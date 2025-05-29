@@ -60,9 +60,10 @@
         <div class="email-field-wrapper">
           <div class="email-flex-wrap">
             <div class="email-combined" id="email-combined">
-              <input type="text" name="email_id" id="email_id" placeholder="이메일 입력" />
-              <span class="at">@</span>
-              <input type="text" name="email_domain" id="email_domain" placeholder="도메인 입력" />
+              <input type="text" name="email_id" id="email_id" placeholder="이메일을 입력하세요" />
+              <span>@</span>
+              <input type="text" name="email_domain" id="email_domain" placeholder="" />
+
               <select id="domain_selector" onchange="setEmailDomain(this.value)">
                 <option value="">직접 입력</option>
                 <option value="gmail.com">gmail.com</option>

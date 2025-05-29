@@ -131,16 +131,7 @@ body {
 }
 
   
-.input-group label {
-  flex: 0 0 120px;
-  font-weight: bold;
-  margin-top: 16px;
-  color: #01143F;
-  margin-right: 10px;
-  text-align: left;
-  margin-top: 16px;
-}
-
+.input-group label,
 .password-group label {
   flex: 0 0 120px;
   font-size: 18px;
@@ -177,7 +168,7 @@ body {
   border: none;
   font-size: 16px;
   outline: none;
-  width: 140px;
+  width: 160px;
   background: none;
   padding: 0 8px;
   height: 100%;
@@ -195,9 +186,10 @@ body {
   background: white;
   outline: none;
   border-left: 1px solid #ccc;
-  padding: 0 10px;
+  padding: 10px;
   height: 100%;
 }
+
 
 #email-error {
   margin-left: 145px;
@@ -224,7 +216,6 @@ body {
   font-family: 'Spoqa Han Sans Neo';
   box-sizing: border-box;
   color: #01143F;
-  background-image: url('/static/img/icon-lock.svg');
   background-repeat: no-repeat;
   background-position: 12px center;
   background-size: 20px;
@@ -252,6 +243,20 @@ body {
   color: #9E9E9E;
   margin-bottom: 0;
   text-align: left;
+}
+
+input::placeholder {
+  font-size: 16px;
+  color: #9e9e9e;
+}
+
+input[type="password"]::placeholder {
+  font-size: 16px;
+  color: #9e9e9e;
+}
+
+input[type="text"] {
+  padding-left: 28px !important;
 }
 
 .helper-text {
@@ -319,29 +324,35 @@ body {
 
 .auth-code-wrap {
   display: flex;
-  gap: 12px;
   align-items: center;
+  gap: 9px;
+  margin-top: 10px;
+  height: 54px;                
 }
 
 .auth-input {
-  height: 54px;
-  width: 180px;
-  padding: 0 16px;
+  flex: 1;
+  height: 100%;
   font-size: 16px;
+  padding: 0 16px;
+  border: 1px solid #9e9e9e;
   border-radius: 8px;
-  border: 1px solid #C4C4C4;
+  background: white;
+  box-sizing: border-box;
 }
 
 .btn-auth-check {
-  height: 54px;
+  height: 100%;
   padding: 0 20px;
+  font-size: 16px;
   background-color: #FFC508;
   color: white;
-  font-size: 16px;
-  border-radius: 8px;
   border: none;
+  border-radius: 8px;
   cursor: pointer;
+  white-space: nowrap;
 }
+
 .btn-auth-check:hover {
   background-color: #e4b109;
 }
