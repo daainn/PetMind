@@ -1,0 +1,87 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>PetMind | 상담 채팅</title>
+
+  <!-- 폰트 및 스타일 -->
+  <link href="//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Koh+Santepheap:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="{% static 'css/chat.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chat_header.css' %}">
+  <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chat_talk.css' %}">
+</head>
+<body>
+  <div class="app-wrapper" id="appWrapper">
+
+    <!-- 헤더 -->
+    {% include 'common/chat_header.html' %}
+
+    <!-- 사이드바 -->
+    {% include 'common/sidebar.html' %}
+
+    <!-- 본문 -->
+    <main class="chat-main">
+      <!-- 메시지 출력 -->
+      <div class="chat-history">
+        {% for m in messages %}
+          <div class="chat-message-wrapper {% if m.sender == 'user' %}user-side{% else %}bot-side{% endif %}">
+            <div class="chat-message {{ m.sender }}-message">
+              <div class="message-content">{{ m.message }}</div>
+              {% if m.duration %}
+                <div class="chat-subtext">{{ m.duration }}s</div>
+              {% endif %}
+              <span class="chat-time">{{ m.created_at|time:"H:i" }}</span>
+            </div>
+          </div>
+        {% empty %}
+          <p class="empty-message">상담 기록이 없습니다.</p>
+        {% endfor %}
+      </div>
+
+      <!-- 입력창 -->
+      <form method="POST" action="{% url 'chat:chat_talk_detail' current_chat.id %}" class="chat-input-form">
+        {% csrf_token %}
+        <textarea name="message" placeholder="질문을 입력하세요." required></textarea>
+        <div class="chat-input-bottom">
+          <div class="info-btn-wrapper">
+            <a href="{% url 'user:info' %}" class="info-btn">의뢰인 개인정보 입력</a>
+            <div class="tooltip-container">
+              <span class="tooltip-trigger">?</span>
+              <div class="tooltip-message">
+                귀하의 상황에 맞는 맞춤형 법률 상담을 위해 각자 정보를 입력해 주세요.<br>
+                입력하신 정보는 오직 상담 목적에만 활용되며, 철저한 보안 시스템 하에 관리됩니다.
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="send-btn">
+            <img src="{% static 'images/chat_enter.png' %}" alt="보내기">
+          </button>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <!-- JS -->
+  <script src="{% static 'js/chat_member_sidebar.js' %}"></script>
+  <script>
+    // 툴팁 전용
+    document.addEventListener('DOMContentLoaded', function () {
+      const tooltipTrigger = document.querySelector('.tooltip-trigger');
+      const tooltipMessage = document.querySelector('.tooltip-message');
+
+      tooltipTrigger?.addEventListener('mouseenter', () => {
+        tooltipMessage.style.display = 'block';
+      });
+      tooltipTrigger?.addEventListener('mouseleave', () => {
+        tooltipMessage.style.display = 'none';
+      });
+    });
+  </script>
+</body>
+</html>

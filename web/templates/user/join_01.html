@@ -1,0 +1,199 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>회원 가입 | PetMind</title>
+  <link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css' rel='stylesheet' type='text/css'>
+  <link href="https://fonts.googleapis.com/css2?family=Koh+Santepheap:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/common.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/petmind-join.css' %}" />
+</head>
+<body>
+  {% include 'common/header.html' %}
+  <div class="header_tit">
+    <h2>회원 가입</h2>
+    <div class="progress-bar">
+      <div class="active"></div>
+      <div></div>
+      <div></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <form method="post" action="{% url 'user:join_02' %}" id="joinForm">
+      {% csrf_token %}
+
+      <!-- 약관 -->
+      <div>
+        <div class="section-title">약관 동의</div>
+        <div class="checkbox-area">
+          <div class="checkbox-item">
+            <label class="checkbox-label">
+              <input type="checkbox" id="all_agree"> 전체 약관 동의
+            </label>
+          </div>
+          <div class="line"></div>
+          <div class="checkbox-item">
+            <label class="checkbox-label">
+              <input type="checkbox" name="terms_required" class="agree_check"> <b>[필수]</b> 이용 약관
+            </label>
+            <button class="view-btn" type="button" onclick="openPopup('{% url 'user:join_terms_service' %}')">내용 보기</button>
+          </div>
+          <div class="checkbox-item">
+            <label class="checkbox-label">
+              <input type="checkbox" name="privacy_required" class="agree_check"> <b>[필수]</b> 개인정보 수집, 이용 동의
+            </label>
+            <button class="view-btn" type="button" onclick="openPopup('{% url 'user:join_terms_privacy' %}')">내용 보기</button>
+          </div>
+        </div>
+        <p class="helper-text error-message" id="terms-error"></p>
+        <p class="helper-text" id="terms-helper">※ 필수 항목에 동의하지 않으시는 경우, 서비스 가입이 불가합니다.</p>
+      </div>
+
+      <div class="line"></div>
+
+      <!-- 개인정보 입력 -->
+      <div class="input-area">
+        <div class="section-title">개인정보입력 <span style="color:#FFC508; font-size:18px;">(*필수항목)</span></div>
+
+        <div class="input-group email-group">
+          <label for="email_id" id="email-label">이메일<span style="color:#FFC508;">*</span></label>
+          <div class="email-combined" id="email-combined">
+            <input type="text" name="email_id" id="email_id" placeholder="이메일 입력" />
+            <span class="at">@</span>
+            <input type="text" name="email_domain" id="email_domain" placeholder="petmind.com" />
+            <select id="domain_selector">
+              <option value="">직접 입력</option>
+              <option value="naver.com">naver.com</option>
+              <option value="gmail.com">gmail.com</option>
+              <option value="hanmail.net">hanmail.net</option>
+              <option value="nate.com">nate.com</option>
+            </select>
+            <div class="email-error-icon" id="email-error-icon" style="display: none;"></div>
+          </div>
+        </div>
+        <p class="helper-text error-message" id="email-error"></p>
+
+        <div class="password-group">
+          <label for="password" id="password-label">비밀번호<span style="color:#FFC508;">*</span></label>
+          <div class="password-group-wrapper">
+            <input type="password" name="password" id="password" placeholder="비밀번호를 입력하세요">
+            <div class="password-error-icon" id="password-error-icon" style="display: none;"></div>
+            <p class="helper-text" id="password-helper">※ 영문 대/소문자, 숫자, 특수문자를 2종류 혼합하여 8~16자 입력</p>
+            <p class="helper-text error-message" id="password-error"></p>
+          </div>
+        </div>
+
+        <div class="button-row-wrapper">
+          <div class="button-row">
+            <button type="submit" class="btn-confirm">확인</button>
+            <button type="button" class="btn-cancel" onclick="location.href='{% url 'user:home' %}'">취소</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- ✅ SCRIPT -->
+  <script>
+    // 전역에 선언 (select에서 호출 가능해야 함)
+    function setEmailDomain(value) {
+      const emailDomainInput = document.getElementById('email_domain');
+      if (value !== '') {
+        emailDomainInput.value = value;
+        emailDomainInput.readOnly = true;
+      } else {
+        emailDomainInput.value = '';
+        emailDomainInput.readOnly = false;
+      }
+    }
+
+    function openPopup(url) {
+      window.open(url, 'popup', 'width=720,height=800,scrollbars=yes');
+    }    
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const emailId = document.getElementById('email_id');
+      const emailDomain = document.getElementById('email_domain');
+      const password = document.getElementById('password');
+      const emailError = document.getElementById('email-error');
+      const passwordError = document.getElementById('password-error');
+      const emailIcon = document.getElementById('email-error-icon');
+      const passwordIcon = document.getElementById('password-error-icon');
+      const termsHelper = document.getElementById('terms-helper');
+      const allAgree = document.getElementById('all_agree');
+      const agreeChecks = document.querySelectorAll('.agree_check');
+      const emailCombined = document.getElementById('email-combined');
+      const domainSelector = document.getElementById('domain_selector');
+      const form = document.getElementById('joinForm');
+
+      const emailPattern = /^[a-z0-9]{5,20}$/;
+      const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d|[^A-Za-z\d])(?=.{8,16}).*$/;
+
+      allAgree.addEventListener('change', () => {
+        agreeChecks.forEach(c => c.checked = allAgree.checked);
+      });
+
+      agreeChecks.forEach(c => {
+        c.addEventListener('change', () => {
+          allAgree.checked = Array.from(agreeChecks).every(c => c.checked);
+        });
+      });
+
+      domainSelector.addEventListener('change', function () {
+        setEmailDomain(this.value);
+      });
+
+      function validateInputs() {
+        let isValid = true;
+        const emailValue = emailId.value.trim();
+        const passwordValue = password.value.trim();
+
+        emailId.classList.remove('error');
+        emailDomain.classList.remove('error');
+        emailCombined.classList.remove('error');
+        password.classList.remove('error');
+        emailError.textContent = '';
+        passwordError.textContent = '';
+        emailIcon.style.display = 'none';
+        passwordIcon.style.display = 'none';
+
+        if (!emailPattern.test(emailValue)) {
+          emailError.textContent = '※ 영문 소문자, 숫자를 혼용하여 5~20자 입력해주세요';
+          emailId.classList.add('error');
+          emailDomain.classList.add('error');
+          emailCombined.classList.add('error');
+          emailIcon.style.display = 'block';
+          isValid = false;
+        }
+
+        if (!passwordPattern.test(passwordValue)) {
+          passwordError.textContent = '※ 영문 대/소문자, 숫자, 특수문자를 2종류 혼합하여 8~16자 입력해주세요';
+          password.classList.add('error');
+          passwordIcon.style.display = 'block';
+          isValid = false;
+        }
+
+        const termsOk = Array.from(agreeChecks).every(c => c.checked);
+        termsHelper.classList.remove('error-message');
+        if (!termsOk) {
+          termsHelper.classList.add('error-message');
+          isValid = false;
+        }
+
+        return isValid;
+      }
+
+      form.addEventListener('submit', function (e) {
+        if (!validateInputs()) {
+          e.preventDefault();
+        }
+      });
+
+      emailId.addEventListener('input', validateInputs);
+      password.addEventListener('input', validateInputs);
+    });
+  </script>
+</body>
+</html>

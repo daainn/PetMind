@@ -1,0 +1,61 @@
+{% load static %}
+
+<!-- 사이드바 -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header-bar">
+    <button id="sidebarToggle" class="chat-sidebar-btn">
+      <img src="{% static 'images/sidebar.png' %}" alt="사이드바 열기">
+    </button>
+    <a href="{% url 'chat:main' %}" class="chat-new-btn">
+      <img src="{% static 'images/new-chat.png' %}" alt="새 채팅">
+    </a>
+  </div>
+
+  {% if current_chat %}
+    <div class="current-chat">
+      <img src="{% static 'images/chat-history.png' %}" alt="기록 아이콘">
+      <span>{{ current_chat.chat_title|truncatechars:10 }}</span>
+      <span class="chat-active-indicator"></span>
+    </div>
+  {% endif %}
+
+  <hr class="sidebar-divider">
+
+  {% if not is_guest %}
+    {% if chat_list %}
+      <div class="sidebar-date-label">지난 채팅 기록</div>
+      {% for c in chat_list %}
+        <div class="question-item{% if current_chat and current_chat.id == c.id %} active{% endif %}" id="chat-{{ c.id }}">
+          <div class="question-info" onclick="location.href='{% url 'chat:chat_talk_detail' c.id %}'">
+            <img src="{% static 'images/chat-history.png' %}" alt="채팅 아이콘">
+            <input
+              class="question-text"
+              type="text"
+              id="chat-title-{{ c.id }}"
+              name="title"
+              value="{{ c.chat_title|truncatechars:10 }}"
+              readonly />
+          </div>
+          <div class="question-icons">
+            <i class="fas fa-pencil-alt" onclick="editChatTitle({{ c.id }})" title="제목 수정"></i>
+            <i class="fas fa-trash" onclick="deleteChat({{ c.id }})" title="삭제하기"></i>
+            <span class="chat-active-indicator"></span>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="guest-info-message">상담 기록이 없습니다.</p>
+    {% endif %}
+  {% else %}
+    <div class="guest-info-message">
+      <p>
+        로그인 시 모든 상담 내용이 안전하게 저장되어 언제든지 다시 확인하실 수 있어요.<br>
+        이혼 상담에서 주고받은 중요한 법률 조언을 잊지 않고, 필요할 때마다 쉽게 찾아볼 수 있답니다.
+      </p>
+      <a href="{% url 'user:home' %}" class="guest-login-btn">로그인 하기</a>
+    </div>
+  {% endif %}
+</div>
+
+<!-- 아이콘용 FontAwesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
