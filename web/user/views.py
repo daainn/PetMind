@@ -13,6 +13,9 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import make_password, check_password
 from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
 
 def home(request):
     if request.method == 'POST':
@@ -73,7 +76,6 @@ def get_or_create_user(request):
     user = User.objects.create(email=temp_email, password="guest_password")
     return user, False
 
-
 def info_cancel(request):
     messages.info(request, "입력이 취소되었습니다.")
     return redirect("user:home")
@@ -82,95 +84,9 @@ def join_user_form(request):
     return render(request, 'user/join_01.html')
 
 def join_user_email_form(request):
-    if request.method == 'POST':
-        email_id = request.POST.get('email_id')
-        email_domain = request.POST.get('email_domain')
-        password = request.POST.get('password')
-        full_email = f"{email_id}@{email_domain}"
-
-        try:
-            validate_email(full_email)
-        except ValidationError:
-            messages.error(request, '유효하지 않은 이메일 형식입니다.')
-            return redirect('user:join_01')
-
-        if User.objects.filter(email=full_email).exists():
-            messages.error(request, '이미 등록된 이메일입니다.')
-            return redirect('user:join_01')
-
-        if not re.match(r'^(?=.*[A-Za-z])(?=.*\d|[^A-Za-z\d])(?=.{8,16}).*$', password):
-            messages.error(request, '비밀번호 형식이 올바르지 않습니다.')
-            return redirect('user:join_01')
-
-        auth_code = str(random.randint(10000, 99999))
-        request.session['user_email'] = full_email
-        request.session['user_password'] = password
-        request.session['auth_code'] = auth_code
-
-        subject = "[PetMind] 이메일 인증번호 안내"
-        from_email = settings.DEFAULT_FROM_EMAIL
-        to_email = [full_email]
-        verification_link = "http://localhost:8080/join/email/certification"
-
-        html_content = render_to_string('email_verification.html', {
-            'verification_code': auth_code,
-            'verification_link': verification_link
-        })
-
-        email = EmailMultiAlternatives(subject, '', from_email, to_email)
-        email.attach_alternative(html_content, "text/html")
-        email.send()
-
-        return redirect('user:join_03')
-
     return redirect('user:join_01')
 
 def join_user_email_certification(request):
-    if request.method == 'POST':
-        user_input = request.POST.get('auth_code')
-        session_code = request.session.get('auth_code')
-        email = request.session.get('user_email')
-        password = request.session.get('user_password')
-
-        if not email or not password or not session_code:
-            messages.error(request, '세션이 만료되었습니다. 다시 회원가입을 진행해주세요.')
-            return redirect('user:join_01')
-
-        if user_input != session_code:
-            return render(request, 'user/join_03.html', {
-                'error': '❌ 인증번호가 일치하지 않습니다. 다시 입력해주세요.'
-            })
-
-        try:
-            validate_email(email)
-        except ValidationError:
-            return render(request, 'user/join_03.html', {
-                'error': '❌ 유효하지 않은 이메일 형식입니다.'
-            })
-
-        if User.objects.filter(email=email).exists():
-            return render(request, 'user/join_03.html', {
-                'error': '❌ 이미 등록된 이메일입니다. 로그인 또는 비밀번호 찾기를 이용해주세요.'
-            })
-
-        if not re.match(r'^(?=.*[A-Za-z])(?=.*\d|[^A-Za-z\d])(?=.{8,16}).*$', password):
-            return render(request, 'user/join_03.html', {
-                'error': '❌ 비밀번호는 영문자와 숫자 또는 특수문자를 포함한 8~16자여야 합니다.'
-            })
-
-        try:
-            hashed_pw = make_password(password)
-            user = User(email=email, password=hashed_pw, is_verified=True)
-            user.save()
-        except Exception as e:
-            return render(request, 'user/join_03.html', {
-                'error': f'❌ 회원가입에 실패했습니다. 관리자에게 문의해주세요. ({str(e)})'
-            })
-
-        response = redirect('user:join_04')
-        request.session.flush()
-        return response
-
     return render(request, 'user/join_03.html', {
         'error': '❗ 인증 절차를 완료하려면 인증번호를 입력해주세요.'
     })
@@ -183,3 +99,35 @@ def join_terms_service(request):
 
 def join_user_complete(request):
     return render(request, 'user/join_04.html')
+
+@csrf_exempt 
+def send_auth_code(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            if not email:
+                return JsonResponse({'success': False, 'message': '이메일이 없습니다.'}, status=400)
+
+            auth_code = str(random.randint(10000, 99999))
+            request.session['auth_code'] = auth_code
+            request.session['user_email'] = email
+
+            subject = "[PetMind] 이메일 인증번호 안내"
+            from_email = settings.DEFAULT_FROM_EMAIL
+            to_email = [email]
+
+            html_content = render_to_string('email_verification.html', {
+                'verification_code': auth_code
+            })
+
+            email_message = EmailMultiAlternatives(subject, '', from_email, to_email)
+            email_message.attach_alternative(html_content, "text/html")
+            email_message.send()
+
+            return JsonResponse({'success': True})
+        except Exception as e:
+            print(f"[ERROR] {e}")
+            return JsonResponse({'success': False, 'message': '서버 오류'}, status=500)
+
+    return JsonResponse({'success': False, 'message': '잘못된 요청'}, status=405)
