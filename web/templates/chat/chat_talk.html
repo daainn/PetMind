@@ -27,16 +27,23 @@
 
     <!-- 본문 -->
     <main class="chat-main">
+
       <!-- 메시지 출력 -->
       <div class="chat-history">
         {% for m in messages %}
           <div class="chat-message-wrapper {% if m.sender == 'user' %}user-side{% else %}bot-side{% endif %}">
-            <div class="chat-message {{ m.sender }}-message">
-              <div class="message-content">{{ m.message }}</div>
-              {% if m.duration %}
-                <div class="chat-subtext">{{ m.duration }}s</div>
+            <div class="chat-message-block">
+              {% if m.sender == 'user' %}
+                <span class="chat-time side-time">{{ m.created_at|time:"H:i" }}</span>
               {% endif %}
-              <span class="chat-time">{{ m.created_at|time:"H:i" }}</span>
+
+              <div class="chat-message {{ m.sender }}-message">
+                <div class="message-content">{{ m.message }}</div>
+              </div>
+
+              {% if m.sender == 'bot' %}
+                <span class="chat-time side-time">{{ m.created_at|time:"H:i" }}</span>
+              {% endif %}
             </div>
           </div>
         {% empty %}
@@ -44,23 +51,31 @@
         {% endfor %}
       </div>
 
+      <!-- 추천 안내 메시지 -->
+      <div class="recommend-info-box">
+        <img src="{% static 'images/recommendation_btn.png' %}" alt="추천 아이콘" class="recommend-icon">
+        <span class="recommend-text">이런 정보는 어때요? 추천 콘텐츠를 확인해보세요.</span>
+      </div>
+
       <!-- 입력창 -->
-      <form method="POST" action="{% url 'chat:chat_talk_detail' current_chat.id %}" class="chat-input-form">
+      <form method="POST" action="{% url 'chat:chat_talk_detail' current_chat.id %}" class="chat-input-form" enctype="multipart/form-data">
         {% csrf_token %}
         <textarea name="message" placeholder="질문을 입력하세요." required></textarea>
+
+        <!-- 하단 버튼 -->
         <div class="chat-input-bottom">
-          <div class="info-btn-wrapper">
-            <a href="{% url 'user:info' %}" class="info-btn">의뢰인 개인정보 입력</a>
-            <div class="tooltip-container">
-              <span class="tooltip-trigger">?</span>
-              <div class="tooltip-message">
-                귀하의 상황에 맞는 맞춤형 법률 상담을 위해 각자 정보를 입력해 주세요.<br>
-                입력하신 정보는 오직 상담 목적에만 활용되며, 철저한 보안 시스템 하에 관리됩니다.
-              </div>
-            </div>
+          <div class="bottom-left">
+            <!-- 이미지 업로드 -->
+            <label class="image-upload-btn">
+              <input type="file" name="image" accept="image/*" hidden>
+              <img src="{% static 'images/image_upload_btn.png' %}" alt="이미지 업로드 아이콘">
+              <span>이미지 업로드</span>
+            </label>
           </div>
+
+          <!-- 전송 버튼 -->
           <button type="submit" class="send-btn">
-            <img src="{% static 'images/chat_enter.png' %}" alt="보내기">
+            <img src="{% static 'images/chatbot_sendbtn.png' %}" alt="보내기">
           </button>
         </div>
       </form>
@@ -70,7 +85,6 @@
   <!-- JS -->
   <script src="{% static 'js/chat_member_sidebar.js' %}"></script>
   <script>
-    // 툴팁 전용
     document.addEventListener('DOMContentLoaded', function () {
       const tooltipTrigger = document.querySelector('.tooltip-trigger');
       const tooltipMessage = document.querySelector('.tooltip-message');

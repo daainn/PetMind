@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -7,7 +7,6 @@ from user.models import User
 from .models import Chat, Message
 from dogs.models import DogProfile
 import uuid
-import datetime
 import requests
 
 # 공통 진입점 (회원/비회원 분기)
@@ -25,23 +24,32 @@ def chat_main(request):
     user_id = request.session.get("user_id")
     guest_user_id = request.session.get("guest_user_id")
     user_email = request.session.get("user_email")
-
-    
+    current_dog_id = request.session.get("current_dog_id")
 
     chat_list, current_chat, messages = [], None, []
 
     if user_id and not is_guest:
         try:
             user = User.objects.get(id=user_id)
+            # ✅ 회원의 반려견 채팅 리스트
             chat_list = Chat.objects.filter(dog__user=user).order_by('-created_at')
-            current_chat = chat_list.first()
+
+            if current_dog_id:
+                current_chat = Chat.objects.filter(dog__id=current_dog_id).first()
+            else:
+                # 세션에 current_dog_id 없으면 첫 채팅의 반려견 ID를 저장
+                current_chat = chat_list.first()
+                if current_chat and current_chat.dog:
+                    request.session["current_dog_id"] = current_chat.dog.id
+
         except User.DoesNotExist:
             return redirect('user:home')
 
     elif is_guest and guest_user_id:
         try:
             user = User.objects.get(id=guest_user_id)
-            chat_list = Chat.objects.filter(dog__user=user).order_by('-created_at')
+            # ✅ 비회원 채팅 리스트 (dog=None and user=guest)
+            chat_list = Chat.objects.filter(dog=None, user=user).order_by('-created_at')
             current_chat = chat_list.first()
         except User.DoesNotExist:
             return redirect('chat:chat_guest_view')
@@ -59,6 +67,7 @@ def chat_main(request):
         'is_guest': is_guest,
         'user_email': user_email,
     })
+
 
 # 채팅 제목 클릭 시 해당 채팅으로 이동
 @require_POST
@@ -100,24 +109,54 @@ def call_runpod_api(message, user_info):
     except Exception as e:
         return f"❗ 오류 발생: {str(e)}"
     
-def get_dog_info(user):
-    try:
-        dog = DogProfile.objects.filter(user=user).first()
-        if not dog:
-            return {}
+def select_dog(request, dog_id):
+    if not request.session.get("user_id"):
+        return redirect("user:home")
+    request.session['current_dog_id'] = dog_id
+    return redirect('chat:main')
+    
+def get_dog_info(dog):
+    return {
+        "name": dog.name,
+        "breed": dog.breed_name,
+        "age": dog.age,
+        "gender": dog.gender,
+        "neutered": dog.neutered,
+        "disease": "있음" if dog.disease_history else "없음",
+        "disease_desc": dog.disease_history or "",
+        "period": dog.living_period,
+        "housing": dog.housing_type,
+        "chat_history": [],
+        "prev_q": None,
+        "prev_a": None,
+        "prev_cate": None,
+        "is_first_question": True
+    }
 
-        return {
-            "dog_name": dog.name,
-            "breed_name": dog.breed_name,
-            "age": dog.age,
-            "gender": dog.gender,
-            "neutered": dog.neutered,
-            "disease_history": dog.disease_history or "없음",
-            "living_period": dog.living_period,
-            "housing_type": dog.housing_type,
-        }
-    except DogProfile.DoesNotExist:
-        return {}
+def get_minimal_guest_info(session):
+    breed = session.get("guest_dog_breed", "견종 정보 없음")
+    return {
+        "name": "비회원견",
+        "breed": breed,
+        "chat_history": [],
+        "prev_q": None,
+        "prev_a": None,
+        "prev_cate": None,
+        "is_first_question": True
+    }
+
+def get_chat_history(chat):
+    past_msgs = Message.objects.filter(chat=chat).order_by("created_at")
+    chat_history = [{"role": m.sender, "content": m.message} for m in past_msgs]
+
+    prev_q, prev_a = None, None
+    for i in range(len(chat_history) - 2, -1, -2):
+        if chat_history[i]["role"] == "user" and chat_history[i + 1]["role"] == "bot":
+            prev_q = chat_history[i]["content"]
+            prev_a = chat_history[i + 1]["content"]
+            break
+
+    return chat_history, prev_q, prev_a
 
 def call_runpod_api(message, user_info):
     try:
@@ -149,19 +188,48 @@ def chat_send(request):
 
     user = User.objects.get(id=user_id)
 
-    # 새 채팅 생성 및 질문 저장
-    dog = DogProfile.objects.filter(user=user).first()
+    # ✅ 비회원 처리
+    if is_guest:
+        breed = request.POST.get("breed", "알 수 없음")
+        chat = Chat.objects.create(dog=None, chat_title=message[:20])
+        Message.objects.create(chat=chat, sender="user", message=message)
+
+        guest_info = {
+            "name": "비회원 반려견",
+            "breed": breed,
+            "age": "알 수 없음",
+            "gender": "모름",
+            "neutered": "모름",
+            "disease": "모름",
+            "disease_desc": "",
+            "period": "모름",
+            "housing": "모름",
+            "chat_history": [],
+            "prev_q": None,
+            "prev_a": None,
+            "prev_cate": None,
+            "is_first_question": True
+        }
+        answer = call_runpod_api(message, guest_info)
+        Message.objects.create(chat=chat, sender="bot", message=answer)
+        return redirect('chat:chat_talk_detail', chat_id=chat.id)
+
+    # ✅ 회원 처리
+    current_dog_id = request.session.get("current_dog_id")
+    dog = DogProfile.objects.filter(id=current_dog_id, user=user).first()
+
+    if not dog:
+        return JsonResponse({"error": "반려견이 선택되지 않았습니다."}, status=400)
+
     chat = Chat.objects.create(dog=dog, chat_title=message[:20])
     Message.objects.create(chat=chat, sender="user", message=message)
 
-    # 유저 정보 및 RunPod 호출
-    user_info = get_dog_info(user)
+    user_info = get_dog_info(dog)
     answer = call_runpod_api(message, user_info)
-
-    # 응답 저장
     Message.objects.create(chat=chat, sender="bot", message=answer)
 
     return redirect('chat:chat_talk_detail', chat_id=chat.id)
+
 
 # 채팅 삭제
 @require_POST
@@ -200,8 +268,7 @@ def chat_member_update_title(request, chat_id):
         return JsonResponse({'status': 'empty_title'}, status=400)
     except Chat.DoesNotExist:
         return JsonResponse({'status': 'not_found'}, status=404)
-
-# 비회원 시작용 guest 세션 생성
+    
 def chat_guest_view(request):
     request.session.flush()
     request.session['guest'] = True
@@ -213,36 +280,55 @@ def chat_guest_view(request):
 
     return redirect('chat:main')
 
+# 비회원 시작용 guest 세션 생성
 def chat_talk_view(request, chat_id):
     is_guest = request.session.get('guest', False)
     user_email = request.session.get("user_email")
+    current_dog_id = request.session.get("current_dog_id")
 
     try:
         chat = Chat.objects.get(id=chat_id)
     except Chat.DoesNotExist:
         return redirect('chat:main')
 
-    # 🔐 사용자 검증
     user_id = request.session.get("guest_user_id") if is_guest else request.session.get("user_id")
-    if not user_id or str(chat.dog.user.id) != str(user_id):
+
+    # ✅ 회원의 경우 user_id 불일치 또는 user가 None이면 리다이렉트
+    if not is_guest:
+        if not user_id or chat.user is None or str(chat.user.id) != str(user_id):
+            return redirect('chat:main')
+
+    # ✅ 현재 강아지 ID 불일치 시 리다이렉트
+    if not is_guest and chat.dog is not None and current_dog_id is not None and chat.dog.id != current_dog_id:
         return redirect('chat:main')
 
-    # ✅ POST 요청 처리
+    # ✅ POST 요청: 메시지 전송
     if request.method == "POST":
         message = request.POST.get("message", "").strip()
         if message:
             Message.objects.create(chat=chat, sender='user', message=message)
 
-            user_info = get_dog_info(chat.dog.user)
-            answer = call_runpod_api(message, user_info)
+            if is_guest:
+                user_info = get_minimal_guest_info(request.session)
+            else:
+                chat_history, prev_q, prev_a = get_chat_history(chat)
+                user_info = get_dog_info(chat.dog)
+                user_info.update({
+                    "chat_history": chat_history,
+                    "prev_q": prev_q,
+                    "prev_a": prev_a,
+                    "prev_cate": None,
+                    "is_first_question": len(chat_history) == 0
+                })
 
+            answer = call_runpod_api(message, user_info)
             Message.objects.create(chat=chat, sender='bot', message=answer)
 
         return redirect('chat:chat_talk_detail', chat_id=chat.id)
 
-    # ✅ GET 요청 처리
+    # ✅ GET 요청: 채팅 페이지 렌더링
     messages = Message.objects.filter(chat=chat).order_by('created_at')
-    chat_list = Chat.objects.filter(dog__user=chat.dog.user).order_by('-created_at')
+    chat_list = Chat.objects.filter(user=chat.user).order_by('-created_at') if chat.user else []
     now_time = timezone.localtime().strftime("%I:%M %p").lower()
 
     return render(request, "chat/chat_talk.html", {

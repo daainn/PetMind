@@ -62,18 +62,38 @@
   align-self: flex-end;
 }
 .user-message {
-  background-color: #E3EFFF;
+  background-color: #FFFFDB;
   color: #01143F;
   border-top-right-radius: 0;
 }
 .bot-message {
-  background-color: #FFFFFF;
-  border: 1px solid #E3EFFF;
+  background-color: #FFFFDB;
   color: #2B2F31;
   border-top-left-radius: 0;
 }
 
 /* 시간 및 서브텍스트 */
+.chat-message-block {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.chat-message-wrapper.user-side .chat-message-block {
+  justify-content: flex-end;
+}
+
+.chat-message-wrapper.bot-side .chat-message-block {
+  justify-content: flex-start;
+}
+
+.side-time {
+  font-size: 12px;
+  color: #9E9E9E;
+  white-space: nowrap;
+}
+
 .chat-time {
   font-size: 11px;
   color: #9E9E9E;
@@ -115,10 +135,78 @@
   margin-bottom: 16px;
   box-sizing: border-box;
 }
+
 .chat-input-bottom {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: 8px;
+}
+
+.bottom-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.recommend-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.recommend-btn img {
+  height: 32px;
+}
+
+.recommend-info-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background-color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin: 20px auto;
+  max-width: 60%;
+  box-sizing: border-box;
+}
+
+.recommend-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.recommend-text {
+  font-size: 14px;
+  color: #333;
+}
+
+.image-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border: 1px solid #ccc;
+  border-radius: 999px;
+  background-color: white;
+  color: #444;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  gap: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.image-upload-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.image-upload-btn img {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
 /* 버튼 그룹 */

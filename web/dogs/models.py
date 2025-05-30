@@ -27,8 +27,8 @@ class DogProfile(models.Model):
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    breed = models.ForeignKey(DogBreed, on_delete=models.CASCADE)  # 필수
-    name = models.CharField(max_length=100)                        # 필수
+    breed = models.ForeignKey(DogBreed, on_delete=models.CASCADE)  
+    name = models.CharField(max_length=100)                        
     breed_name = models.CharField(max_length=100, null=True, blank=True)
     age = models.IntegerField(null=True, blank=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, null=True, blank=True)

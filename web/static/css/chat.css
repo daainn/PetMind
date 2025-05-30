@@ -57,6 +57,79 @@ body {
   box-sizing: border-box;
 }
 
+.upload-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.upload-label {
+  font-size: 14px;
+  padding: 5px 12px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  color: #555;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.upload-label i {
+  font-size: 14px;
+}
+
+.custom-upload-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background-color: #fff;
+  transition: box-shadow 0.2s;
+}
+
+.custom-upload-wrapper:hover {
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.upload-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.upload-text {
+  font-size: 14px;
+  color: #444;
+}
+
+.image-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border: 1px solid #ccc;
+  border-radius: 999px;
+  background-color: white;
+  color: #444;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  gap: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.image-upload-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.image-upload-btn img {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+
 /* 하단 버튼 레이아웃 (의뢰인 버튼 + ? + 전송) */
 .chat-input-bottom {
   display: flex;
