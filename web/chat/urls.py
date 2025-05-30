@@ -6,9 +6,9 @@ app_name = 'chat'
 urlpatterns = [
     path('', views.chat_entry, name='chat_entry'),
     path('main/', views.chat_main, name='main'),
-    path('send/', views.chat_send, name='chat_send'),  # POST only
+    path('send/', views.chat_send, name='chat_send'), 
 
-    path('guest/', views.chat_guest_view, name='chat_guest'),
+    # path('guest/', views.chat_guest_view, name='chat_guest'),
 
     path('talk/<int:chat_id>/', views.chat_talk_view, name='chat_talk_detail'),  
 

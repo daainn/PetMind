@@ -5,24 +5,14 @@
   <meta charset="UTF-8">
   <title>PetMind | 상담 채팅</title>
 
-  <!-- 폰트 및 스타일 -->
   <link href="//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Koh+Santepheap:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-  <!-- CSS -->
   <link rel="stylesheet" href="{% static 'css/chat.css' %}">
   <link rel="stylesheet" href="{% static 'css/chat_header.css' %}">
   <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
   <link rel="stylesheet" href="{% static 'css/chat_talk.css' %}">
-
-  <style>
-    .recommend-info-box.disabled {
-      pointer-events: none;
-      opacity: 0.4;
-      background-color: #f2f2f2 !important;
-    }
-  </style>
 </head>
 <body>
   <div class="app-wrapper" id="appWrapper">
@@ -33,37 +23,50 @@
       <div class="chat-history">
         {% for m in messages %}
           <div class="chat-message-wrapper {% if m.sender == 'user' %}user-side{% else %}bot-side{% endif %}">
-            <div class="chat-message-block">
-              {% if m.sender == 'user' %}
-                <span class="chat-time side-time" data-time="{{ m.created_at|date:'c' }}"></span>
+            <div class="chat-message-block" style="display: flex; flex-direction: column; align-items: center;">
+              {% if m.images.all %}
+                <div class="chat-image-block" style="margin-bottom: 6px;">
+                  {% for img in m.images.all %}
+                    <img src="{{ img.image.url }}" class="preview-image" alt="업로드 이미지" style="display: block; margin: 4px auto;">
+                  {% endfor %}
+                </div>
               {% endif %}
-              <div class="chat-message {{ m.sender }}-message">
-                <div class="message-content">{{ m.message|safe }}</div>
-              </div>
-              {% if m.sender == 'bot' %}
-                <span class="chat-time side-time" data-time="{{ m.created_at|date:'c' }}"></span>
+              {% if m.message %}
+                <div style="display: flex; justify-content: flex-end; align-items: center; gap: 6px; width: 100%;">
+                  {% if m.sender == 'user' %}
+                    <span class="chat-time side-time" data-time="{{ m.created_at|date:'c' }}"></span>
+                  {% endif %}
+                  <div class="chat-message {{ m.sender }}-message">
+                    <div class="message-content">{{ m.message|safe }}</div>
+                  </div>
+                  {% if m.sender == 'bot' %}
+                    <span class="chat-time side-time" data-time="{{ m.created_at|date:'c' }}"></span>
+                  {% endif %}
+                </div>
               {% endif %}
             </div>
           </div>
-        {% empty %}
-          <p class="empty-message">상담 기록이 없습니다.</p>
         {% endfor %}
       </div>
 
-      <!-- 추천 안내 -->
-      <div class="recommend-info-box" id="recommendTrigger" style="cursor:pointer;">
+      <!-- ✅ recommendTrigger에 data-url 속성 추가 -->
+      <div class="recommend-info-box" id="recommendTrigger"
+           data-url="{% url 'chat:recommend_content' chat_id=current_chat.id %}"
+           style="cursor:pointer;">
         <img src="{% static 'images/recommendation_btn.png' %}" alt="추천 아이콘" class="recommend-icon">
         <span class="recommend-text">이런 정보는 어때요? 추천 콘텐츠를 확인해보세요.</span>
       </div>
 
-      <!-- 입력창 -->
       <form method="POST" action="{% url 'chat:chat_talk_detail' current_chat.id %}" class="chat-input-form" enctype="multipart/form-data">
         {% csrf_token %}
         <textarea name="message" placeholder="질문을 입력하세요." required></textarea>
+
+        <div id="imagePreviewContainer" style="display: flex; gap: 8px; margin-top: 8px;"></div>
+
         <div class="chat-input-bottom">
           <div class="bottom-left">
             <label class="image-upload-btn">
-              <input type="file" name="image" accept="image/*" hidden>
+              <input type="file" name="images" id="imageInput" accept="image/*" multiple hidden>
               <img src="{% static 'images/image_upload_btn.png' %}" alt="이미지 업로드 아이콘">
               <span>이미지 업로드</span>
             </label>
@@ -76,89 +79,23 @@
     </main>
   </div>
 
+  <!-- ✅ JS 파일들 불러오기 -->
   <script src="{% static 'js/chat_member_sidebar.js' %}"></script>
+  <script src="{% static 'js/image_upload.js' %}"></script>
+  <script src="{% static 'js/recommend.js' %}"></script>
+
+  <!-- ✅ 시간 포맷만 남겨두고 나머지 추천 관련 JS는 제거 -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // 시간 포맷 변환
       document.querySelectorAll(".chat-time").forEach(el => {
         const rawTime = el.getAttribute("data-time");
         if (rawTime) {
           const date = new Date(rawTime);
           if (!isNaN(date)) {
-            const timeStr = date.toLocaleTimeString('ko-KR', {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true
-            });
-            el.textContent = timeStr;
+            el.textContent = date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: true });
           } else {
             el.textContent = '시간 오류';
           }
-        }
-      });
-
-      const recommendTrigger = document.getElementById('recommendTrigger');
-      const recommendText = document.querySelector('.recommend-text');
-      const chatHistory = document.querySelector('.chat-history');
-      const textarea = document.querySelector('textarea');
-
-      recommendTrigger?.addEventListener('mouseenter', () => {
-        if (!recommendTrigger.classList.contains('disabled')) {
-          recommendTrigger.style.backgroundColor = "#ffe6b8";
-        }
-      });
-      recommendTrigger?.addEventListener('mouseleave', () => {
-        recommendTrigger.style.backgroundColor = "white";
-      });
-
-      // 추천 콘텐츠 클릭 시
-      recommendTrigger?.addEventListener('click', () => {
-        if (recommendTrigger.classList.contains('disabled')) return;
-
-        fetch("{% url 'chat:recommend_content' chat_id=current_chat.id %}", {
-          method: "GET",
-          headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.cards_html && data.has_recommendation) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'chat-message-wrapper bot-side';
-            wrapper.innerHTML = `
-              <div class="chat-message-block">
-                <div class="chat-message bot-message">
-                  <div class="message-content">${data.cards_html}</div>
-                </div>
-                <span class="chat-time side-time" data-time="${new Date().toISOString()}"></span>
-              </div>`;
-            chatHistory.appendChild(wrapper);
-
-            // 추가된 시간 포맷 적용
-            const timeSpan = wrapper.querySelector(".chat-time");
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('ko-KR', {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true
-            });
-            timeSpan.textContent = timeStr;
-
-            chatHistory.scrollTop = chatHistory.scrollHeight;
-
-            // 버튼 비활성화
-            recommendTrigger.classList.add('disabled');
-            recommendText.innerText = "추천 콘텐츠를 확인했어요!";
-          } else {
-            recommendText.innerText = "아직 추천할 콘텐츠가 없어요 좀 더 대화를 진행해주세요!";
-          }
-        });
-      });
-
-      // 입력 시 버튼 활성화
-      textarea?.addEventListener('input', () => {
-        if (recommendTrigger.classList.contains('disabled')) {
-          recommendTrigger.classList.remove('disabled');
-          recommendText.innerText = "이런 정보는 어때요? 추천 콘텐츠를 확인해보세요.";
         }
       });
     });

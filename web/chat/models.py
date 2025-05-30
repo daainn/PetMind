@@ -21,6 +21,12 @@ class Message(models.Model):
 
     def __str__(self):
         return f"{self.sender}: {self.message[:20]}"
+    
+
+class MessageImage(models.Model):
+    message = models.ForeignKey(Message, related_name="images", on_delete=models.CASCADE)
+    image = models.ImageField(upload_to="chat_images/")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
 
 
 class Content(models.Model):

@@ -4,7 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from user.models import User
-from .models import Chat, Message, Content
+from .models import Chat, Message, Content, MessageImage
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -175,7 +175,6 @@ def call_runpod_api(message, user_info):
     except Exception as e:
         return f"❗ 오류 발생: {str(e)}"
 
-# 채팅 메시지 전송
 @require_POST
 @csrf_exempt
 def chat_send(request):
@@ -191,11 +190,17 @@ def chat_send(request):
 
     user = User.objects.get(id=user_id)
 
-    # ✅ 비회원 처리
     if is_guest:
         breed = request.POST.get("breed", "알 수 없음")
         chat = Chat.objects.create(dog=None, chat_title=message[:20])
-        Message.objects.create(chat=chat, sender="user", message=message)
+        user_message = Message.objects.create(chat=chat, sender="user", message=message)
+
+        image_files = request.FILES.getlist("images")
+        for idx, img in enumerate(image_files[:3]):
+            try:
+                MessageImage.objects.create(message=user_message, image=img)
+            except Exception as e:
+                pass
 
         guest_info = {
             "name": "비회원 반려견",
@@ -217,7 +222,6 @@ def chat_send(request):
         Message.objects.create(chat=chat, sender="bot", message=answer)
         return redirect('chat:chat_talk_detail', chat_id=chat.id)
 
-    # ✅ 회원 처리
     current_dog_id = request.session.get("current_dog_id")
     dog = DogProfile.objects.filter(id=current_dog_id, user=user).first()
 
@@ -225,7 +229,14 @@ def chat_send(request):
         return JsonResponse({"error": "반려견이 선택되지 않았습니다."}, status=400)
 
     chat = Chat.objects.create(dog=dog, chat_title=message[:20])
-    Message.objects.create(chat=chat, sender="user", message=message)
+    user_message = Message.objects.create(chat=chat, sender="user", message=message)
+
+    image_files = request.FILES.getlist("images")
+    for idx, img in enumerate(image_files[:3]):
+        try:
+            MessageImage.objects.create(message=user_message, image=img)
+        except Exception as e:
+            pass
 
     user_info = get_dog_info(dog)
     answer = call_runpod_api(message, user_info)
@@ -233,8 +244,6 @@ def chat_send(request):
 
     return redirect('chat:chat_talk_detail', chat_id=chat.id)
 
-
-# 채팅 삭제
 @require_POST
 @csrf_exempt
 def chat_member_delete(request, chat_id):
@@ -272,18 +281,6 @@ def chat_member_update_title(request, chat_id):
     except Chat.DoesNotExist:
         return JsonResponse({'status': 'not_found'}, status=404)
     
-def chat_guest_view(request):
-    request.session.flush()
-    request.session['guest'] = True
-
-    guest_email = f"guest_{uuid.uuid4().hex[:10]}@example.com"
-    guest_user = User.objects.create(email=guest_email, password='guest_pw')
-    request.session['guest_user_id'] = str(guest_user.id)
-    request.session['user_email'] = guest_email
-
-    return redirect('chat:main')
-
-
 def chat_talk_view(request, chat_id):
     is_guest = request.session.get('guest', False)
     user_email = request.session.get("user_email")
@@ -304,9 +301,17 @@ def chat_talk_view(request, chat_id):
         return redirect('chat:main')
 
     if request.method == "POST":
-        message = request.POST.get("message", "").strip()
-        if message:
-            Message.objects.create(chat=chat, sender='user', message=message)
+        message_text = request.POST.get("message", "").strip()
+
+        if message_text:
+            user_message = Message.objects.create(chat=chat, sender='user', message=message_text)
+
+            image_files = request.FILES.getlist("images")
+            for img in image_files[:3]:
+                try:
+                    MessageImage.objects.create(message=user_message, image=img)
+                except Exception:
+                    pass
 
             if is_guest:
                 user_info = get_minimal_guest_info(request.session)
@@ -321,12 +326,12 @@ def chat_talk_view(request, chat_id):
                     "is_first_question": len(chat_history) == 0
                 })
 
-            answer = call_runpod_api(message, user_info)
+            answer = call_runpod_api(message_text, user_info)
             Message.objects.create(chat=chat, sender='bot', message=answer)
 
         return redirect('chat:chat_talk_detail', chat_id=chat.id)
 
-    messages = Message.objects.filter(chat=chat).order_by('created_at')
+    messages = Message.objects.filter(chat=chat).prefetch_related("images").order_by('created_at')
     chat_list = Chat.objects.filter(user=chat.user).order_by('-created_at') if chat.user else []
     now_time = timezone.localtime().strftime("%I:%M %p").lower()
 
@@ -338,6 +343,8 @@ def chat_talk_view(request, chat_id):
         "is_guest": is_guest,
         "now_time": now_time,
     })
+
+
 
 def recommend_content(request, chat_id):
     if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
