@@ -10,7 +10,6 @@ class User(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
-    last_login = models.DateTimeField(default=now)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []

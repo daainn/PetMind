@@ -263,7 +263,7 @@ input[type="text"] {
   font-size: 15px;
   color: #9E9E9E;
   margin-top: 6px;
-  margin-bottom: 40px;
+  /* margin-bottom: 40px; */
 }
 
 .helper-text.error {

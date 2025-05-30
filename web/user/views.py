@@ -3,6 +3,7 @@ from django.contrib import messages
 from .services.auth_service import authenticate_user
 from .repositories.user_repository import user_exists_by_email, get_user_by_email
 from .models import User
+from dogs.models import DogProfile
 import uuid
 from django.contrib.auth import authenticate, login
 import random
@@ -25,14 +26,29 @@ def home(request):
         user = get_user_by_email(email)
         if not user:
             messages.error(request, '입력한 이메일 주소를 찾을 수 없습니다.')
-        elif not check_password(password, user.password):
-            messages.error(request, '비밀번호가 올바르지 않습니다.')
-        else: 
-            request.session.flush()
-            request.session['user_id'] = str(user.id)
-            request.session['user_email'] = user.email
-            return redirect('chat:main')
+        else:
+            # ✅ 디버깅 로그
+            print(f"[DEBUG] 입력된 비밀번호: {password}")
+            print(f"[DEBUG] DB 비밀번호 해시: {user.password}")
+            print(f"[DEBUG] check_password 결과: {check_password(password, user.password)}")
+
+            if not check_password(password, user.password):
+                messages.error(request, '비밀번호가 올바르지 않습니다.')
+            else:
+                request.session.flush()
+                request.session['user_id'] = str(user.id)
+                request.session['user_email'] = user.email
+
+                dogs = DogProfile.objects.filter(user=user).order_by('-created_at')
+
+                if not dogs.exists():
+                    return redirect('dogs:dog_info_join') 
+                else:
+                    latest_dog = dogs.first()
+                    return redirect(f'/chat/main/{latest_dog.dog_id}/')  
+
     return render(request, 'user/home_01.html')
+
 
 def chat_guest_view(request):
     request.session.flush()
@@ -99,20 +115,35 @@ def join_terms_service(request):
 
 
 def join_user_complete(request):
-    email = request.session.get('user_email')
-    password = request.session.get('user_raw_password')
+    if request.method == 'POST':
+        email_id = request.POST.get('email_id')
+        email_domain = request.POST.get('email_domain')
+        password = request.POST.get('password')
 
-    if not User.objects.filter(email=email).exists():
-        user = User.objects.create(
-            email=email,
-            password=make_password(password),
-            is_verified=True  # 필요시
-        )
-    else:
-        user = User.objects.get(email=email)
+        email = f"{email_id}@{email_domain}"
+        print(f"[DEBUG] 가입 이메일: {email}")
+        print(f"[DEBUG] 가입 원문 비밀번호: {password}")
 
-    login(request, user)
-    return redirect('dogs:dog_info_join')
+        if not password:
+            messages.error(request, "비밀번호가 누락되었습니다.")
+            return redirect('user:join_01')
+
+        if not User.objects.filter(email=email).exists():
+            hashed = make_password(password)
+            print(f"[DEBUG] 해시된 비밀번호: {hashed}")
+            user = User.objects.create(
+                email=email,
+                password=hashed,
+                is_verified=True
+            )
+        else:
+            user = User.objects.get(email=email)
+
+        request.session['user_email'] = email
+        return render(request, 'user/home_01.html')
+
+    return redirect('user:join_01')
+
 
 
 
