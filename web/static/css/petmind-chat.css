@@ -26,7 +26,7 @@ html, body {
 .welcome-title {
   font-size: 32px;
   font-weight: 700;
-  color: #01143F;
+  color: #2B2104;
   margin-bottom: 40px;
   text-align: center;
 }
@@ -95,7 +95,7 @@ html, body {
 .info-button {
   background: #ffffff;
   border: 1px solid #d1d5db;
-  color: #01143F;
+  color: #2B2104;
   padding: 8px 14px;
   border-radius: 999px;
   font-size: 14px;

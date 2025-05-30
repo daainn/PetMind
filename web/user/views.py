@@ -66,8 +66,8 @@ def find_password_complete(request):
 
 def info(request):
     if request.method == 'POST':
-        return redirect('user:info')
-    return render(request, 'dogs/info.html')
+        return redirect('dogs:dog_info_join')
+    return render(request, 'dogs/dog_info_join.html')
 
 def get_or_create_user(request):
     if request.user.is_authenticated:
@@ -97,8 +97,24 @@ def join_terms_privacy(request):
 def join_terms_service(request):
     return render(request, 'user/join_p_terms_service.html')
 
+
 def join_user_complete(request):
-    return render(request, 'user/join_04.html')
+    email = request.session.get('user_email')
+    password = request.session.get('user_raw_password')
+
+    if not User.objects.filter(email=email).exists():
+        user = User.objects.create(
+            email=email,
+            password=make_password(password),
+            is_verified=True  # 필요시
+        )
+    else:
+        user = User.objects.get(email=email)
+
+    login(request, user)
+    return redirect('dogs:dog_info_join')
+
+
 
 @csrf_exempt 
 def send_auth_code(request):
@@ -131,3 +147,26 @@ def send_auth_code(request):
             return JsonResponse({'success': False, 'message': '서버 오류'}, status=500)
 
     return JsonResponse({'success': False, 'message': '잘못된 요청'}, status=405)
+
+@csrf_exempt
+def verify_auth_code(request):
+    if request.method == 'POST':
+        import json
+        body = json.loads(request.body)
+        email = body.get('email')
+        code = body.get('code')
+        session_code = request.session.get('auth_code')
+        session_email = request.session.get('user_email')
+
+        if not session_code or not session_email:
+            return JsonResponse({'success': False, 'message': '세션이 만료되었습니다.'})
+
+        if email != session_email:
+            return JsonResponse({'success': False, 'message': '이메일이 일치하지 않습니다.'})
+
+        if code != session_code:
+            return JsonResponse({'success': False, 'message': '인증번호가 일치하지 않습니다.'})
+
+        return JsonResponse({'success': True})
+    
+    return JsonResponse({'success': False, 'message': '잘못된 요청입니다.'})

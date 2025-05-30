@@ -22,7 +22,7 @@ body {
 .header_tit h2 {
   font-weight: 700;
   font-size: 40px;
-  color: #01143F;
+  color: #2B2104;
   font-family: 'Koh Santepheap', sans-serif;
 }
 
@@ -47,7 +47,7 @@ body {
 .section-title {
   font-size: 24px;
   font-weight: 600;
-  color: #01143F;
+  color: #2B2104;
   margin-bottom: 40px;
 }
 
@@ -76,7 +76,7 @@ body {
 
 .checkbox-label {
   font-size: 20px;
-  color: #01143F;
+  color: #2B2104;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -136,7 +136,7 @@ body {
   flex: 0 0 120px;
   font-size: 18px;
   font-weight: bold;
-  color: #01143F;
+  color: #2B2104;
   margin-right: 10px;
   text-align: left;
   margin-top: 16px;
@@ -176,7 +176,7 @@ body {
 
 .email-combined .at {
   padding: 0 4px;
-  color: #01143F;
+  color: #2B2104;
   font-size: 16px;
 }
 .email-combined select {
@@ -215,7 +215,7 @@ body {
   border-radius: 8px;
   font-family: 'Spoqa Han Sans Neo';
   box-sizing: border-box;
-  color: #01143F;
+  color: #2B2104;
   background-repeat: no-repeat;
   background-position: 12px center;
   background-size: 20px;
@@ -397,238 +397,13 @@ select.error {
   margin-bottom: 7px;
 }
 
-
-
-
-/* join_02.html 전용 스타일 */
-.join-email-container {
-  max-width: 720px;
-  margin: 100px auto;
-  padding: 60px;
-  border-radius: 20px;
-  background-color: #ffffff;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
-  text-align: center;
-}
-
-.join-email-container h2 {
-  font-size: 22px;
-  font-weight: 700;
-  text-align: left;
-  color: #01143F;
-  margin-bottom: 30px;
-}
-
-.join-email-container .desc {
-  text-align: left;
-  font-size: 16px;
-  color: #2B2F31;
-  line-height: 1.8;
-  margin-bottom: 30px;
-}
-
-.join-email-container .input-email {
-  width: 100%;
-  padding: 16px;
-  font-size: 16px;
-  border: 1px solid #C4C4C4;
-  border-radius: 8px;
-  background-color: #f9f9f9;
-  color: #01143F;
-  box-sizing: border-box;
-  margin-bottom: 10px;
-}
-
-.join-email-container .helper-text {
-  font-size: 14px;
-  color: #9E9E9E;
-  text-align: left;
-  margin-bottom: 40px;
-}
-
-.join-email-container .btn-submit {
-  width: 100%;
-  padding: 18px;
-  font-size: 18px;
-  font-weight: 600;
-  background-color: #FFC508;
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.join-email-container .btn-submit:hover {
-  background-color: #0443D0;
-}
-
-
-/* join_03.html */
-/* 인증번호 입력 전용 container */
-.container.join-confirm {
-  max-width: 720px;
-  margin: 80px auto;
-  background: white;
-  border-radius: 20px;
-  padding: 60px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  text-align: center;
-}
-
-/* 제목 스타일 */
-.email-cert-title {
-  font-size: 24px;
-  font-weight: bold;
-  color: #01143F;
-  margin-bottom: 10px;
-  text-align: left;
-}
-
-/* 설명 텍스트 */
-.join-confirm-desc {
-  text-align: left;
-  font-size: 16px;
-  color: #2B2F31;
-  margin-bottom: 30px;
-  line-height: 1.6;
-}
-
-/* 인증번호 입력창 */
-.input-auth-code {
-  width: 100%;
-  padding: 16px;
-  font-size: 18px;
-  border: 1px solid #C4C4C4;
-  border-radius: 8px;
-  color: #01143F;
-  margin-bottom: 12px;
-  box-sizing: border-box;
-}
-
-/* form 태그 스타일 */
-.join-auth-form {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.join-auth-form .btn-submit {
-  width: 100%;
-  background-color: #FFC508;
-  color: white;
-  font-size: 18px;
-  padding: 16px;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  font-weight: 500;
-  margin-top: 20px;
-}
-
-.join-auth-form .btn-submit:hover {
-  background-color: #0443D0;
-}
-
 #auth-helper {
-  display: block;
-  width: 100%;
-  text-align: left;
-  margin-top: 6px;
+  margin-top: 0px;
   font-size: 14px;
   color: #9E9E9E;
-  padding-left: 3px;
-}
-
-
-
-/* join_04.html */
-/* 회원가입 완료 페이지 스타일 */
-.join-complete-box {
-  max-width: 700px;
-  margin: 60px auto;
-  padding: 60px;
-  background-color: white;
-  border-radius: 20px;
-  /* text-align: center; */
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
-}
-
-.join-complete-title {
-  font-size: 20px;
-  font-weight: bold;
-  color: #01143F;
-  margin-bottom: 24px;
-}
-
-.join-complete-desc {
-  font-size: 16px;
-  color: #2B2F31;
-  line-height: 1.8;
   margin-bottom: 40px;
-}
+  margin-left:5px;
+  text-align: left;
+  display: none;
+} 
 
-.join-complete-desc strong {
-  font-weight: bold;
-  color: #01143F;
-}
-
-.join-complete-btn-group {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 0 0 1px #d9d9d9;
-  width: 500px;
-  max-width: 100%;
-  margin: 0 auto;
-}
-
-.btn-join-next, .btn-join-login {
-  flex: 1;
-  font-size: 16px;
-  padding: 16px 0;
-  text-decoration: none;
-  display: inline-block;
-  text-align: center;
-  font-weight: 500;
-}
-
-.btn-join-next {
-  background-color: #FFC508;
-  color: white;
-}
-
-.btn-join-login {
-  background-color: #fff;
-  color: #9E9E9E;
-}
-
-.btn-join-login:hover {
-  background-color: #f5f5f5;
-}
-
-.email-auth-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex: 1;
-}
-
-.auth-box {
-  display: flex;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.input-auth-code {
-  flex: 1;
-  padding: 14px;
-  font-size: 16px;
-  border: 1px solid #C4C4C4;
-  border-radius: 8px;
-  color: #01143F;
-  box-sizing: border-box;
-}

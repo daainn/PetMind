@@ -31,7 +31,6 @@ left: 10%;
 transform: translateX(-50%);
 font-family: 'Leckerli One', cursive;
 font-size: 20px;
-font-weight: bold;
 color: #F7AE05;
 text-decoration: none;
 }
@@ -71,7 +70,7 @@ display: flex;
 /* 이메일 텍스트 */
 .chat-user-email {
 font-size: 13px;
-color: #01143F;
+color: #2B2104;
 padding: 10px 16px;
 border-bottom: 1px solid #ddd;
 word-break: break-all;
@@ -81,7 +80,7 @@ white-space: normal;
 /* 메뉴 항목 */
 .chat-dropdown-menu a {
 padding: 12px 16px;
-color: #01143F;
+color: #2B2104;
 text-decoration: none;
 font-size: 13px;
 display: block;

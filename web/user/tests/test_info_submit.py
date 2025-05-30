@@ -25,7 +25,7 @@ def test_info_submit_creates_guest_user_and_info(client):
     session["guest"] = True
     session.save()
 
-    response = client.post(reverse("user:info_submit"), data)
+    response = client.post(reverse("dogs:dog_info_join_submit"), data)
 
     assert response.status_code == 302
 
@@ -53,7 +53,7 @@ def test_info_submit_with_skip_flags_as_guest(client):
         "detail_skip_btn": "on",
     }
 
-    response = client.post(reverse("user:info_submit"), data)
+    response = client.post(reverse("dogs:dog_info_join_submit"), data)
     assert response.status_code == 302
 
     session = client.session
@@ -82,7 +82,7 @@ def test_info_submit_with_skip_flags_as_member(client):
         "detail_skip_btn": "on",
     }
 
-    response = client.post(reverse("user:info_submit"), data)
+    response = client.post(reverse("dogs:dog_info_join_submit"), data)
     assert response.status_code == 302
 
     info = UserInfo.objects.filter(user=user).first()
@@ -123,7 +123,7 @@ def test_info_submit_with_authenticated_user(client):
     }
 
     # 4. 요청
-    response = client.post(reverse("user:info_submit"), data)
+    response = client.post(reverse("dogs:dog_info_join_submit"), data)
 
     # 5. 결과 검증
     assert response.status_code == 302
@@ -132,7 +132,7 @@ def test_info_submit_with_authenticated_user(client):
 @pytest.mark.django_db
 def test_info_submit_with_empty_data(client):
     # ✅ 4. 아무 값 없이 제출해도 서버 에러 없이 처리되는가?
-    response = client.post(reverse("user:info_submit"), {})
+    response = client.post(reverse("dogs:dog_info_join_submit"), {})
     # ✅ 200이 반환되고, 에러 메시지가 포함된 폼이 반환되는지 확인
     assert response.status_code == 200
     assert "form" in response.context

@@ -26,11 +26,11 @@
 
       <div class="chat-dropdown-menu" id="chatDropdownMenu">
         {% if is_guest %}
-          <a href="{% url 'user:info' %}">반려견 정보 입력</a>
+          <a href="{% url 'dogs:dog_info_join' %}">반려견 정보 입력</a>
           <a href="{% url 'user:home' %}">로그인</a>
         {% else %}
           <p class="chat-user-email">{{ user_email }}</p>
-          <a href="{% url 'user:info' %}">반려견 정보 수정</a>
+          <a href="{% url 'dogs:dog_info_join' %}">반려견 정보 수정</a>
           <a href="{% url 'user:logout' %}">로그아웃</a>
         {% endif %}
       </div>

@@ -9,7 +9,7 @@ from user.models import User, UserInfo
 class UserInfoFormTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.submit_url = reverse("user:info_submit")
+        self.submit_url = reverse("dogs:dog_info_join_submit")
 
     def test_form_submission_creates_guest_user(self):
         # 건너뛰기 없이 모든 필드 입력
@@ -85,7 +85,7 @@ class UserInfoFormTests(TestCase):
         """GET 요청이 오면 info 페이지로 redirect"""
         response = self.client.get(self.submit_url)
         self.assertEqual(response.status_code, 302)
-        self.assertIn(reverse("user:info"), response.url)
+        self.assertIn(reverse("dogs:dog_info_join"), response.url)
 
     def test_skip_all_sections(self):
         """모든 항목 건너뛰기한 경우에도 저장되는지 확인"""
