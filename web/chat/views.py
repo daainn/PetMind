@@ -4,7 +4,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from user.models import User
-from .models import Chat, Message
+from .models import Chat, Message, Content
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 from dogs.models import DogProfile
 import uuid
 import requests
@@ -280,7 +283,7 @@ def chat_guest_view(request):
 
     return redirect('chat:main')
 
-# 비회원 시작용 guest 세션 생성
+
 def chat_talk_view(request, chat_id):
     is_guest = request.session.get('guest', False)
     user_email = request.session.get("user_email")
@@ -293,16 +296,13 @@ def chat_talk_view(request, chat_id):
 
     user_id = request.session.get("guest_user_id") if is_guest else request.session.get("user_id")
 
-    # ✅ 회원의 경우 user_id 불일치 또는 user가 None이면 리다이렉트
     if not is_guest:
         if not user_id or chat.user is None or str(chat.user.id) != str(user_id):
             return redirect('chat:main')
 
-    # ✅ 현재 강아지 ID 불일치 시 리다이렉트
     if not is_guest and chat.dog is not None and current_dog_id is not None and chat.dog.id != current_dog_id:
         return redirect('chat:main')
 
-    # ✅ POST 요청: 메시지 전송
     if request.method == "POST":
         message = request.POST.get("message", "").strip()
         if message:
@@ -326,7 +326,6 @@ def chat_talk_view(request, chat_id):
 
         return redirect('chat:chat_talk_detail', chat_id=chat.id)
 
-    # ✅ GET 요청: 채팅 페이지 렌더링
     messages = Message.objects.filter(chat=chat).order_by('created_at')
     chat_list = Chat.objects.filter(user=chat.user).order_by('-created_at') if chat.user else []
     now_time = timezone.localtime().strftime("%I:%M %p").lower()
@@ -338,4 +337,71 @@ def chat_talk_view(request, chat_id):
         "user_email": user_email,
         "is_guest": is_guest,
         "now_time": now_time,
+    })
+
+def recommend_content(request, chat_id):
+    if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({"error": "Invalid request"}, status=400)
+
+    chat = Chat.objects.get(id=chat_id)
+    history = Message.objects.filter(chat=chat).order_by("created_at")
+    chat_history = [
+        {"role": "user" if m.sender == "user" else "assistant", "content": m.message}
+        for m in history
+    ]
+
+    contents = Content.objects.all().values("title", "body", "reference_url", "image_url")
+    df = pd.DataFrame.from_records(contents)
+
+    if df.empty:
+        return JsonResponse({
+            "cards_html": "",
+            "has_recommendation": False
+        })
+
+    vectorizer = TfidfVectorizer()
+    tfidf_matrix = vectorizer.fit_transform(df["body"])
+    chat_text = "\n".join([m["content"] for m in chat_history if m["role"] in ["user", "assistant"]])
+
+    if not chat_text.strip():
+        return JsonResponse({
+            "cards_html": "",
+            "has_recommendation": False
+        })
+
+    user_vector = vectorizer.transform([chat_text])
+    cosine_scores = cosine_similarity(user_vector, tfidf_matrix).flatten()
+    top_indices = cosine_scores.argsort()[-3:][::-1]
+    top_contents = df.iloc[top_indices]
+
+    # ✅ 미니 카드 형식으로 HTML 구성
+    html = '''
+    <div style="padding: 10px 16px;">
+    <p style="font-weight:600; margin: 0 0 12px 0; font-size:15px;">
+    🐾 반려견의 마음을 이해하는 데 도움 되는 이야기들이에요:
+    </p>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+    '''
+    for item in top_contents.to_dict(orient="records"):
+        html += f'''
+        <a href="{item['reference_url']}" target="_blank" style="text-decoration:none; color:inherit;">
+        <div style="border:1px solid #eee; border-radius:10px; padding:12px 16px; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+            <p style="font-size:14px; font-weight:600; margin:0 0 4px;">{item['title']}</p>
+            <p style="font-size:13px; color:#555; margin:0; line-height:1.4;">{item['body'][:80]}...</p>
+        </div>
+        </a>
+        '''
+    html += '</div></div>'
+
+    # ✅ Message로 저장
+    Message.objects.create(
+        chat=chat,
+        sender="bot",
+        message=html,
+        created_at=timezone.now()
+    )
+
+    return JsonResponse({
+        "cards_html": html,
+        "has_recommendation": True
     })

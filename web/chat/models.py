@@ -26,10 +26,10 @@ class Message(models.Model):
 class Content(models.Model):
     title = models.CharField(max_length=200)
     body = models.TextField()
-    image_url = models.URLField(max_length=255, null=True, blank=True)
+    image_url = models.URLField(max_length=500, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    reference_url = models.URLField(max_length=200, null=True, blank=True)
+    reference_url = models.URLField(max_length=1000, null=True, blank=True)
 
     def __str__(self):
         return self.title

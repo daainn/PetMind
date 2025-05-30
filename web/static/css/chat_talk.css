@@ -51,7 +51,7 @@
   border-radius: 12px;
   font-size: 15px;
   /* line-height: 1.8; */
-  white-space: pre-wrap;
+  /* white-space: pre-wrap; */
   word-break: break-word;
   box-sizing: border-box;
   display: flex;
@@ -161,16 +161,21 @@
 }
 
 .recommend-info-box {
+  background-color: white;
+  border: 1px solid #ffcc80;
+  border-radius: 12px;
+  padding: 12px;
+  margin: 20px;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px;
-  border-radius: 16px;
-  background-color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  margin: 20px auto;
-  max-width: 60%;
-  box-sizing: border-box;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.recommend-info-box:hover {
+  background-color: #FFFFF6;
+  box-shadow: 0 0 6px rgba(255, 193, 7, 0.4);
 }
 
 .recommend-icon {
@@ -183,6 +188,12 @@
   font-size: 14px;
   color: #333;
 }
+
+.recommend-info-box.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
 
 .image-upload-btn {
   display: inline-flex;
