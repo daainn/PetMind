@@ -25,31 +25,31 @@ def home(request):
         password = request.POST.get('password')
 
         user = get_user_by_email(email)
+
         if not user:
             messages.error(request, '입력한 이메일 주소를 찾을 수 없습니다.')
-        else:
-            # ✅ 디버깅 로그
+        elif not check_password(password, user.password):
             print(f"[DEBUG] 입력된 비밀번호: {password}")
-            print(f"[DEBUG] DB 비밀번호 해시: {user.password}")
-            print(f"[DEBUG] check_password 결과: {check_password(password, user.password)}")
+            print(f"[DEBUG] 저장된 해시 비밀번호: {user.password}")
+            messages.error(request, '비밀번호가 올바르지 않습니다.')
+        else:
+            # 세션 기반 로그인 처리
+            request.session.flush()
+            request.session['user_id'] = str(user.id)
+            request.session['user_email'] = user.email
 
-            if not check_password(password, user.password):
-                messages.error(request, '비밀번호가 올바르지 않습니다.')
+            dogs = DogProfile.objects.filter(user=user).order_by('-created_at')
+            if dogs.exists():
+                latest_dog = dogs.first()
+                request.session['current_dog_id'] = latest_dog.id
+                return redirect('chat:chat_member', dog_id=latest_dog.id)
             else:
-                request.session.flush()
-                request.session['user_id'] = str(user.id)
-                request.session['user_email'] = user.email
-
-                dogs = DogProfile.objects.filter(user=user.id).order_by('-created_at')
-
-                if not dogs.exists():
-                    return redirect('dogs:dog_info_join')
-                else:
-                    latest_dog = dogs.first()
-                    return redirect('chat:main', dog_id=latest_dog.dog_id)
+                return redirect('dogs:dog_info_join')
 
     return render(request, 'user/home_01.html')
 
+            
+            
 def logout_view(request):
     request.session.flush()
     messages.info(request, "로그아웃 되었습니다.")
@@ -76,10 +76,18 @@ def info(request):
     return render(request, 'dogs/dog_info_join.html')
 
 def get_or_create_user(request):
-    if request.user.is_authenticated:
-        return request.user, True
+    user_id = request.session.get('user_id')
+    if user_id:
+        try:
+            user = User.objects.get(id=user_id)
+            return user, True
+        except User.DoesNotExist:
+            pass
+
     temp_email = f"guest_{uuid.uuid4().hex[:10]}@example.com"
     user = User.objects.create(email=temp_email, password="guest_password")
+    request.session['guest'] = True
+    request.session['guest_user_id'] = str(user.id)
     return user, False
 
 def info_cancel(request):
@@ -129,8 +137,11 @@ def join_user_complete(request):
         else:
             user = User.objects.get(email=email)
 
-        request.session['user_email'] = email
-        return render(request, 'user/home_01.html')
+        request.session.flush()
+        request.session['user_id'] = str(user.id)
+        request.session['user_email'] = user.email
+        return redirect('chat:chat_member', dog_id=DogProfile.objects.filter(user=user).first().id) \
+            if DogProfile.objects.filter(user=user).exists() else redirect('dogs:dog_info_join')
 
     return redirect('user:join_01')
 

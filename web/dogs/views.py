@@ -6,12 +6,18 @@ from django.conf import settings
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 import os
+from user.models import User
 
 
 def dog_info_join_view(request):
-    user, _ = get_or_create_user(request)
-    if not user:
-        return redirect('user:home')
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return redirect("user:home")  # 로그인 안 돼 있으면 홈으로
+
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return redirect("user:home")
 
     dog_breeds = DogBreed.objects.all().order_by('name')
 
@@ -20,36 +26,12 @@ def dog_info_join_view(request):
 
         if form.is_valid():
             dog_profile = form.save(commit=False)
-            dog_profile.user = user
-
-            # 견종 처리
-            breed_id = form.cleaned_data.get('breed').id if form.cleaned_data.get('breed') else None
-            breed_obj = DogBreed.objects.filter(id=breed_id).first()
-
-            if not breed_obj:
-                form.add_error('breed', "올바른 견종을 선택해주세요.")
-            else:
-                dog_profile.breed = breed_obj
-
-                # 프로필 이미지 저장
-                profile_image = request.FILES.get("profile_image_url")  # ✅ 필드명 수정
-                if profile_image:
-                    path = default_storage.save(f"profile_images/{profile_image.name}", ContentFile(profile_image.read()))
-                    dog_profile.profile_image_url = os.path.join(settings.MEDIA_URL, path)
-
-                # 선택 입력 정보 저장
-                dog_profile.age = form.cleaned_data.get('age')
-                dog_profile.gender = form.cleaned_data.get('gender')
-                dog_profile.neutered = form.cleaned_data.get('neutered')
-                dog_profile.disease_history = form.cleaned_data.get('disease_history')
-                dog_profile.living_period = form.cleaned_data.get('living_period')
-                dog_profile.housing_type = form.cleaned_data.get('housing_type')
-
-                dog_profile.save()
-                return redirect("chat:main")  # ✅ 채팅 페이지로 이동
+            dog_profile.user = user  # ✅ 진짜 로그인 유저로 연결
+            ...
+            dog_profile.save()
+            return redirect("chat:main", dog_id=dog_profile.id)
         else:
             print("폼 에러 발생:", form.errors)
-
     else:
         form = DogProfileForm()
 

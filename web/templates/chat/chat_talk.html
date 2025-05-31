@@ -49,7 +49,7 @@
         {% endfor %}
       </div>
 
-      <!-- ✅ recommendTrigger에 data-url 속성 추가 -->
+      <!-- ✅ 추천 버튼 -->
       <div class="recommend-info-box" id="recommendTrigger"
            data-url="{% url 'chat:recommend_content' chat_id=current_chat.id %}"
            style="cursor:pointer;">
@@ -57,7 +57,15 @@
         <span class="recommend-text">이런 정보는 어때요? 추천 콘텐츠를 확인해보세요.</span>
       </div>
 
-      <form method="POST" action="{% url 'chat:chat_talk_detail' current_chat.id %}" class="chat-input-form" enctype="multipart/form-data">
+      <!-- ✅ 메시지 입력 폼 -->
+      <form method="POST"
+            action="{% if is_guest %}
+                       {% url 'chat:chat_talk_detail' current_chat.id %}
+                    {% else %}
+                       {% url 'chat:chat_member_talk_detail' dog.id current_chat.id %}
+                    {% endif %}"
+            class="chat-input-form"
+            enctype="multipart/form-data">
         {% csrf_token %}
         <textarea name="message" placeholder="질문을 입력하세요." required></textarea>
 
@@ -84,7 +92,7 @@
   <script src="{% static 'js/image_upload.js' %}"></script>
   <script src="{% static 'js/recommend.js' %}"></script>
 
-  <!-- ✅ 시간 포맷만 남겨두고 나머지 추천 관련 JS는 제거 -->
+  <!-- ✅ 시간 포맷 변환 -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       document.querySelectorAll(".chat-time").forEach(el => {
