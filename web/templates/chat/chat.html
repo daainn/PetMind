@@ -10,7 +10,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Koh+Santepheap:wght@700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Leckerli+One&display=swap" rel="stylesheet">
 
-
   <!-- CSS -->
   <link rel="stylesheet" href="{% static 'css/chat.css' %}">
   <link rel="stylesheet" href="{% static 'css/chat_header.css' %}">
@@ -18,7 +17,7 @@
 </head>
 <body>
   <div class="app-wrapper" id="appWrapper">
-    
+
     <!-- 헤더 -->
     {% include 'common/chat_header.html' %}
 
@@ -28,21 +27,37 @@
     <!-- 채팅 본문 -->
     <main class="chat-main">
       <div class="chat-empty">
-        <h2 class="chat-title">반려견의 어떤 점이 알고 싶으신가요?</h2>
+        <h2 class="chat-title">
+          {% if is_guest %}
+            반려견의 어떤 점이 궁금하신가요?
+          {% else %}
+            {{ dog.name }}에 대해 무엇이 궁금하신가요?
+          {% endif %}
+        </h2>
+
         <form method="POST" action="{% url 'chat:chat_send' %}" class="chat-input-form">
           {% csrf_token %}
           <textarea name="message" placeholder="질문을 입력하세요." required></textarea>
+
+          {% if not is_guest and dog %}
+            <!-- 회원일 경우 dog_id를 숨겨서 전송 -->
+            <input type="hidden" name="dog_id" value="{{ dog.id }}">
+          {% endif %}
+
           <div class="chat-input-bottom">
             <div class="info-btn-wrapper">
-              <a href="{% url 'dogs:dog_info_join' %}" class="info-btn">의뢰인 개인정보 입력</a>
-              <div class="tooltip-container">
-                <span class="tooltip-trigger">?</span>
-                <div class="tooltip-message">
-                  귀하의 상황에 맞는 맞춤형 법률 상담을 위해 각자 정보를 입력해 주세요.<br>
-                  입력하신 정보는 오직 상담 목적에만 활용되며, 철저한 보안 시스템 하에 관리됩니다.
+              {% if is_guest %}
+                <a href="{% url 'dogs:dog_info_join' %}" class="info-btn">의뢰인 개인정보 입력</a>
+                <div class="tooltip-container">
+                  <span class="tooltip-trigger">?</span>
+                  <div class="tooltip-message">
+                    귀하의 상황에 맞는 맞춤형 법률 상담을 위해 각자 정보를 입력해 주세요.<br>
+                    입력하신 정보는 오직 상담 목적에만 활용되며, 철저한 보안 시스템 하에 관리됩니다.
+                  </div>
                 </div>
-              </div>
+              {% endif %}
             </div>
+
             <button type="submit" class="send-btn">
               <img src="{% static 'images/chatbot_sendbtn.png' %}" alt="보내기">
             </button>
@@ -50,7 +65,6 @@
         </form>
       </div>
     </main>
-
   </div>
 
   <!-- JavaScript -->
@@ -60,12 +74,11 @@
       const toggleBtn = document.getElementById('sidebarToggle');
       const sidebar = document.getElementById('sidebar');
       const appWrapper = document.querySelector('.app-wrapper');
-    
+
       toggleBtn?.addEventListener('click', function () {
         sidebar.classList.toggle('active');
         appWrapper.classList.toggle('sidebar-open');
       });
-    });
 
       // 툴팁
       const tooltipTrigger = document.querySelector('.tooltip-trigger');

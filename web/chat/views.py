@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -18,6 +18,59 @@ def chat_entry(request):
         return redirect('chat:main')
     else:
         return redirect('user:home')
+    
+def chat_member_view(request, dog_id):
+    if not request.user.is_authenticated:
+        return redirect('user:login')
+
+    dog = get_object_or_404(DogProfile, id=dog_id, user=request.user)
+    chat_list = Chat.objects.filter(dog__user=request.user).order_by('-created_at')
+    current_chat = Chat.objects.filter(dog=dog).order_by('-created_at').first()
+    messages = Message.objects.filter(chat=current_chat).order_by('created_at') if current_chat else []
+
+    return render(request, 'chat/chat.html', {
+        'chat_list': chat_list,
+        'current_chat': current_chat,
+        'chat_messages': messages,
+        'is_guest': False,
+        'user_email': request.user.email,
+        'dog': dog,
+    })
+
+def chat_member_talk_detail(request, dog_id, chat_id):
+    if not request.user.is_authenticated:
+        return redirect('user:login')
+
+    dog = get_object_or_404(DogProfile, id=dog_id, user=request.user)
+    chat = get_object_or_404(Chat, id=chat_id, dog=dog)
+
+    if request.method == "POST":
+        message = request.POST.get("message", "").strip()
+        if message:
+            Message.objects.create(chat=chat, sender='user', message=message)
+
+            user_info = get_dog_info(request.user)
+            answer = call_runpod_api(message, user_info)
+            Message.objects.create(chat=chat, sender='bot', message=answer)
+
+        return redirect('chat:chat_member_talk_detail', dog_id=dog.id, chat_id=chat.id)
+
+    messages = Message.objects.filter(chat=chat).order_by('created_at')
+    chat_list = Chat.objects.filter(dog__user=request.user).order_by('-created_at')
+    now_time = timezone.localtime().strftime("%I:%M %p").lower()
+
+    return render(request, "chat/chat_talk.html", {
+        "messages": messages,
+        "current_chat": chat,
+        "chat_list": chat_list,
+        "user_email": request.user.email,
+        "is_guest": False,
+        "now_time": now_time,
+        "dog": dog,
+    })
+
+
+
 
 # 메인 채팅 페이지
 def chat_main(request):
@@ -139,29 +192,33 @@ def call_runpod_api(message, user_info):
 def chat_send(request):
     is_guest = request.session.get('guest', False)
     user_id = request.session.get("guest_user_id") if is_guest else request.session.get("user_id")
-
     if not user_id:
         return redirect('user:home')
 
+    user = get_object_or_404(User, id=user_id)
     message = request.POST.get("message", "").strip()
     if not message:
         return redirect("chat:main")
 
-    user = User.objects.get(id=user_id)
+    if is_guest:
+        # 비회원 → dog 하나만 자동 선택 (또는 향후 생성된 것 활용)
+        dog = DogProfile.objects.filter(user=user).first()
+    else:
+        dog_id = request.POST.get("dog_id")
+        dog = get_object_or_404(DogProfile, id=dog_id, user=user)
 
-    # 새 채팅 생성 및 질문 저장
-    dog = DogProfile.objects.filter(user=user).first()
     chat = Chat.objects.create(dog=dog, chat_title=message[:20])
     Message.objects.create(chat=chat, sender="user", message=message)
 
-    # 유저 정보 및 RunPod 호출
     user_info = get_dog_info(user)
     answer = call_runpod_api(message, user_info)
-
-    # 응답 저장
     Message.objects.create(chat=chat, sender="bot", message=answer)
 
-    return redirect('chat:chat_talk_detail', chat_id=chat.id)
+    if is_guest:
+        return redirect('chat:chat_talk_detail', chat_id=chat.id)
+    else:
+        return redirect('chat:chat_member_talk_detail', dog_id=dog.id, chat_id=chat.id)
+
 
 # 채팅 삭제
 @require_POST

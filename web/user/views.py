@@ -4,6 +4,7 @@ from .services.auth_service import authenticate_user
 from .repositories.user_repository import user_exists_by_email, get_user_by_email
 from .models import User
 from dogs.models import DogProfile
+from django.urls import reverse
 import uuid
 from django.contrib.auth import authenticate, login
 import random
@@ -42,10 +43,10 @@ def home(request):
                 dogs = DogProfile.objects.filter(user=user).order_by('-created_at')
 
                 if not dogs.exists():
-                    return redirect('dogs:dog_info_join') 
+                    return redirect('dogs:dog_info_join')
                 else:
                     latest_dog = dogs.first()
-                    return redirect(f'/chat/main/{latest_dog.dog_id}/')  
+                    return redirect('chat:main', dog_id=latest_dog.dog_id)  # ✅ 수정된 부분
 
     return render(request, 'user/home_01.html')
 

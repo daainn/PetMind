@@ -4,17 +4,19 @@ from . import views
 app_name = 'chat'
 
 urlpatterns = [
+    # 공통 진입
     path('', views.chat_entry, name='chat_entry'),
-    path('main/', views.chat_main, name='main'),
-    path('send/', views.chat_send, name='chat_send'),  # POST only
 
+    # 비회원
     path('guest/', views.chat_guest_view, name='chat_guest'),
+    path('main/', views.chat_main, name='main'),  # name 꼭 맞춰야 함
 
-    path('talk/<int:chat_id>/', views.chat_talk_view, name='chat_talk_detail'),  
+    # 회원
+    path('<int:dog_id>/', views.chat_member_view, name='chat_member'),
+    path('<int:dog_id>/talk/<int:chat_id>/', views.chat_member_talk_detail, name='chat_member_talk_detail'),
+    path('<int:dog_id>/delete/<int:chat_id>/', views.chat_member_delete, name='chat_member_delete'),
+    path('<int:dog_id>/update-title/<int:chat_id>/', views.chat_member_update_title, name='chat_member_update_title'),
 
-    path('member/delete/<int:chat_id>/', views.chat_member_delete, name='member_chat_delete'),
-    path('member/update-title/<int:chat_id>/', views.chat_member_update_title, name='member_chat_update_title'),
-    path('member/chat/<int:chat_id>/', views.chat_member_start, name='chat_member_start'),
-
-    
+    # 공통 전송
+    path('send/', views.chat_send, name='chat_send'),
 ]
