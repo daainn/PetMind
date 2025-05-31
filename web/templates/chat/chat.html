@@ -27,37 +27,23 @@
     <!-- 채팅 본문 -->
     <main class="chat-main">
       <div class="chat-empty">
-        <h2 class="chat-title">
-          {% if is_guest %}
-            반려견의 어떤 점이 궁금하신가요?
-          {% else %}
-            {{ dog.name }}에 대해 무엇이 궁금하신가요?
-          {% endif %}
-        </h2>
-
-        <form method="POST" action="{% url 'chat:chat_send' %}" class="chat-input-form">
+        <h2 class="chat-title">반려견의 어떤 점이 알고 싶으신가요?</h2>
+        <form method="POST" action="{% url 'chat:chat_send' %}" enctype="multipart/form-data" class="chat-input-form">
           {% csrf_token %}
           <textarea name="message" placeholder="질문을 입력하세요." required></textarea>
 
-          {% if not is_guest and dog %}
-            <!-- 회원일 경우 dog_id를 숨겨서 전송 -->
-            <input type="hidden" name="dog_id" value="{{ dog.id }}">
-          {% endif %}
+          <!-- ✅ 이미지 미리보기 출력 영역 -->
+          <div id="imagePreviewContainer" style="display: flex; gap: 8px; margin-top: 8px;"></div>
 
           <div class="chat-input-bottom">
-            <div class="info-btn-wrapper">
-              {% if is_guest %}
-                <a href="{% url 'dogs:dog_info_join' %}" class="info-btn">의뢰인 개인정보 입력</a>
-                <div class="tooltip-container">
-                  <span class="tooltip-trigger">?</span>
-                  <div class="tooltip-message">
-                    귀하의 상황에 맞는 맞춤형 법률 상담을 위해 각자 정보를 입력해 주세요.<br>
-                    입력하신 정보는 오직 상담 목적에만 활용되며, 철저한 보안 시스템 하에 관리됩니다.
-                  </div>
-                </div>
-              {% endif %}
-            </div>
+            <!-- ✅ 이미지 업로드 버튼 -->
+            <label class="image-upload-btn">
+              <input type="file" name="images" id="imageInput" accept="image/*" multiple hidden>
+              <img src="{% static 'images/image_upload_btn.png' %}" alt="이미지 업로드 아이콘">
+              <span>이미지 업로드</span>
+            </label>
 
+            <!-- ✅ 전송 버튼 -->
             <button type="submit" class="send-btn">
               <img src="{% static 'images/chatbot_sendbtn.png' %}" alt="보내기">
             </button>
@@ -69,6 +55,7 @@
 
   <!-- JavaScript -->
   <script src="{% static 'js/chat_member_sidebar.js' %}"></script>
+  <script src="{% static 'js/image_upload.js' %}"></script> <!-- ✅ 이미지 업로드 스크립트 연결 -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const toggleBtn = document.getElementById('sidebarToggle');
