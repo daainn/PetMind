@@ -40,26 +40,15 @@ def home(request):
                 request.session['user_id'] = str(user.id)
                 request.session['user_email'] = user.email
 
-                dogs = DogProfile.objects.filter(user=user).order_by('-created_at')
+                dogs = DogProfile.objects.filter(user=user.id).order_by('-created_at')
 
                 if not dogs.exists():
                     return redirect('dogs:dog_info_join')
                 else:
                     latest_dog = dogs.first()
-                    return redirect('chat:main', dog_id=latest_dog.dog_id)  # ✅ 수정된 부분
+                    return redirect('chat:main', dog_id=latest_dog.dog_id)
 
     return render(request, 'user/home_01.html')
-
-
-def chat_guest_view(request):
-    request.session.flush()
-    request.session['guest'] = True
-
-    guest_email = f"guest_{uuid.uuid4().hex[:10]}@example.com"
-    guest_user = User.objects.create(email=guest_email, password='guest_pw')
-    request.session['guest_user_id'] = str(guest_user.id)
-    request.session['user_email'] = guest_email
-    return redirect('chat:main')
 
 def logout_view(request):
     request.session.flush()

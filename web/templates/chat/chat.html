@@ -4,80 +4,137 @@
 <head>
   <meta charset="UTF-8">
   <title>PetMind | 상담 채팅</title>
-
-  <!-- 폰트 CDN -->
   <link href="//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Koh+Santepheap:wght@700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Leckerli+One&display=swap" rel="stylesheet">
-
-  <!-- CSS -->
   <link rel="stylesheet" href="{% static 'css/chat.css' %}">
   <link rel="stylesheet" href="{% static 'css/chat_header.css' %}">
   <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
 </head>
 <body>
-  <div class="app-wrapper" id="appWrapper">
+<div class="app-wrapper" id="appWrapper">
+  {% include 'common/chat_header.html' %}
+  {% include 'common/sidebar.html' %}
 
-    <!-- 헤더 -->
-    {% include 'common/chat_header.html' %}
+  <main class="chat-main">
+    <div class="chat-empty">
 
-    <!-- 사이드바 -->
-    {% include 'common/sidebar.html' %}
+      <!-- ✅ 항상 보여지는 타이틀 -->
+      <h2 class="chat-title">반려견의 어떤 점이 알고 싶으신가요?</h2>
 
-    <!-- 채팅 본문 -->
-    <main class="chat-main">
-      <div class="chat-empty">
-        <h2 class="chat-title">반려견의 어떤 점이 알고 싶으신가요?</h2>
-        <form method="POST" action="{% url 'chat:chat_send' %}" enctype="multipart/form-data" class="chat-input-form">
+      <!-- ✅ 비회원 정보 입력 카드 -->
+      {% if is_guest and show_guest_info_form %}
+      <div class="chat-message bot-message" style="background: #fffcd3; padding: 20px; border-radius: 16px; max-width: 640px; margin: 0 auto 24px;">
+        <div class="message-text" style="margin-bottom: 14px;">
+          🐶 <strong>비회원이시군요!</strong> 상담을 시작하려면 반려견 정보를 입력해주세요.
+        </div>
+        <form method="POST" action="{% url 'chat:guest_profile_register' %}" style="display: flex; gap: 10px; flex-wrap: wrap;">
           {% csrf_token %}
-          <textarea name="message" placeholder="질문을 입력하세요." required></textarea>
-
-          <!-- ✅ 이미지 미리보기 출력 영역 -->
-          <div id="imagePreviewContainer" style="display: flex; gap: 8px; margin-top: 8px;"></div>
-
-          <div class="chat-input-bottom">
-            <!-- ✅ 이미지 업로드 버튼 -->
-            <label class="image-upload-btn">
-              <input type="file" name="images" id="imageInput" accept="image/*" multiple hidden>
-              <img src="{% static 'images/image_upload_btn.png' %}" alt="이미지 업로드 아이콘">
-              <span>이미지 업로드</span>
-            </label>
-
-            <!-- ✅ 전송 버튼 -->
-            <button type="submit" class="send-btn">
-              <img src="{% static 'images/chatbot_sendbtn.png' %}" alt="보내기">
-            </button>
-          </div>
+          <input type="text" name="guest_name" placeholder="반려견 이름" required
+                style="padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc; width: 140px;">
+          <select name="guest_breed" required
+                  style="padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc; width: 200px;">
+            <option value="">견종을 선택하세요</option>
+            {% for breed in dog_breeds %}
+              <option value="{{ breed.name }}">{{ breed.name }}</option>
+            {% endfor %}
+            <option value="기타">기타</option>
+          </select>
+          <button type="submit"
+                  style="padding: 8px 16px; background-color: #ffd400; border: none; border-radius: 8px; color: #000; font-weight: bold;">
+            확인
+          </button>
         </form>
       </div>
-    </main>
-  </div>
+      {% endif %}
 
-  <!-- JavaScript -->
-  <script src="{% static 'js/chat_member_sidebar.js' %}"></script>
-  <script src="{% static 'js/image_upload.js' %}"></script> <!-- ✅ 이미지 업로드 스크립트 연결 -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const toggleBtn = document.getElementById('sidebarToggle');
-      const sidebar = document.getElementById('sidebar');
-      const appWrapper = document.querySelector('.app-wrapper');
+      <!-- ✅ 반려견 정보 입력 후 안내 -->
+      {% if is_guest and not show_guest_info_form %}
+      <div class="chat-message bot-message">
+        <div class="message-text">
+          ✅ 반려견 정보를 등록했어요! <br>이제 궁금한 점을 입력해 상담을 시작해보세요.
+        </div>
+      </div>
+      <div class="chat-message bot-message" style="background: #fff7e6; color: #a67c00;">
+        <div class="message-text">
+          👉 더 많은 기능은 <strong>로그인</strong> 후 이용하실 수 있어요!
+          <a href="{% url 'user:login' %}" style="margin-left: 8px; color: #007bff;">로그인하러 가기</a>
+        </div>
+      </div>
+      {% endif %}
 
-      toggleBtn?.addEventListener('click', function () {
-        sidebar.classList.toggle('active');
-        appWrapper.classList.toggle('sidebar-open');
+      <!-- ✅ 경고 메시지 출력 영역 -->
+      <div id="guestWarning"
+           style="display: none; background: #fff7e6; border-radius: 12px; padding: 12px 16px; margin: 12px auto;
+                  max-width: 500px; color: #d97706; font-weight: 600; text-align: center;">
+        ⚠️ 이름과 견종을 입력해야 상담을 시작할 수 있어요.
+      </div>
+
+      <!-- ✅ 채팅 입력폼 -->
+      <form method="POST" action="{% url 'chat:chat_send' %}" enctype="multipart/form-data" class="chat-input-form">
+        {% csrf_token %}
+        <textarea name="message" placeholder="질문을 입력하세요." required></textarea>
+        <div id="imagePreviewContainer" style="display: flex; gap: 8px; margin-top: 8px;"></div>
+        <div class="chat-input-bottom">
+          <label class="image-upload-btn">
+            <input type="file" name="images" id="imageInput" accept="image/*" multiple hidden>
+            <img src="{% static 'images/image_upload_btn.png' %}" alt="이미지 업로드 아이콘">
+            <span>이미지 업로드</span>
+          </label>
+          <button type="submit" class="send-btn">
+            <img src="{% static 'images/chatbot_sendbtn.png' %}" alt="보내기">
+          </button>
+        </div>
+
+        <!-- ✅ 비회원의 반려견 정보 히든 필드 -->
+        <input type="hidden" id="guestDogName" value="{{ guest_dog_name|default_if_none:'' }}">
+        <input type="hidden" id="guestDogBreed" value="{{ guest_dog_breed|default_if_none:'' }}">
+      </form>
+
+    </div>
+  </main>
+</div>
+
+<script src="{% static 'js/chat_member_sidebar.js' %}"></script>
+<script src="{% static 'js/image_upload.js' %}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('.chat-input-form');
+    const warningBox = document.getElementById('guestWarning');
+    const nameField = document.getElementById('guestDogName');
+    const breedField = document.getElementById('guestDogBreed');
+    const messageTextarea = document.querySelector('textarea[name="message"]');
+    const isGuest = {{ is_guest|yesno:"true,false" }};
+    let warningTimeout;
+
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        const guestDogName = nameField?.value.trim();
+        const guestDogBreed = breedField?.value.trim();
+
+        if (isGuest && (!guestDogName || !guestDogBreed)) {
+          e.preventDefault(); // 전송 차단
+          if (warningBox) {
+            warningBox.style.display = 'block';
+            warningBox.textContent = "⚠️ 이름과 견종을 입력해야 상담을 시작할 수 있어요.";
+            clearTimeout(warningTimeout);
+            warningTimeout = setTimeout(() => {
+              warningBox.style.display = 'none';
+            }, 3000); // 3초 후 자동 숨김
+          }
+        } else {
+          if (warningBox) warningBox.style.display = 'none';
+        }
       });
+    }
 
-      // 툴팁
-      const tooltipTrigger = document.querySelector('.tooltip-trigger');
-      const tooltipMessage = document.querySelector('.tooltip-message');
-
-      tooltipTrigger?.addEventListener('mouseenter', () => {
-        tooltipMessage.style.display = 'block';
+    // ✅ 사용자 입력 시 경고 숨김
+    if (messageTextarea) {
+      messageTextarea.addEventListener('input', () => {
+        if (warningBox) warningBox.style.display = 'none';
       });
-      tooltipTrigger?.addEventListener('mouseleave', () => {
-        tooltipMessage.style.display = 'none';
-      });
-    });
-  </script>
+    }
+  });
+</script>
 </body>
 </html>

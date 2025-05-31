@@ -11,8 +11,6 @@ urlpatterns = [
 
     path('logout/', views.logout_view, name='logout'),
 
-    path('chat/guest/', views.chat_guest_view, name='chat_guest'),
-
     path('info/', views.info, name='info'),
     path('info/cancel', views.info_cancel, name='info_cancel'), 
 

@@ -8,7 +8,10 @@ from .models import Chat, Message, Content, MessageImage
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from dogs.models import DogProfile
+from dogs.models import DogProfile, DogBreed
+from django.http import HttpResponseNotAllowed
+from django.views.decorators.http import require_http_methods
+
 import uuid
 import requests
 
@@ -38,6 +41,41 @@ def chat_member_view(request, dog_id):
         'user_email': request.user.email,
         'dog': dog,
     })
+
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def guest_profile_register(request):
+    if request.method == 'GET':
+        request.session.flush()
+        request.session['guest'] = True
+
+        guest_email = f"guest_{uuid.uuid4().hex[:10]}@example.com"
+        guest_user = User.objects.create(email=guest_email, password='guest_pw')
+        request.session['guest_user_id'] = str(guest_user.id)
+        request.session['user_email'] = guest_email
+
+        return redirect('chat:main')
+
+    elif request.method == 'POST':
+        guest_name = request.POST.get("guest_name", "").strip()
+        guest_breed = request.POST.get("guest_breed", "").strip()
+
+        if not guest_name or not guest_breed:
+            return redirect('chat:main')
+
+        request.session["guest_dog_name"] = guest_name
+        request.session["guest_dog_breed"] = guest_breed
+
+        guest_user_id = request.session.get("guest_user_id")
+        user = User.objects.get(id=guest_user_id)
+
+        chat = Chat.objects.create(user=user, dog=None, chat_title="비회원 상담 시작")
+        welcome_message = f"{guest_name}의 상담을 시작해볼까요? 😊"
+        Message.objects.create(chat=chat, sender="bot", message=welcome_message)
+
+        return redirect('chat:chat_talk_detail', chat_id=chat.id)
+
+    return HttpResponseNotAllowed(['GET', 'POST'])
 
 def chat_member_talk_detail(request, dog_id, chat_id):
     if not request.user.is_authenticated:
@@ -82,18 +120,33 @@ def chat_main(request):
     user_email = request.session.get("user_email")
     current_dog_id = request.session.get("current_dog_id")
 
+    # ✅ 비회원 기본 정보
+    guest_name = request.session.get("guest_dog_name")
+    guest_breed = request.session.get("guest_dog_breed")
+
+    # ✅ 견종 리스트: 비회원 이름/견종 입력 폼용
+    dog_breeds = DogBreed.objects.all().order_by("name")
+
+    # ✅ 비회원인데 이름이나 견종이 없으면 폼 먼저 보여주기
+    if is_guest and (not guest_name or not guest_breed):
+        return render(request, "chat/chat.html", {
+            "show_guest_info_form": True,
+            "is_guest": True,
+            "dog_breeds": dog_breeds,
+        })
+
+    # ✅ 채팅 데이터 초기화
     chat_list, current_chat, messages = [], None, []
 
     if user_id and not is_guest:
         try:
             user = User.objects.get(id=user_id)
-            # ✅ 회원의 반려견 채팅 리스트
             chat_list = Chat.objects.filter(dog__user=user).order_by('-created_at')
 
+            # ✅ 최근 채팅으로 설정
             if current_dog_id:
                 current_chat = Chat.objects.filter(dog__id=current_dog_id).first()
             else:
-                # 세션에 current_dog_id 없으면 첫 채팅의 반려견 ID를 저장
                 current_chat = chat_list.first()
                 if current_chat and current_chat.dog:
                     request.session["current_dog_id"] = current_chat.dog.id
@@ -104,11 +157,17 @@ def chat_main(request):
     elif is_guest and guest_user_id:
         try:
             user = User.objects.get(id=guest_user_id)
-            # ✅ 비회원 채팅 리스트 (dog=None and user=guest)
             chat_list = Chat.objects.filter(dog=None, user=user).order_by('-created_at')
-            current_chat = chat_list.first()
+
+            # ✅ 새로 만든 채팅이 있다면 우선 표시
+            new_chat_id = request.session.pop("new_chat_id", None)
+            if new_chat_id:
+                current_chat = Chat.objects.filter(id=new_chat_id, user=user).first()
+            else:
+                current_chat = chat_list.first()
+
         except User.DoesNotExist:
-            return redirect('chat:chat_guest_view')
+            return redirect('user:home')
 
     else:
         return redirect('user:home')
@@ -122,7 +181,13 @@ def chat_main(request):
         'chat_messages': messages,
         'is_guest': is_guest,
         'user_email': user_email,
+        'guest_dog_name': guest_name,
+        'guest_dog_breed': guest_breed,
+        'dog_breeds': dog_breeds,
+        'show_guest_info_form': False,
+        'show_login_notice': is_guest  # ✅ 비회원 로그인 유도 문구용
     })
+
 
 
 # 채팅 제목 클릭 시 해당 채팅으로 이동
@@ -190,9 +255,10 @@ def get_dog_info(dog):
     }
 
 def get_minimal_guest_info(session):
+    name = session.get("guest_dog_name", "비회원견")
     breed = session.get("guest_dog_breed", "견종 정보 없음")
     return {
-        "name": "비회원견",
+        "name": name,
         "breed": breed,
         "chat_history": [],
         "prev_q": None,

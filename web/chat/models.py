@@ -5,7 +5,7 @@ from user.models import User
 
 class Chat(models.Model):
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)  # ✅ 추가
-    dog = models.ForeignKey(DogProfile, on_delete=models.CASCADE)
+    dog = models.ForeignKey(DogProfile, null=True, blank=True, on_delete=models.SET_NULL)
     chat_title = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
