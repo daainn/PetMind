@@ -86,6 +86,7 @@ def guest_profile_register(request):
 
     return HttpResponseNotAllowed(['GET', 'POST'])
 
+@require_http_methods(["GET", "POST"])
 def chat_member_talk_detail(request, dog_id, chat_id):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -102,15 +103,26 @@ def chat_member_talk_detail(request, dog_id, chat_id):
     if request.method == "POST":
         message = request.POST.get("message", "").strip()
         if message:
-            Message.objects.create(chat=chat, sender='user', message=message)
+            # ✅ 메시지 저장
+            user_message = Message.objects.create(chat=chat, sender='user', message=message)
 
-            user_info = get_dog_info(dog) 
+            # ✅ 이미지 최대 3장 업로드
+            image_files = request.FILES.getlist("images")
+            for img in image_files[:3]:
+                try:
+                    MessageImage.objects.create(message=user_message, image=img)
+                except Exception:
+                    pass
+
+            # ✅ 챗봇 응답 생성 및 저장
+            user_info = get_dog_info(dog)
             answer = call_runpod_api(message, user_info)
             Message.objects.create(chat=chat, sender='bot', message=answer)
 
         return redirect('chat:chat_member_talk_detail', dog_id=dog.id, chat_id=chat.id)
 
-    messages = Message.objects.filter(chat=chat).order_by('created_at')
+    # ✅ GET 요청 처리
+    messages = Message.objects.filter(chat=chat).prefetch_related("images").order_by('created_at')
     chat_list = Chat.objects.filter(dog__user=user).order_by('-created_at')
     now_time = timezone.localtime().strftime("%I:%M %p").lower()
 
