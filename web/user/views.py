@@ -140,8 +140,7 @@ def join_user_complete(request):
         request.session.flush()
         request.session['user_id'] = str(user.id)
         request.session['user_email'] = user.email
-        return redirect('chat:chat_member', dog_id=DogProfile.objects.filter(user=user).first().id) \
-            if DogProfile.objects.filter(user=user).exists() else redirect('dogs:dog_info_join')
+        return render(request, 'user/home_01.html')
 
     return redirect('user:join_01')
 

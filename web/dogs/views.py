@@ -26,10 +26,12 @@ def dog_info_join_view(request):
 
         if form.is_valid():
             dog_profile = form.save(commit=False)
-            dog_profile.user = user  # ✅ 진짜 로그인 유저로 연결
+            dog_profile.user = user
             ...
             dog_profile.save()
-            return redirect("chat:main", dog_id=dog_profile.id)
+            dog = DogProfile.objects.get(pk=dog_profile.id)
+            if dog:
+                return redirect('chat:chat_member', dog_id=dog.id)
         else:
             print("폼 에러 발생:", form.errors)
     else:
