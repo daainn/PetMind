@@ -13,11 +13,12 @@ from django.http import HttpResponseNotAllowed
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from user.utils import get_logged_in_user
+from collections import defaultdict
+from datetime import date, timedelta
 
 import uuid
 import requests
 
-# 공통 진입점 (회원/비회원 분기)
 def chat_entry(request):
     if request.session.get('guest'):
         return redirect('chat:main')
@@ -31,6 +32,23 @@ def chat_entry(request):
 
     else:
         return redirect('user:home')
+    
+def group_chats_by_date(chat_list):
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+    grouped = defaultdict(list)
+
+    for chat in chat_list:
+        created = chat.created_at.date()
+        if created == today:
+            label = "오늘"
+        elif created == yesterday:
+            label = "어제"
+        else:
+            label = created.strftime("%Y.%m.%d")
+        grouped[label].append(chat)
+
+    return dict(grouped)
 
 def chat_member_view(request, dog_id):
     user = get_logged_in_user(request)
@@ -39,10 +57,12 @@ def chat_member_view(request, dog_id):
 
     dog = get_object_or_404(DogProfile, id=dog_id, user=user)
     chat_list = Chat.objects.filter(dog__user=user).order_by('-created_at')
+    grouped_chat_list = group_chats_by_date(chat_list)
     current_chat = Chat.objects.filter(dog=dog).order_by('-created_at').first()
     messages = Message.objects.filter(chat=current_chat).order_by('created_at') if current_chat else []
 
     return render(request, 'chat/chat.html', {
+        'grouped_chat_list': grouped_chat_list,
         'chat_list': chat_list,
         'current_chat': current_chat,
         'chat_messages': messages,
@@ -50,6 +70,7 @@ def chat_member_view(request, dog_id):
         'user_email': user.email,
         'dog': dog,
     })
+
 
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
@@ -81,6 +102,7 @@ def guest_profile_register(request):
         chat = Chat.objects.create(user=user, dog=None, chat_title="비회원 상담 시작")
         welcome_message = f"{guest_name}의 상담을 시작해볼까요? 😊"
         Message.objects.create(chat=chat, sender="bot", message=welcome_message)
+        request.session["current_chat_id"] = str(chat.id)
 
         return redirect('chat:chat_talk_detail', chat_id=chat.id)
 
@@ -103,10 +125,8 @@ def chat_member_talk_detail(request, dog_id, chat_id):
     if request.method == "POST":
         message = request.POST.get("message", "").strip()
         if message:
-            # ✅ 메시지 저장
             user_message = Message.objects.create(chat=chat, sender='user', message=message)
 
-            # ✅ 이미지 최대 3장 업로드
             image_files = request.FILES.getlist("images")
             for img in image_files[:3]:
                 try:
@@ -114,47 +134,41 @@ def chat_member_talk_detail(request, dog_id, chat_id):
                 except Exception:
                     pass
 
-            # ✅ 챗봇 응답 생성 및 저장
             user_info = get_dog_info(dog)
             answer = call_runpod_api(message, user_info)
             Message.objects.create(chat=chat, sender='bot', message=answer)
 
         return redirect('chat:chat_member_talk_detail', dog_id=dog.id, chat_id=chat.id)
 
-    # ✅ GET 요청 처리
     messages = Message.objects.filter(chat=chat).prefetch_related("images").order_by('created_at')
     chat_list = Chat.objects.filter(dog__user=user).order_by('-created_at')
-    now_time = timezone.localtime().strftime("%I:%M %p").lower()
+    grouped_chat_list = group_chats_by_date(chat_list)
 
     return render(request, "chat/chat_talk.html", {
         "messages": messages,
         "current_chat": chat,
         "chat_list": chat_list,
+        "grouped_chat_list": grouped_chat_list,  
         "user_email": user.email,
         "is_guest": False,
-        "now_time": now_time,
+        "now_time": timezone.localtime().strftime("%I:%M %p").lower(),
         "dog": dog,
     })
 
 
-
-
-# 메인 채팅 페이지
 def chat_main(request):
     is_guest = request.session.get("guest", False)
     user_id = request.session.get("user_id")
     guest_user_id = request.session.get("guest_user_id")
     user_email = request.session.get("user_email")
     current_dog_id = request.session.get("current_dog_id")
+    current_chat_id = request.session.get("current_chat_id")
 
-    # ✅ 비회원 기본 정보
     guest_name = request.session.get("guest_dog_name")
     guest_breed = request.session.get("guest_dog_breed")
 
-    # ✅ 견종 리스트: 비회원 이름/견종 입력 폼용
     dog_breeds = DogBreed.objects.all().order_by("name")
 
-    # ✅ 비회원인데 이름이나 견종이 없으면 폼 먼저 보여주기
     if is_guest and (not guest_name or not guest_breed):
         return render(request, "chat/chat.html", {
             "show_guest_info_form": True,
@@ -162,7 +176,6 @@ def chat_main(request):
             "dog_breeds": dog_breeds,
         })
 
-    # ✅ 채팅 데이터 초기화
     chat_list, current_chat, messages = [], None, []
 
     if user_id and not is_guest:
@@ -170,7 +183,6 @@ def chat_main(request):
             user = User.objects.get(id=user_id)
             chat_list = Chat.objects.filter(dog__user=user).order_by('-created_at')
 
-            # ✅ 최근 채팅으로 설정
             if current_dog_id:
                 current_chat = Chat.objects.filter(dog__id=current_dog_id).first()
             else:
@@ -186,12 +198,18 @@ def chat_main(request):
             user = User.objects.get(id=guest_user_id)
             chat_list = Chat.objects.filter(dog=None, user=user).order_by('-created_at')
 
-            # ✅ 새로 만든 채팅이 있다면 우선 표시
-            new_chat_id = request.session.pop("new_chat_id", None)
-            if new_chat_id:
-                current_chat = Chat.objects.filter(id=new_chat_id, user=user).first()
-            else:
+            if current_chat_id:
+                current_chat = Chat.objects.filter(id=current_chat_id, user=user).first()
+
+            if not current_chat:
                 current_chat = chat_list.first()
+
+            if not current_chat:
+                current_chat = Chat.objects.create(user=user, dog=None, chat_title="비회원 상담 시작")
+                Message.objects.create(chat=current_chat, sender="bot", message=f"{guest_name}의 상담을 시작해볼까요? 😊")
+                chat_list = Chat.objects.filter(dog=None, user=user).order_by('-created_at')
+
+            request.session["current_chat_id"] = str(current_chat.id)
 
         except User.DoesNotExist:
             return redirect('user:home')
@@ -212,8 +230,10 @@ def chat_main(request):
         'guest_dog_breed': guest_breed,
         'dog_breeds': dog_breeds,
         'show_guest_info_form': False,
-        'show_login_notice': is_guest  # ✅ 비회원 로그인 유도 문구용
+        'show_login_notice': is_guest 
     })
+
+
 
 
 @require_POST
@@ -329,23 +349,26 @@ def chat_send(request):
     if not message:
         return redirect("chat:main")
 
-    user = User.objects.get(id=user_id)
-
     if is_guest:
-        breed = request.POST.get("breed", "알 수 없음")
-        chat = Chat.objects.create(dog=None, chat_title=message[:20])
+        chat_id = request.session.get("current_chat_id")
+        chat = Chat.objects.filter(id=chat_id, user=user).first()
+
+        if not chat:
+            chat = Chat.objects.create(user=user, dog=None, chat_title=message[:20])
+            request.session["current_chat_id"] = str(chat.id)
+
         user_message = Message.objects.create(chat=chat, sender="user", message=message)
 
         image_files = request.FILES.getlist("images")
         for idx, img in enumerate(image_files[:3]):
             try:
                 MessageImage.objects.create(message=user_message, image=img)
-            except Exception as e:
+            except Exception:
                 pass
 
         guest_info = {
             "name": "비회원 반려견",
-            "breed": breed,
+            "breed": request.POST.get("breed", "알 수 없음"),
             "age": "알 수 없음",
             "gender": "모름",
             "neutered": "모름",
@@ -361,6 +384,7 @@ def chat_send(request):
         }
         answer = call_runpod_api(message, guest_info)
         Message.objects.create(chat=chat, sender="bot", message=answer)
+
         return redirect('chat:chat_talk_detail', chat_id=chat.id)
 
     current_dog_id = request.session.get("current_dog_id")
@@ -369,24 +393,21 @@ def chat_send(request):
     if not dog:
         return JsonResponse({"error": "반려견이 선택되지 않았습니다."}, status=400)
 
-    chat = Chat.objects.create(dog=dog, chat_title=message[:20])
+    chat = Chat.objects.create(dog=dog, user=user, chat_title=message[:20])
     user_message = Message.objects.create(chat=chat, sender="user", message=message)
 
     image_files = request.FILES.getlist("images")
     for idx, img in enumerate(image_files[:3]):
         try:
             MessageImage.objects.create(message=user_message, image=img)
-        except Exception as e:
+        except Exception:
             pass
 
     user_info = get_dog_info(dog)
     answer = call_runpod_api(message, user_info)
     Message.objects.create(chat=chat, sender="bot", message=answer)
 
-    if is_guest:
-        return redirect('chat:chat_talk_detail', chat_id=chat.id)
-    else:
-        return redirect('chat:chat_member_talk_detail', dog_id=dog.id, chat_id=chat.id)
+    return redirect('chat:chat_member_talk_detail', dog_id=dog.id, chat_id=chat.id)
 
 
 @require_POST
@@ -404,7 +425,6 @@ def chat_member_delete(request, chat_id):
     except Chat.DoesNotExist:
         return JsonResponse({'status': 'not_found'}, status=404)
 
-# 채팅 제목 수정
 @require_POST
 @csrf_exempt
 def chat_member_update_title(request, chat_id):
@@ -434,24 +454,20 @@ def chat_talk_view(request, chat_id):
     current_dog_id = request.session.get("current_dog_id")
     user_id = request.session.get("guest_user_id") if is_guest else request.session.get("user_id")
 
-    # ✅ Chat 존재 여부 확인
     try:
         chat = Chat.objects.get(id=chat_id)
     except Chat.DoesNotExist:
         return redirect('chat:main' if is_guest else 'chat:chat_member', dog_id=current_dog_id or 1)
 
-    # ✅ 회원인 경우 접근 권한 검증 (세션 사용자 ID와 일치하는지)
     if not is_guest:
         if not user_id or not chat.user or str(chat.user.id) != str(user_id):
             return redirect('chat:chat_member', dog_id=current_dog_id or (chat.dog.id if chat.dog else 1))
 
-    # ✅ POST 요청 처리 (메시지 전송)
     if request.method == "POST":
         message_text = request.POST.get("message", "").strip()
         if message_text:
             user_message = Message.objects.create(chat=chat, sender='user', message=message_text)
 
-            # 이미지 최대 3장 업로드
             image_files = request.FILES.getlist("images")
             for img in image_files[:3]:
                 try:
@@ -459,7 +475,6 @@ def chat_talk_view(request, chat_id):
                 except Exception:
                     pass
 
-            # 사용자 정보 구성
             if is_guest:
                 user_info = get_minimal_guest_info(request.session)
             else:
@@ -473,13 +488,11 @@ def chat_talk_view(request, chat_id):
                     "is_first_question": len(chat_history) == 0
                 })
 
-            # 응답 생성 및 저장
             answer = call_runpod_api(message_text, user_info)
             Message.objects.create(chat=chat, sender='bot', message=answer)
 
         return redirect('chat:chat_talk_detail', chat_id=chat.id)
 
-    # ✅ GET 요청: 채팅 화면 렌더링
     messages = Message.objects.filter(chat=chat).prefetch_related("images").order_by('created_at')
     chat_list = Chat.objects.filter(user__id=user_id).order_by('-created_at') if not is_guest else []
     now_time = timezone.localtime().strftime("%I:%M %p").lower()
@@ -530,7 +543,6 @@ def recommend_content(request, chat_id):
     top_indices = cosine_scores.argsort()[-3:][::-1]
     top_contents = df.iloc[top_indices]
 
-    # ✅ 미니 카드 형식으로 HTML 구성
     html = '''
     <div style="padding: 10px 16px;">
     <p style="font-weight:600; margin: 0 0 12px 0; font-size:15px;">
@@ -549,7 +561,6 @@ def recommend_content(request, chat_id):
         '''
     html += '</div></div>'
 
-    # ✅ Message로 저장
     Message.objects.create(
         chat=chat,
         sender="bot",

@@ -11,6 +11,7 @@ urlpatterns = [
     path('update/', views.update_info, name='update_info'),
     path('feedback/', views.user_feedback, name='user_feedback'),
     path('withdraw/', views.withdraw_user, name='withdraw'),
+    path('submit-feedback/', views.submit_feedback, name='submit_feedback'),
 
     path('logout/', views.logout_view, name='logout'),
 

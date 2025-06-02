@@ -1,8 +1,9 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .services.auth_service import authenticate_user
 from .repositories.user_repository import user_exists_by_email, get_user_by_email
 from .models import User
+from chat.models import Chat, UserReview
 from dogs.models import DogProfile
 from django.urls import reverse
 import uuid
@@ -34,7 +35,6 @@ def home(request):
             print(f"[DEBUG] 저장된 해시 비밀번호: {user.password}")
             messages.error(request, '비밀번호가 올바르지 않습니다.')
         else:
-            # 세션 기반 로그인 처리
             request.session.flush()
             request.session['user_id'] = str(user.id)
             request.session['user_email'] = user.email
@@ -241,3 +241,30 @@ def withdraw_user(request):
         pass
 
     return redirect('user:home')
+
+@require_POST
+def submit_feedback(request):
+    chat_id = request.POST.get('chat_id')
+    rating = request.POST.get('rating')
+    text = request.POST.get('text')
+
+    if not rating or not chat_id:
+        return JsonResponse({'status': 'error', 'message': '누락된 정보가 있습니다.'}, status=400)
+
+    try:
+        chat_id = int(chat_id)
+    except (TypeError, ValueError):
+        return JsonResponse({'status': 'error', 'message': '유효하지 않은 chat_id입니다.'}, status=400)
+
+    if UserReview.objects.filter(chat_id=chat_id).exists():
+        return JsonResponse({'status': 'duplicate'})
+
+    try:
+        UserReview.objects.create(
+            chat_id=chat_id,
+            review_score=int(rating),
+            review=text
+        )
+        return JsonResponse({'status': 'ok'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

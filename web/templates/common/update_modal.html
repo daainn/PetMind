@@ -212,7 +212,7 @@
         });
 
         const result = await response.json();
-        msgBox.style.color = result.success ? 'green' : 'red';
+        msgBox.style.color = result.success ? '#F7AE05' : 'red';
         msgBox.innerText = result.message;
 
         if (result.success) {
