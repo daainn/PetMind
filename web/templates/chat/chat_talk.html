@@ -92,21 +92,45 @@
   <script src="{% static 'js/image_upload.js' %}"></script>
   <script src="{% static 'js/recommend.js' %}"></script>
 
-  <!-- ✅ 시간 포맷 변환 -->
   <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      document.querySelectorAll(".chat-time").forEach(el => {
-        const rawTime = el.getAttribute("data-time");
-        if (rawTime) {
-          const date = new Date(rawTime);
-          if (!isNaN(date)) {
-            el.textContent = date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: true });
-          } else {
-            el.textContent = '시간 오류';
-          }
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll(".chat-time").forEach(el => {
+      const rawTime = el.getAttribute("data-time");
+      if (rawTime) {
+        const date = new Date(rawTime);
+        if (!isNaN(date)) {
+          el.textContent = date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: true });
+        } else {
+          el.textContent = '시간 오류';
         }
-      });
+      }
     });
-  </script>
+
+    // ✅ 비회원 기능 제한
+    const isGuest = {{ is_guest|yesno:"true,false" }};
+
+    // 이미지 업로드 차단
+    if (isGuest) {
+      const imageUploadLabel = document.querySelector('.image-upload-btn');
+      if (imageUploadLabel) {
+        imageUploadLabel.addEventListener('click', function (e) {
+          e.preventDefault();
+          alert("이미지 업로드는 로그인 후 이용하실 수 있습니다.");
+        });
+      }
+    }
+
+    // 추천 콘텐츠 버튼 차단
+    if (isGuest) {
+      const recommendBtn = document.getElementById('recommendTrigger');
+      if (recommendBtn) {
+        recommendBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          alert("추천 콘텐츠는 로그인 후 이용하실 수 있습니다.");
+        });
+      }
+    }
+  });
+</script>
 </body>
 </html>

@@ -20,7 +20,6 @@
 
   <main class="chat-main">
     <div class="chat-empty">
-
       <h2 class="chat-title">반려견의 어떤 점이 알고 싶으신가요?</h2>
 
       {% if is_guest and show_guest_info_form %}
@@ -86,7 +85,6 @@
         <input type="hidden" id="guestDogName" value="{{ guest_dog_name|default_if_none:'' }}">
         <input type="hidden" id="guestDogBreed" value="{{ guest_dog_breed|default_if_none:'' }}">
       </form>
-
     </div>
   </main>
 </div>
@@ -128,6 +126,19 @@
       messageTextarea.addEventListener('input', () => {
         if (warningBox) warningBox.style.display = 'none';
       });
+    }
+
+    // ✅ 비회원 이미지 업로드 차단
+    if (isGuest) {
+      const imageInput = document.getElementById('imageInput');
+      const imageUploadBtn = document.querySelector('.image-upload-btn');
+
+      if (imageUploadBtn && imageInput) {
+        imageUploadBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          alert("이미지 업로드는 로그인 후 이용하실 수 있습니다.");
+        });
+      }
     }
   });
 </script>

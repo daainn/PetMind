@@ -4,6 +4,9 @@ document.addEventListener('DOMContentLoaded', function () {
   const chatHistory = document.querySelector('.chat-history');
   const textarea = document.querySelector('textarea');
 
+  // ✅ 템플릿에서 전달된 is_guest 값 읽기
+  const isGuest = JSON.parse(document.getElementById('isGuestFlag')?.textContent || 'false');
+
   if (!recommendTrigger) return;
 
   recommendTrigger.addEventListener('mouseenter', () => {
@@ -17,6 +20,12 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   recommendTrigger.addEventListener('click', () => {
+    // ✅ 비회원은 추천 기능 차단
+    if (isGuest) {
+      alert("추천 콘텐츠는 로그인 후 이용하실 수 있습니다.");
+      return;
+    }
+
     if (recommendTrigger.classList.contains('disabled')) return;
 
     const url = recommendTrigger.getAttribute('data-url');
