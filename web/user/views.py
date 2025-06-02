@@ -17,6 +17,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 import json
 
 def home(request):
@@ -111,6 +112,31 @@ def join_terms_privacy(request):
 def join_terms_service(request):
     return render(request, 'user/join_p_terms_service.html')
 
+@require_POST
+def update_info(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return JsonResponse({'success': False, 'message': '로그인이 필요합니다.'})
+
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({'success': False, 'message': '사용자를 찾을 수 없습니다.'})
+
+    current_password = request.POST.get('current_password')
+    new_password = request.POST.get('new_password')
+
+    if not check_password(current_password, user.password):
+        return JsonResponse({'success': False, 'message': '기존 비밀번호가 올바르지 않습니다.'})
+
+    user.password = make_password(new_password)
+    user.save()
+
+    return JsonResponse({'success': True, 'message': '비밀번호가 성공적으로 변경되었습니다.'})
+
+def user_feedback(request):
+    return render(request, 'user/user_feedback.html')
+
 
 def join_user_complete(request):
     if request.method == 'POST':
@@ -143,8 +169,6 @@ def join_user_complete(request):
         return render(request, 'user/home_01.html')
 
     return redirect('user:join_01')
-
-
 
 
 @csrf_exempt 
@@ -201,3 +225,19 @@ def verify_auth_code(request):
         return JsonResponse({'success': True})
     
     return JsonResponse({'success': False, 'message': '잘못된 요청입니다.'})
+
+
+@require_POST
+def withdraw_user(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return redirect('user:home')
+
+    try:
+        user = User.objects.get(id=user_id)
+        user.delete()
+        request.session.flush()
+    except User.DoesNotExist:
+        pass
+
+    return redirect('user:home')

@@ -8,6 +8,9 @@ urlpatterns = [
     path('password/', views.find_password, name='find_password'),
     path('password/complete/', views.find_password_complete, name='find_password_complete'),
     path('login/', views.home, name='login'),
+    path('update/', views.update_info, name='update_info'),
+    path('feedback/', views.user_feedback, name='user_feedback'),
+    path('withdraw/', views.withdraw_user, name='withdraw'),
 
     path('logout/', views.logout_view, name='logout'),
 
