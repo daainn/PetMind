@@ -34,14 +34,17 @@
           <img src="{% static 'images/petmind_logo.png' %}" alt="PetMind 로고" class="logo-text" />
         </div>
 
+        <!-- 이메일 입력 -->
         <div class="mb-3">
           <input type="email" name="email" class="form-control {% if messages %}is-invalid{% endif %}" placeholder="이메일" required />
         </div>
 
+        <!-- 비밀번호 입력 -->
         <div class="mb-1">
           <input type="password" name="password" class="form-control {% if messages %}is-invalid{% endif %}" placeholder="비밀번호" required />
         </div>
 
+        <!-- 오류 메시지 출력 -->
         {% if messages %}
           <div class="login-error-box">
             {% for message in messages %}
@@ -50,15 +53,18 @@
           </div>
         {% endif %}
 
+        <!-- 비회원 링크 -->
         <div style="text-align: right;">
-          <a href="{% url 'user:chat_guest' %}" class="guest-link">비회원으로 진행하기</a>
+          <a href="{% url 'chat:guest_profile_register' %}" class="guest-link">비회원으로 진행하기</a>
         </div>
 
+        <!-- 로그인 / 회원가입 버튼 -->
         <div class="button-row">
-          <button type="submit" class="btn-login" onclick="location.href='{% url 'chat:main' %}">로그인</button>
+          <button type="submit" class="btn-login">로그인</button> <!-- submit으로 전송 -->
           <button type="button" class="btn-join" onclick="location.href='{% url 'user:join_01' %}'">회원가입</button>
         </div>
 
+        <!-- 비밀번호 찾기 -->
         <a href="{% url 'user:find_password' %}" class="find-password">비밀번호 찾기</a>
       </form>
     </div>

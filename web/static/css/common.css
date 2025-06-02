@@ -1,15 +1,14 @@
 /* 헤더 전체 레이아웃 */
 .header {
   width: 100%;
+  padding: 20px 20px;
   background-color: #FFFFF6;
-  border-bottom: 1px solid #e0e0e0;
-  padding: 16px 32px;
-  box-sizing: border-box;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .header-inner {
-  max-width: 1280px;
-  /* margin: 0 auto; */
+  max-width: 1800px;
+  margin: 0 auto;
   display: flex;
   align-items: center;
 }
@@ -17,10 +16,9 @@
 /* 로고 스타일 */
 .logo {
   font-family: 'Leckerli One', cursive;
-  font-size: 25px;
-  font-weight: bold;
-  color: #F7AE05;
-  letter-spacing: -0.05em;
+  font-weight: 100;
+  font-size: 32px;
+  color: #FFC508;
   text-decoration: none;
 }
 

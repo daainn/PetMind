@@ -3,15 +3,21 @@ import uuid
 
 def get_or_create_user(request):
     """
-    로그인한 회원이면 그대로 return,
-    비회원이면 세션 기반 UUID를 이용해 가상의 유저 생성
+    세션 기반 사용자 반환 함수.
+    회원 로그인: user_id 세션에서 조회
+    비회원: guest_user_id 세션에서 조회 또는 생성
     """
-    if request.user.is_authenticated:
-        return request.user, False  # False → 새로 만든 게 아님
+    # 회원 세션이 있으면 회원 처리
+    user_id = request.session.get("user_id")
+    if user_id:
+        try:
+            user = User.objects.get(id=uuid.UUID(user_id))
+            return user, False
+        except (User.DoesNotExist, ValueError):
+            pass  # 오류 시 비회원 처리로 진행
 
-    # 세션에 가상 유저 ID가 있는지 확인
+    # 비회원 세션이 있으면 비회원 처리
     guest_user_id = request.session.get("guest_user_id")
-
     if guest_user_id:
         try:
             user = User.objects.get(id=guest_user_id)
@@ -19,13 +25,24 @@ def get_or_create_user(request):
         except User.DoesNotExist:
             pass
 
-    # 없으면 새로 생성 (DB에 저장)
+    # 비회원 정보 없으면 새로 생성
     user = User.objects.create(
         email=f"guest_{uuid.uuid4().hex[:10]}@example.com",
-        password="",  # 실제 로그인은 못함
+        password="",
         is_verified=False,
         is_deleted=False,
     )
     request.session["guest_user_id"] = str(user.id)
     request.session["guest"] = True
-    return user, True  # True → 새로 만든 유저임
+    return user, True
+
+
+
+def get_logged_in_user(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return None
+    try:
+        return User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return None

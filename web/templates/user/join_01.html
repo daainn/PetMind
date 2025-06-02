@@ -21,7 +21,7 @@
   </div>
 
   <div class="container">
-    <form method="post" action="{% url 'user:join_02' %}" id="joinForm">
+    <form id="joinForm" method="post" action="{% url 'user:join_complete' %}">
       {% csrf_token %}
 
       <!-- 약관 -->
@@ -54,146 +54,147 @@
       <div class="line"></div>
 
       <!-- 개인정보 입력 -->
-      <div class="input-area">
-        <div class="section-title">개인정보입력 <span style="color:#FFC508; font-size:18px;">(*필수항목)</span></div>
-
-        <div class="input-group email-group">
-          <label for="email_id" id="email-label">이메일<span style="color:#FFC508;">*</span></label>
-          <div class="email-combined" id="email-combined">
-            <input type="text" name="email_id" id="email_id" placeholder="이메일 입력" />
-            <span class="at">@</span>
-            <input type="text" name="email_domain" id="email_domain" placeholder="petmind.com" />
-            <select id="domain_selector">
-              <option value="">직접 입력</option>
-              <option value="naver.com">naver.com</option>
-              <option value="gmail.com">gmail.com</option>
-              <option value="hanmail.net">hanmail.net</option>
-              <option value="nate.com">nate.com</option>
-            </select>
-            <div class="email-error-icon" id="email-error-icon" style="display: none;"></div>
+      <div class="input-group">
+        <label for="email_id">이메일<span style="color:#FFC508;">*</span></label>
+        <div class="email-field-wrapper">
+          <div class="email-flex-wrap">
+            <div class="email-combined" id="email-combined">
+              <input type="text" name="email_id" id="email_id" placeholder="이메일을 입력하세요" />
+              <span>@</span>
+              <input type="text" name="email_domain" id="email_domain" placeholder="" />
+              <select id="domain_selector" onchange="setEmailDomain(this.value)">
+                <option value="">직접 입력</option>
+                <option value="gmail.com">gmail.com</option>
+                <option value="naver.com">naver.com</option>
+              </select>
+            </div>
+            <button type="button" class="btn-auth-request">인증 번호 요청</button>
           </div>
+
+          <div class="auth-code-wrap" style="display: none;">
+            <input type="text" id="auth_code" class="auth-input" placeholder="인증번호 입력" />
+            <button type="button" class="btn-auth-check">인증 번호 확인</button>
+          </div>
+          <p class="helper-text" id="auth-helper" style="display: none;">인증이 완료 되었습니다.</p>
+          <p class="error-text" id="auth-error-msg" style="display: none; color: #FA5252; font-size: 14px;"></p>
         </div>
-        <p class="helper-text error-message" id="email-error"></p>
+      </div>
+      <p class="helper-text error-message" id="email-error"></p>
 
-        <div class="password-group">
-          <label for="password" id="password-label">비밀번호<span style="color:#FFC508;">*</span></label>
-          <div class="password-group-wrapper">
-            <input type="password" name="password" id="password" placeholder="비밀번호를 입력하세요">
-            <div class="password-error-icon" id="password-error-icon" style="display: none;"></div>
-            <p class="helper-text" id="password-helper">※ 영문 대/소문자, 숫자, 특수문자를 2종류 혼합하여 8~16자 입력</p>
-            <p class="helper-text error-message" id="password-error"></p>
-          </div>
+      <div class="password-group">
+        <label for="password" id="password-label">비밀번호<span style="color:#FFC508;">*</span></label>
+        <div class="password-group-wrapper">
+          <input type="password" name="password" id="password" placeholder="비밀번호를 입력하세요">
+          <p class="helper-text" id="password-helper">※ 영문 대/소문자, 숫자, 특수문자를 2종류 혼합하여 8~16자 입력</p>
+          <p class="helper-text error-message" id="password-error"></p>
         </div>
+      </div>
 
-        <div class="button-row-wrapper">
-          <div class="button-row">
-            <button type="submit" class="btn-confirm">확인</button>
-            <button type="button" class="btn-cancel" onclick="location.href='{% url 'user:home' %}'">취소</button>
-          </div>
+      <div class="button-row-wrapper">
+        <div class="button-row">
+          <button type="submit" class="btn-confirm">확인</button>
+          <button type="button" class="btn-cancel" onclick="location.href='{% url 'user:home' %}'">취소</button>
         </div>
       </div>
     </form>
   </div>
 
-  <!-- ✅ SCRIPT -->
-  <script>
-    // 전역에 선언 (select에서 호출 가능해야 함)
-    function setEmailDomain(value) {
-      const emailDomainInput = document.getElementById('email_domain');
-      if (value !== '') {
-        emailDomainInput.value = value;
-        emailDomainInput.readOnly = true;
-      } else {
-        emailDomainInput.value = '';
-        emailDomainInput.readOnly = false;
-      }
-    }
+<script>
+  function setEmailDomain(value) {
+    const emailDomainInput = document.getElementById('email_domain');
+    emailDomainInput.value = value;
+    emailDomainInput.readOnly = value !== '';
+  }
 
-    function openPopup(url) {
-      window.open(url, 'popup', 'width=720,height=800,scrollbars=yes');
-    }    
+  function openPopup(url) {
+    window.open(url, 'popup', 'width=720,height=800,scrollbars=yes');
+  }
 
-    document.addEventListener('DOMContentLoaded', function () {
-      const emailId = document.getElementById('email_id');
-      const emailDomain = document.getElementById('email_domain');
-      const password = document.getElementById('password');
-      const emailError = document.getElementById('email-error');
-      const passwordError = document.getElementById('password-error');
-      const emailIcon = document.getElementById('email-error-icon');
-      const passwordIcon = document.getElementById('password-error-icon');
-      const termsHelper = document.getElementById('terms-helper');
-      const allAgree = document.getElementById('all_agree');
-      const agreeChecks = document.querySelectorAll('.agree_check');
-      const emailCombined = document.getElementById('email-combined');
-      const domainSelector = document.getElementById('domain_selector');
-      const form = document.getElementById('joinForm');
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('joinForm');
+    const emailId = document.getElementById('email_id');
+    const emailDomain = document.getElementById('email_domain');
+    const password = document.getElementById('password');
+    const agreeChecks = document.querySelectorAll('.agree_check');
+    const allAgree = document.getElementById('all_agree');
+    const authCodeInput = document.getElementById('auth_code');
+    const authCodeWrap = document.querySelector('.auth-code-wrap');
+    const authSuccessMsg = document.getElementById('auth-helper');
+    const authErrorMsg = document.getElementById('auth-error-msg');
+    let isEmailVerified = false;
 
-      const emailPattern = /^[a-z0-9]{5,20}$/;
-      const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d|[^A-Za-z\d])(?=.{8,16}).*$/;
-
-      allAgree.addEventListener('change', () => {
-        agreeChecks.forEach(c => c.checked = allAgree.checked);
-      });
-
-      agreeChecks.forEach(c => {
-        c.addEventListener('change', () => {
-          allAgree.checked = Array.from(agreeChecks).every(c => c.checked);
-        });
-      });
-
-      domainSelector.addEventListener('change', function () {
-        setEmailDomain(this.value);
-      });
-
-      function validateInputs() {
-        let isValid = true;
-        const emailValue = emailId.value.trim();
-        const passwordValue = password.value.trim();
-
-        emailId.classList.remove('error');
-        emailDomain.classList.remove('error');
-        emailCombined.classList.remove('error');
-        password.classList.remove('error');
-        emailError.textContent = '';
-        passwordError.textContent = '';
-        emailIcon.style.display = 'none';
-        passwordIcon.style.display = 'none';
-
-        if (!emailPattern.test(emailValue)) {
-          emailError.textContent = '※ 영문 소문자, 숫자를 혼용하여 5~20자 입력해주세요';
-          emailId.classList.add('error');
-          emailDomain.classList.add('error');
-          emailCombined.classList.add('error');
-          emailIcon.style.display = 'block';
-          isValid = false;
-        }
-
-        if (!passwordPattern.test(passwordValue)) {
-          passwordError.textContent = '※ 영문 대/소문자, 숫자, 특수문자를 2종류 혼합하여 8~16자 입력해주세요';
-          password.classList.add('error');
-          passwordIcon.style.display = 'block';
-          isValid = false;
-        }
-
-        const termsOk = Array.from(agreeChecks).every(c => c.checked);
-        termsHelper.classList.remove('error-message');
-        if (!termsOk) {
-          termsHelper.classList.add('error-message');
-          isValid = false;
-        }
-
-        return isValid;
-      }
-
-      form.addEventListener('submit', function (e) {
-        if (!validateInputs()) {
-          e.preventDefault();
-        }
-      });
-
-      emailId.addEventListener('input', validateInputs);
-      password.addEventListener('input', validateInputs);
+    allAgree.addEventListener('change', () => {
+      agreeChecks.forEach(c => c.checked = allAgree.checked);
     });
-  </script>
+
+    agreeChecks.forEach(c => {
+      c.addEventListener('change', () => {
+        allAgree.checked = Array.from(agreeChecks).every(c => c.checked);
+      });
+    });
+
+    document.querySelector('.btn-auth-request').addEventListener('click', function () {
+      const email = `${emailId.value}@${emailDomain.value}`;
+      fetch('/join/email/send-auth-code/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          authCodeWrap.style.display = 'flex';
+          alert('인증번호가 전송되었습니다.');
+        } else {
+          alert(data.message || '인증번호 전송에 실패했습니다.');
+        }
+      });
+    });
+
+    document.querySelector('.btn-auth-check').addEventListener('click', function () {
+      const email = `${emailId.value}@${emailDomain.value}`;
+      const code = authCodeInput.value.trim();
+
+      fetch('/join/email/verify-auth-code/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          isEmailVerified = true;
+          authSuccessMsg.style.display = 'block';
+          authErrorMsg.style.display = 'none';
+        } else {
+          isEmailVerified = false;
+          authErrorMsg.textContent = data.message || '인증번호가 올바르지 않습니다.';
+          authErrorMsg.style.display = 'block';
+        }
+      });
+    });
+
+    form.addEventListener('submit', function (e) {
+      const emailVal = emailId.value.trim();
+      const passwordVal = password.value.trim();
+      const isAgreed = Array.from(agreeChecks).every(c => c.checked);
+
+      const validEmail = /^[a-z0-9]{5,20}$/.test(emailVal);
+      const validPassword = /^(?=.*[A-Za-z])(?=.*\d|[^A-Za-z\d])(?=.{8,16}).*$/.test(passwordVal);
+
+      if (!validEmail || !validPassword || !isAgreed) {
+        e.preventDefault();
+        alert("입력값을 다시 확인해주세요.");
+        return;
+      }
+
+      if (!isEmailVerified) {
+        e.preventDefault();
+        alert("이메일 인증을 완료해주세요.");
+        return;
+      }
+    });
+  });
+</script>
 </body>
 </html>

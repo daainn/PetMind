@@ -5,18 +5,25 @@ app_name = 'chat'
 
 urlpatterns = [
     path('', views.chat_entry, name='chat_entry'),
+
+    # ✅ 비회원 URL 정리
     path('main/', views.chat_main, name='main'),
-    path('send/', views.chat_send, name='chat_send'),  # POST only
+    path('guest/register/', views.guest_profile_register, name='guest_profile_register'),
 
-    path('guest/', views.chat_guest_view, name='chat_guest'),
+    # 회원
+    path('<int:dog_id>/', views.chat_member_view, name='chat_member'),
+    path('<int:dog_id>/talk/<int:chat_id>/', views.chat_member_talk_detail, name='chat_member_talk_detail'),
+    path('<int:dog_id>/delete/<int:chat_id>/', views.chat_member_delete, name='chat_member_delete'),
+    path('<int:dog_id>/update-title/<int:chat_id>/', views.chat_member_update_title, name='chat_member_update_title'),
 
-    path('talk/<int:chat_id>/', views.chat_talk_view, name='chat_talk_detail'),  
-
-    path('member/delete/<int:chat_id>/', views.chat_member_delete, name='member_chat_delete'),
-    path('member/update-title/<int:chat_id>/', views.chat_member_update_title, name='member_chat_update_title'),
-    path('member/chat/<int:chat_id>/', views.chat_member_start, name='chat_member_start'),
-
+<<<<<<< HEAD
     path('api/review/submit/', views.submit_review, name='submit_review'),
     path('report/pdf/<int:chat_id>/', views.generate_report_pdf, name='generate_report_pdf'),
     # path('report/preview/', views.preview_pdf, name='report_preview'),
+=======
+    # 공통 전송 및 추천
+    path('send/', views.chat_send, name='chat_send'),
+    path('talk/<int:chat_id>/', views.chat_talk_view, name='chat_talk_detail'),
+    path('recommend/<int:chat_id>/', views.recommend_content, name='recommend_content'),
+>>>>>>> 72b318ee3060d2f741484b1b7d6884768f68b288
 ]
