@@ -1,7 +1,7 @@
 ---
 name: 기능 요청 (Feature Request)
 about: 새로운 기능 추가나 개선 요청을 위해 작성하는 템플릿
-title: "[Feature] 기능명: "
+title: "Feat: "
 labels: feat
 assignees: 'daainn'
 
