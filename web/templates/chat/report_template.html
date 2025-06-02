@@ -1,0 +1,56 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>상담 리포트</title>
+  <link rel="stylesheet" href="{% static 'css/report_template.css' %}">
+</head>
+<body>
+  <div class="header">
+    <img src="{{ request.build_absolute_uri }}{% static 'images/petmind_logo.png' %}" class="logo" alt="PetMind 로고">
+    <div class="report-date">{{ start_date }} ~ {{ end_date }}</div>
+  </div>
+
+  <div class="title">🐾 7일 간의 {{ dog_name }} 🐾</div>
+
+  <div class="profile">
+    <img src="{{ profile_image_url }}" class="profile-img" alt="{{ dog_name }} 사진">
+
+    <div class="profile-box">
+      <span class="name">
+        {{ dog_name }} ({{ age }}세, {{ breed_name }})
+      </span>
+
+      <div class="badges">
+        <span class="badge">{{ gender_display }}</span>
+        <span class="badge">{{ neutered }}</span>
+        <span class="badge">{{ living_period }}</span>
+        <span class="badge">{{ disease_history }}</span>
+        <span class="badge">{{ housing_type }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">{{ dog_name }}에 대해서 알려드릴게요</div>
+  <div class="llm-response">
+    {{ llm_response_html|safe }}
+  </div>
+
+  <div class="section-title">🧾 우리 {{ dog_name }}는요</div>
+  <div class="llm-response">
+    {{ intro_text|linebreaksbr }}
+  </div>
+
+  <div class="section-title">👩‍⚕️ 보호자님에게 드리는 조언</div>
+  <div class="llm-response">
+    {{ advice_text|linebreaksbr }}
+  </div>
+
+  <div class="section-title">📌 다음 상담 시에는</div>
+  <div class="llm-response">
+    {{ next_text|linebreaksbr }}
+  </div>
+</body>
+</html>
+

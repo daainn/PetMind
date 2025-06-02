@@ -1,0 +1,80 @@
+body {
+  font-family: 'Spoqa Han Sans', sans-serif;
+  padding: 40px;
+  color: #333;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  height: 28px;
+}
+
+.report-date {
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.title {
+  text-align: center;
+  font-size: 28px;
+  margin: 40px 0 20px;
+  font-weight: 700;
+}
+
+.profile {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.profile-img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fbdc41;
+}
+
+.name {
+  display: block;
+  font-size: 20px;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.gender {
+  font-size: 15px;
+  color: #666;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.badge {
+  background-color: #fff9cc;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  border: 1px solid #eee;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 30px 0 10px;
+}
+
+.llm-response {
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}

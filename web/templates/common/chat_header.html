@@ -5,6 +5,8 @@
   <link href="https://cdn.jsdelivr.net/npm/spoqa-han-sans@2.1.2/css/SpoqaHanSans.min.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Koh+Santepheap&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Leckerli+One&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="{% static 'css/chat_report_feedback.css' %}">
 
 
   <div class="chat-header-inner">
@@ -15,6 +17,9 @@
 
     <!-- 가운데 로고 -->
     <a href="/" class="chat-logo">PetMind</a>
+
+    <!-- 리포트 & 피드백 분리 템플릿 삽입 -->
+    {% include 'chat/chat_report_feedback.html' %}
 
     <!-- 유저 아이콘 + 드롭다운 -->
     <div class="chat-user-menu">
@@ -37,3 +42,5 @@
     </div>
   </div>
 </header>
+
+<script src="{% static 'js/chat_report_feedback.js' %}"></script>

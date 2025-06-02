@@ -15,4 +15,8 @@ urlpatterns = [
     path('member/delete/<int:chat_id>/', views.chat_member_delete, name='member_chat_delete'),
     path('member/update-title/<int:chat_id>/', views.chat_member_update_title, name='member_chat_update_title'),
     path('member/chat/<int:chat_id>/', views.chat_member_start, name='chat_member_start'),
+
+    path('api/review/submit/', views.submit_review, name='submit_review'),
+    path('report/pdf/<int:chat_id>/', views.generate_report_pdf, name='generate_report_pdf'),
+    # path('report/preview/', views.preview_pdf, name='report_preview'),
 ]
