@@ -1,4 +1,6 @@
 {% load static %}
+{% load custom_filters %} <!-- 자연어 날짜 필터 로드 -->
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -19,10 +21,8 @@
   <main class="chat-main">
     <div class="chat-empty">
 
-      <!-- ✅ 항상 보여지는 타이틀 -->
       <h2 class="chat-title">반려견의 어떤 점이 알고 싶으신가요?</h2>
 
-      <!-- ✅ 비회원 정보 입력 카드 -->
       {% if is_guest and show_guest_info_form %}
       <div class="chat-message bot-message" style="background: #fffcd3; padding: 20px; border-radius: 16px; max-width: 640px; margin: 0 auto 24px;">
         <div class="message-text" style="margin-bottom: 14px;">
@@ -48,7 +48,6 @@
       </div>
       {% endif %}
 
-      <!-- ✅ 반려견 정보 입력 후 안내 -->
       {% if is_guest and not show_guest_info_form %}
       <div class="chat-message bot-message">
         <div class="message-text">
@@ -63,14 +62,12 @@
       </div>
       {% endif %}
 
-      <!-- ✅ 경고 메시지 출력 영역 -->
       <div id="guestWarning"
            style="display: none; background: #fff7e6; border-radius: 12px; padding: 12px 16px; margin: 12px auto;
                   max-width: 500px; color: #d97706; font-weight: 600; text-align: center;">
         ⚠️ 이름과 견종을 입력해야 상담을 시작할 수 있어요.
       </div>
 
-      <!-- ✅ 채팅 입력폼 -->
       <form method="POST" action="{% url 'chat:chat_send' %}" enctype="multipart/form-data" class="chat-input-form">
         {% csrf_token %}
         <textarea name="message" placeholder="질문을 입력하세요." required></textarea>
@@ -86,7 +83,6 @@
           </button>
         </div>
 
-        <!-- ✅ 비회원의 반려견 정보 히든 필드 -->
         <input type="hidden" id="guestDogName" value="{{ guest_dog_name|default_if_none:'' }}">
         <input type="hidden" id="guestDogBreed" value="{{ guest_dog_breed|default_if_none:'' }}">
       </form>
@@ -113,14 +109,14 @@
         const guestDogBreed = breedField?.value.trim();
 
         if (isGuest && (!guestDogName || !guestDogBreed)) {
-          e.preventDefault(); // 전송 차단
+          e.preventDefault();
           if (warningBox) {
             warningBox.style.display = 'block';
             warningBox.textContent = "⚠️ 이름과 견종을 입력해야 상담을 시작할 수 있어요.";
             clearTimeout(warningTimeout);
             warningTimeout = setTimeout(() => {
               warningBox.style.display = 'none';
-            }, 3000); // 3초 후 자동 숨김
+            }, 3000);
           }
         } else {
           if (warningBox) warningBox.style.display = 'none';
@@ -128,7 +124,6 @@
       });
     }
 
-    // ✅ 사용자 입력 시 경고 숨김
     if (messageTextarea) {
       messageTextarea.addEventListener('input', () => {
         if (warningBox) warningBox.style.display = 'none';
