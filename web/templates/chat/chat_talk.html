@@ -1,0 +1,136 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>PetMind | 상담 채팅</title>
+
+  <link href="//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Koh+Santepheap:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+  <link rel="stylesheet" href="{% static 'css/chat.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chat_header.css' %}">
+  <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chat_talk.css' %}">
+</head>
+<body>
+  <div class="app-wrapper" id="appWrapper">
+    {% include 'common/chat_header.html' %}
+    {% include 'common/sidebar.html' %}
+
+    <main class="chat-main">
+      <div class="chat-history">
+        {% for m in messages %}
+          <div class="chat-message-wrapper {% if m.sender == 'user' %}user-side{% else %}bot-side{% endif %}">
+            <div class="chat-message-block" style="display: flex; flex-direction: column; align-items: center;">
+              {% if m.images.all %}
+                <div class="chat-image-block" style="margin-bottom: 6px;">
+                  {% for img in m.images.all %}
+                    <img src="{{ img.image.url }}" class="preview-image" alt="업로드 이미지" style="display: block; margin: 4px auto;">
+                  {% endfor %}
+                </div>
+              {% endif %}
+              {% if m.message %}
+                <div style="display: flex; justify-content: flex-end; align-items: center; gap: 6px; width: 100%;">
+                  {% if m.sender == 'user' %}
+                    <span class="chat-time side-time" data-time="{{ m.created_at|date:'c' }}"></span>
+                  {% endif %}
+                  <div class="chat-message {{ m.sender }}-message">
+                    <div class="message-content">{{ m.message|safe }}</div>
+                  </div>
+                  {% if m.sender == 'bot' %}
+                    <span class="chat-time side-time" data-time="{{ m.created_at|date:'c' }}"></span>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- ✅ 추천 버튼 -->
+      <div class="recommend-info-box" id="recommendTrigger"
+           data-url="{% url 'chat:recommend_content' chat_id=current_chat.id %}"
+           style="cursor:pointer;">
+        <img src="{% static 'images/recommendation_btn.png' %}" alt="추천 아이콘" class="recommend-icon">
+        <span class="recommend-text">이런 정보는 어때요? 추천 콘텐츠를 확인해보세요.</span>
+      </div>
+
+      <!-- ✅ 메시지 입력 폼 -->
+      <form method="POST"
+            action="{% if is_guest %}
+                       {% url 'chat:chat_talk_detail' current_chat.id %}
+                    {% else %}
+                       {% url 'chat:chat_member_talk_detail' dog.id current_chat.id %}
+                    {% endif %}"
+            class="chat-input-form"
+            enctype="multipart/form-data">
+        {% csrf_token %}
+        <textarea name="message" placeholder="질문을 입력하세요." required></textarea>
+
+        <div id="imagePreviewContainer" style="display: flex; gap: 8px; margin-top: 8px;"></div>
+
+        <div class="chat-input-bottom">
+          <div class="bottom-left">
+            <label class="image-upload-btn">
+              <input type="file" name="images" id="imageInput" accept="image/*" multiple hidden>
+              <img src="{% static 'images/image_upload_btn.png' %}" alt="이미지 업로드 아이콘">
+              <span>이미지 업로드</span>
+            </label>
+          </div>
+          <button type="submit" class="send-btn">
+            <img src="{% static 'images/chatbot_sendbtn.png' %}" alt="보내기">
+          </button>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <!-- ✅ JS 파일들 불러오기 -->
+  <script src="{% static 'js/chat_member_sidebar.js' %}"></script>
+  <script src="{% static 'js/image_upload.js' %}"></script>
+  <script src="{% static 'js/recommend.js' %}"></script>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll(".chat-time").forEach(el => {
+      const rawTime = el.getAttribute("data-time");
+      if (rawTime) {
+        const date = new Date(rawTime);
+        if (!isNaN(date)) {
+          el.textContent = date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: true });
+        } else {
+          el.textContent = '시간 오류';
+        }
+      }
+    });
+
+    // ✅ 비회원 기능 제한
+    const isGuest = {{ is_guest|yesno:"true,false" }};
+
+    // 이미지 업로드 차단
+    if (isGuest) {
+      const imageUploadLabel = document.querySelector('.image-upload-btn');
+      if (imageUploadLabel) {
+        imageUploadLabel.addEventListener('click', function (e) {
+          e.preventDefault();
+          alert("이미지 업로드는 로그인 후 이용하실 수 있습니다.");
+        });
+      }
+    }
+
+    // 추천 콘텐츠 버튼 차단
+    if (isGuest) {
+      const recommendBtn = document.getElementById('recommendTrigger');
+      if (recommendBtn) {
+        recommendBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          alert("추천 콘텐츠는 로그인 후 이용하실 수 있습니다.");
+        });
+      }
+    }
+  });
+</script>
+</body>
+</html>
