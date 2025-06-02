@@ -57,7 +57,7 @@
     {% endif %}
   </div>
 
-  {% if not is_guest %}
+  <!-- 환경설정 버튼 -->
   <div class="sidebar-settings-btn-wrapper">
     <button id="settingsBtn" class="settings-btn">
       <img src="{% static 'images/setting.png' %}" alt="환경설정" />
@@ -81,7 +81,6 @@
       {% endif %}
     </div>
   </div>
-  {% endif %}
 </div>
 
 <!-- 공통 모달 파일 include -->
