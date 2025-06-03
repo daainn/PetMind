@@ -124,7 +124,7 @@ body, button, input, textarea {
 .flatpickr-day.startRange,
 .flatpickr-day.endRange,
 .flatpickr-day.inRange {
-  background-color: #FFE16A !important;
+  background-color: #FEDF66 !important;
   color: white !important;
   border: none !important;
 }
@@ -163,6 +163,14 @@ body, button, input, textarea {
   display: flex !important;
   flex-wrap: wrap;
   gap: 0 !important;
+}
+
+/* 시작일과 종료일이 같은 경우 둥근 원 스타일 */
+.flatpickr-day.startRange.endRange {
+  border-radius: 999px !important;
+  background-color: #FEDF66 !important;
+  color: white !important;
+  border: none !important;
 }
 
 /* 확인 버튼 위치 및 스타일 */

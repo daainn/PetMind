@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'user',
     'dogs',
     'chat',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [

@@ -1,30 +1,31 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
-from django.http import JsonResponse, HttpResponse
+from django.views.decorators.http import require_POST, require_http_methods
+from django.http import JsonResponse, HttpResponse, FileResponse, HttpResponseNotAllowed, Http404
 from user.models import User
 from .models import Chat, Message, Content, MessageImage, UserReview
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from dogs.models import DogProfile, DogBreed
-from django.http import HttpResponseNotAllowed
-from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from user.utils import get_logged_in_user
-
 import uuid
 import requests
-from django.shortcuts import render
 from datetime import datetime, timedelta
 import json
-from django.template.loader import render_to_string
+from django.template.loader import render_to_string, get_template
 import tempfile
-from django.template.loader import get_template
-from xhtml2pdf import pisa
 import io
-
+import os
+from django.conf import settings
+import time
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+import img2pdf
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 
 # 공통 진입점 (회원/비회원 분기)
@@ -590,65 +591,83 @@ def submit_review(request):
 
     return JsonResponse({'status': 'error'}, status=400)
 
+@api_view(['POST'])
+def generate_report(request):
+    data = request.data
+    print("📩 받은 데이터:", data)
 
-def generate_report_pdf(request, chat_id):
-    chat = Chat.objects.get(id=chat_id)
-    dog = chat.dog_profile
+    chat_id = data.get("chat_id")
+    start_date = data.get("start_date")
+    end_date = data.get("end_date")
 
+    if not (chat_id and start_date and end_date):
+        return Response({"error": "필수 값 누락"}, status=400)
+
+    # ✅ PDF 저장 경로
+    pdf_path = os.path.join(settings.MEDIA_ROOT, f"report_{chat_id}.pdf")
+
+    # ✅ 임시 HTML 생성
     context = {
-        'chat_id': chat.id,
-        'start_date': '2025-05-15',
-        'end_date': '2025-05-22',
-        'dog_name': dog.name,
-        'age': dog.age,
-        'breed_name': dog.breed_name,
-        'gender_display': '♀️' if dog.gender == 'female' else '♂️',
-        'neutered': '중성화 O' if dog.neutered else '중성화 X',
-        'disease_history': dog.disease_history or '질병 없음',
-        'living_period': dog.living_period,
-        'housing_type': dog.housing_type,
-        'profile_image_url': dog.profile_image_url,
-        'intro_text': chat.report_intro,
-        'advice_text': chat.report_advice,
-        'next_text': chat.report_next,
-        'llm_response_html': chat.full_llm_html or '',
+        "dog_name": "메이",
+        "age": 2,
+        "breed_name": "푸들",
+        "gender_display": "여아",
+        "neutered": "중성화 완료",
+        "living_period": "1년 이상 3년 미만",
+        "disease_history": "없음",
+        "housing_type": "아파트",
+        "profile_image_url": request.build_absolute_uri("/static/images/sample_dog.jpg"),
+        "start_date": start_date,
+        "end_date": end_date,
+        "llm_response_html": "<p>매우 활동적인 아이로 분석돼요!</p>",
+        "intro_text": "매일 산책을 하며 활발히 지냅니다.",
+        "advice_text": "간식을 줄 때 말로 칭찬도 함께 해주세요.",
+        "next_text": "무리하지 않도록 일주일에 한 번 휴식을 주세요.",
+        "request": request,
     }
+    
+    html_str = render_to_string("chat/report_template.html", context)
 
-    template = get_template('report_template.html')
-    html = template.render(context)
+    html_str = html_str.replace(
+    "/static/css/", f"file://{os.path.join(settings.BASE_DIR, 'static/css/')}"
+    )
+    html_str = html_str.replace(
+    "/static/images/", f"file://{os.path.join(settings.BASE_DIR, 'static/images/')}"
+    )
+    html_path = os.path.join(settings.BASE_DIR, "report_template.html")
+    image_path = os.path.join(settings.BASE_DIR, "petmind_logo.png")
 
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{dog.name}_report.pdf"'
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(html_str)
 
-    pisa_status = pisa.CreatePDF(html, dest=response)
+    # ✅ 이미지 캡처
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--window-size=1024,2000")
 
-    if pisa_status.err:
-        return HttpResponse('PDF 생성에 실패했습니다.', status=500)
-    return response
+    driver = webdriver.Chrome(options=chrome_options)
+    driver.get("file://" + html_path)
+    time.sleep(2)
+    driver.save_screenshot(image_path)
+    driver.quit()
 
+    # ✅ 이미지 → PDF
+    with open(pdf_path, "wb") as f:
+        f.write(img2pdf.convert(image_path))
 
-# def preview_pdf(request):
-#     # 테스트용 더미 데이터
-#     context = {
-#         "start_date": "2025-05-01",
-#         "end_date": "2025-05-07",
-#         "dog_name": "마루",
-#         "age": 3,
-#         "breed_name": "푸들",
-#         "gender_display": "♀",
-#         "neutered": "중성화 완료",
-#         "profile_image_url": "https://via.placeholder.com/100",  # 외부 URL 사용 가능
-#         "intro_text": "마루는 매우 활발하고 사람을 좋아해요!",
-#         "advice_text": "산책 시 짖는 행동은 칭찬과 무시를 구분해서 훈련하면 좋아요.",
-#         "next_text": "다음 상담 땐 식습관 변화도 확인해 주세요.",
-#     }
+    print("✅ PDF 저장 완료:", pdf_path)
 
-#     template = get_template('chat/report_template.html')
-#     html = template.render(context)
+    return Response({"message": "리포트 생성 완료"}, status=200)
 
-#     result = io.BytesIO()
-#     pdf = pisa.pisaDocument(io.BytesIO(html.encode("utf-8")), dest=result)
+@api_view(['GET'])
+def check_report_status(request):
+    # 테스트용: 항상 완료 상태 반환
+    return Response({"status": "done"})
 
-#     if not pdf.err:
-#         return HttpResponse(result.getvalue(), content_type='application/pdf')
-#     return HttpResponse("PDF 생성에 실패했습니다.", status=500)
+def download_report_pdf(request, chat_id):
+    file_path = os.path.join(settings.MEDIA_ROOT, f"report_{chat_id}.pdf")
+    if not os.path.exists(file_path):
+        raise Http404("PDF 파일이 존재하지 않습니다.")
+    return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"report_{chat_id}.pdf")

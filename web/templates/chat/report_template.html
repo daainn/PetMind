@@ -8,7 +8,7 @@
 </head>
 <body>
   <div class="header">
-    <img src="{{ request.build_absolute_uri }}{% static 'images/petmind_logo.png' %}" class="logo" alt="PetMind 로고">
+    <img src="{% static 'images/petmind_logo.png' %}" class="logo" alt="PetMind 로고">
     <div class="report-date">{{ start_date }} ~ {{ end_date }}</div>
   </div>
 
