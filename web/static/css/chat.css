@@ -254,10 +254,11 @@ body {
   transition: margin-left 0.3s ease;
 }
 
-.app-wrapper.sidebar-open .chat-header-inner {
-  padding-left: 280px;
-  transition: padding-left 0.3s ease;
+.app-wrapper.right-open .chat-main {
+  padding-right: 70px; /* 사이드바와 여유 간격 */
+  transition: padding-right 0.3s ease;
 }
+
 
 /* 반응형 처리 */
 @media (max-width: 768px) {

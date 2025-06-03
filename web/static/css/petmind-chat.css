@@ -7,7 +7,7 @@
 html, body {
   height: 100%;
   margin: 0;
-  overflow: hidden; /* ✅ 스크롤 제거 */
+  /* overflow: hidden; */
   font-family: 'Spoqa Han Sans', sans-serif;
   background-color: #FFFFF6;
 }

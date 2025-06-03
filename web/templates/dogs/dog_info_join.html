@@ -19,9 +19,14 @@
 {% include 'common/header.html' %}
 <div class="dog-info-form">
   <div class="top-title">
-    <span class="highlight">PetMind</span><strong>에 오신 걸 환영해요!</strong><br/>
-    회원가입이 완료되었어요.<br/>
-    이제 나의 반려견 프로필을 등록하고 맞춤형 상담을 시작해보세요!
+    {% if is_add_mode %}
+      <strong>새로운 반려견을 등록해보세요!</strong><br/>
+      여러 반려견을 등록하면 각 반려견별 맞춤 상담을 받을 수 있어요.
+    {% else %}
+      <span class="highlight">PetMind</span><strong>에 오신 걸 환영해요!</strong><br/>
+      회원가입이 완료되었어요.<br/>
+      이제 나의 반려견 프로필을 등록하고 맞춤형 상담을 시작해보세요!
+    {% endif %}
   </div>
 
 {% if messages %}
@@ -62,7 +67,7 @@
           <label class="image-upload-label">
             <img src="{% static 'images/image.png' %}" alt="기본 아이콘" class="upload-icon" />
             <img id="uploaded-image" class="uploaded-preview" style="display: none;" />
-            <input type="file" name="profile_image_url" accept=".jpg, .jpeg, .png" id="image-input" />
+            <input type="file" name="profile_image" accept=".jpg, .jpeg, .png" id="image-input" />
           </label>
         </div>
       </div>
