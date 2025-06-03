@@ -13,11 +13,13 @@
   <link rel="stylesheet" href="{% static 'css/chat_header.css' %}">
   <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
   <link rel="stylesheet" href="{% static 'css/chat_talk.css' %}">
+  <link rel="stylesheet" href="{% static 'css/right_sidebar.css' %}">  <!-- ✅ 오른쪽 사이드바 스타일 -->
 </head>
 <body>
   <div class="app-wrapper" id="appWrapper">
     {% include 'common/chat_header.html' %}
     {% include 'common/sidebar.html' %}
+    {% include 'common/right_sidebar.html' %}  <!-- ✅ 오른쪽 사이드바 포함 -->
 
     <main class="chat-main">
       <div class="chat-history">
@@ -87,12 +89,13 @@
     </main>
   </div>
 
-  <!-- ✅ JS 파일들 불러오기 -->
+  <!-- ✅ JS -->
   <script src="{% static 'js/chat_member_sidebar.js' %}"></script>
   <script src="{% static 'js/image_upload.js' %}"></script>
   <script src="{% static 'js/recommend.js' %}"></script>
+  <script src="{% static 'js/right_sidebar.js' %}"></script>  <!-- ✅ 사이드바 토글 스크립트 추가 -->
 
-  <!-- ✅ 시간 포맷 변환 -->
+  <!-- ✅ 시간 포맷 -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       document.querySelectorAll(".chat-time").forEach(el => {
@@ -100,7 +103,9 @@
         if (rawTime) {
           const date = new Date(rawTime);
           if (!isNaN(date)) {
-            el.textContent = date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: true });
+            el.textContent = date.toLocaleTimeString('ko-KR', {
+              hour: '2-digit', minute: '2-digit', hour12: true
+            });
           } else {
             el.textContent = '시간 오류';
           }

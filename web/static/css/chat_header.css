@@ -40,9 +40,10 @@ text-decoration: none;
 position: relative;
 }
 .chat-user-icon {
-width: 24px;
-height: 24px;
+width: 45px;
+height: 45px;
 cursor: pointer;
+border-radius: 50%;
 }
 
 /* 드롭다운 메뉴 */

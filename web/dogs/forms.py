@@ -6,7 +6,7 @@ class DogProfileForm(forms.ModelForm):
 
     class Meta:
         model = DogProfile
-        exclude = ['user']  # ✅ user는 폼에서 입력 안 받도록 제외
+        exclude = ['user']
         widgets = {
             'disease_history': forms.Textarea(attrs={'rows': 2}),
         }

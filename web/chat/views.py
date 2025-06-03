@@ -56,10 +56,15 @@ def chat_member_view(request, dog_id):
         return redirect('user:home')
 
     dog = get_object_or_404(DogProfile, id=dog_id, user=user)
-    chat_list = Chat.objects.filter(dog__user=user).order_by('-created_at')
+
+    dog_list = DogProfile.objects.filter(user=user).order_by('created_at')
+
+    chat_list = Chat.objects.filter(dog=dog).order_by('-created_at')
     grouped_chat_list = group_chats_by_date(chat_list)
     current_chat = Chat.objects.filter(dog=dog).order_by('-created_at').first()
     messages = Message.objects.filter(chat=current_chat).order_by('created_at') if current_chat else []
+
+    request.session['current_dog_id'] = dog.id
 
     return render(request, 'chat/chat.html', {
         'grouped_chat_list': grouped_chat_list,
@@ -69,6 +74,7 @@ def chat_member_view(request, dog_id):
         'is_guest': False,
         'user_email': user.email,
         'dog': dog,
+        'dog_list': dog_list,
     })
 
 
@@ -108,6 +114,7 @@ def guest_profile_register(request):
 
     return HttpResponseNotAllowed(['GET', 'POST'])
 
+
 @require_http_methods(["GET", "POST"])
 def chat_member_talk_detail(request, dog_id, chat_id):
     user_id = request.session.get("user_id")
@@ -141,8 +148,10 @@ def chat_member_talk_detail(request, dog_id, chat_id):
         return redirect('chat:chat_member_talk_detail', dog_id=dog.id, chat_id=chat.id)
 
     messages = Message.objects.filter(chat=chat).prefetch_related("images").order_by('created_at')
-    chat_list = Chat.objects.filter(dog__user=user).order_by('-created_at')
+    chat_list = Chat.objects.filter(dog=dog).order_by('-created_at')
     grouped_chat_list = group_chats_by_date(chat_list)
+
+    dog_list = DogProfile.objects.filter(user=user).order_by('created_at')
 
     return render(request, "chat/chat_talk.html", {
         "messages": messages,
@@ -153,6 +162,7 @@ def chat_member_talk_detail(request, dog_id, chat_id):
         "is_guest": False,
         "now_time": timezone.localtime().strftime("%I:%M %p").lower(),
         "dog": dog,
+        "dog_list": dog_list,
     })
 
 
@@ -233,35 +243,14 @@ def chat_main(request):
         'show_login_notice': is_guest 
     })
 
-
-
-
-@require_POST
-def chat_member_start(request, chat_id):
-    user_id = request.session.get('user_id')
+def chat_switch_dog(request, dog_id):
+    user_id = request.session.get("user_id")
     if not user_id:
-        return redirect('user:home')
+        return redirect("user:home")
 
-    try:
-        user = User.objects.get(id=user_id)
-        chat = Chat.objects.get(id=chat_id, dog__user=user)
-    except (User.DoesNotExist, Chat.DoesNotExist):
-        return redirect('user:home')
+    dog = get_object_or_404(DogProfile, id=dog_id, user_id=user_id)
 
-    request.session["current_dog_id"] = chat.dog.id
-
-    chat_list = Chat.objects.filter(dog__user=user).order_by('-created_at')
-    messages = Message.objects.filter(chat=chat).order_by('created_at')
-    user_email = request.session.get('user_email')
-
-    return render(request, 'chat/chat.html', {
-        'chat_list': chat_list,
-        'current_chat': chat,
-        'chat_messages': messages,
-        'user_email': user_email,
-        'is_guest': False,
-    })
-
+    return redirect('chat:chat_member', dog_id=dog.id)
 
 
 def call_runpod_api(message, user_info):
@@ -497,6 +486,9 @@ def chat_talk_view(request, chat_id):
     chat_list = Chat.objects.filter(user__id=user_id).order_by('-created_at') if not is_guest else []
     now_time = timezone.localtime().strftime("%I:%M %p").lower()
 
+    dog = chat.dog if not is_guest else None
+    dog_list = DogProfile.objects.filter(user__id=user_id).order_by('created_at') if dog else []
+
     return render(request, "chat/chat_talk.html", {
         "messages": messages,
         "current_chat": chat,
@@ -504,6 +496,8 @@ def chat_talk_view(request, chat_id):
         "user_email": user_email,
         "is_guest": is_guest,
         "now_time": now_time,
+        "dog": dog,
+        "dog_list": dog_list
     })
 
 

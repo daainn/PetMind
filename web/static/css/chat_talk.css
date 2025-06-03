@@ -112,7 +112,7 @@
 /* 입력 폼 */
 .chat-input-form {
   width: 100%;
-  max-width: 60%;
+  max-width: 70%;
   background-color: #fff;
   border-radius: 20px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
@@ -329,6 +329,11 @@
   margin-left: 280px;
   transition: margin-left 0.3s ease;
 }
+.app-wrapper.right-open .chat-main {
+  padding-right: 70px; /* 사이드바와 여유 간격 */
+  transition: padding-right 0.3s ease;
+}
+
 
 /* 반응형 대응 */
 @media (max-width: 768px) {

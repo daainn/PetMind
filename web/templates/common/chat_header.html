@@ -1,39 +1,29 @@
 {% load static %}
 
 <header class="chat-header">
-  <!-- ✅ 폰트 CDN -->
   <link href="https://cdn.jsdelivr.net/npm/spoqa-han-sans@2.1.2/css/SpoqaHanSans.min.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Koh+Santepheap&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Leckerli+One&display=swap" rel="stylesheet">
 
-
   <div class="chat-header-inner">
-    <!-- 사이드바 토글 버튼 -->
     <button id="sidebarToggle" class="chat-sidebar-btn header-sidebar-toggle">
       <img src="{% static 'images/sidebar.png' %}" alt="사이드바 열기">
     </button>
 
-    <!-- 가운데 로고 -->
     <a href="/" class="chat-logo">PetMind</a>
 
-    <!-- 유저 아이콘 + 드롭다운 -->
-    <div class="chat-user-menu">
-      {% if is_guest %}
-        <img src="{% static 'images/non-member.png' %}" class="chat-user-icon" id="chatUserIcon" alt="비회원 아이콘">
-      {% else %}
-        <img src="{% static 'images/member.png' %}" class="chat-user-icon" id="chatUserIcon" alt="회원 아이콘">
-      {% endif %}
-
-      <div class="chat-dropdown-menu" id="chatDropdownMenu">
-        {% if is_guest %}
-          <a href="{% url 'dogs:dog_info_join' %}">반려견 정보 입력</a>
-          <a href="{% url 'user:home' %}">로그인</a>
+    {% if is_guest %}
+      <div class="chat-user-menu">
+        <img src="{% static 'images/guest_icon.png' %}" class="chat-user-icon" id="chatUserIcon" alt="비회원 아이콘">
+      </div>
+    {% else %}
+      <div class="chat-user-menu">
+        {% if dog.profile_image %}
+          <img src="{{ dog.profile_image.url }}" class="chat-user-icon" id="chatUserIcon" alt="회원 아이콘">
         {% else %}
-          <p class="chat-user-email">{{ user_email }}</p>
-          <a href="{% url 'dogs:dog_info_join' %}">반려견 정보 수정</a>
-          <a href="{% url 'user:logout' %}">로그아웃</a>
+          <img src="{% static 'images/petmind_logo_dog.png' %}" class="chat-user-icon" id="chatUserIcon" alt="기본 회원 아이콘">
         {% endif %}
       </div>
-    </div>
+    {% endif %}
   </div>
 </header>
