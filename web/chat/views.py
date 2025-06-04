@@ -506,6 +506,14 @@ def recommend_content(request, chat_id):
     if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({"error": "Invalid request"}, status=400)
 
+    # ✅ 비회원 차단
+    if request.session.get("guest", False):
+        return JsonResponse({
+            "error": "비회원은 추천 콘텐츠를 이용할 수 없습니다.",
+            "cards_html": "",
+            "has_recommendation": False
+        }, status=403)
+
     chat = Chat.objects.get(id=chat_id)
     history = Message.objects.filter(chat=chat).order_by("created_at")
     chat_history = [

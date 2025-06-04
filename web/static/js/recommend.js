@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const chatHistory = document.querySelector('.chat-history');
   const textarea = document.querySelector('textarea');
 
+  const isGuest = JSON.parse(document.getElementById('isGuestFlag')?.textContent || 'false');
+
   if (!recommendTrigger) return;
 
   recommendTrigger.addEventListener('mouseenter', () => {
@@ -17,6 +19,11 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   recommendTrigger.addEventListener('click', () => {
+    if (isGuest) {
+      alert("추천 콘텐츠는 로그인 후 이용하실 수 있습니다.");
+      return;
+    }
+
     if (recommendTrigger.classList.contains('disabled')) return;
 
     const url = recommendTrigger.getAttribute('data-url');

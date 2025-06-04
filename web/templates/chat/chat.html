@@ -133,7 +133,20 @@
         if (warningBox) warningBox.style.display = 'none';
       });
     }
+
+    if (isGuest) {
+      const imageInput = document.getElementById('imageInput');
+      const imageUploadBtn = document.querySelector('.image-upload-btn');
+
+      if (imageUploadBtn && imageInput) {
+        imageUploadBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          alert("이미지 업로드는 로그인 후 이용하실 수 있습니다.");
+        });
+      }
+    }
   });
+
 </script>
 </body>
 </html>
