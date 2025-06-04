@@ -1,3 +1,5 @@
+{% load static %}
+
 <div class="right-sidebar" id="rightSidebar">
   <div class="right-sidebar-header">
     <h3 style="margin: 0; font-size: 16px;">반려견 정보</h3>
@@ -7,18 +9,20 @@
   {% if dog %}
   <div class="dog-profile-card">
     {% if dog.profile_image %}
-      <img src="{{ dog.profile_image.url }}"
-           alt="반려견 이미지"
-           class="dog-profile-image">
+      <img src="{{ dog.profile_image.url }}" alt="반려견 이미지" class="dog-profile-image">
     {% else %}
-      <img src="/static/images/petmind_logo_dog.png"
-           alt="기본 반려견 이미지"
-           class="dog-profile-image">
+      <img src="{% static 'images/petmind_logo_dog.png' %}" alt="기본 반려견 이미지" class="dog-profile-image">
     {% endif %}
 
     <div class="dog-profile-header">
       <span class="dog-icon">🐾</span>
       <strong class="dog-name">{{ dog.name }}</strong>
+
+      <a href="{% url 'dogs:dog_info_join' %}?mode=edit&dog_id={{ dog.id }}"
+        class="dog-edit-button-inline" aria-label="수정">
+        <i class="fas fa-pen"></i>
+      </a>
+
       {% if dog.age or dog.breed.name %}
         <span class="dog-info">
           (
@@ -64,14 +68,22 @@
                    class="dog-switch-image"
                    alt="{{ other_dog.name }} 이미지">
             {% else %}
-              <img src="/static/images/petmind_logo_dog.png"
+              <img src="{% static 'images/petmind_logo_dog.png' %}"
                    class="dog-switch-image"
                    alt="{{ other_dog.name }} 기본 이미지">
             {% endif %}
             <div class="dog-switch-info">
               <strong>{{ other_dog.name }}</strong>
-              <span>({{ other_dog.age }}세, {{ other_dog.breed.name }})</span>
+              <span>
+                {% if other_dog.age %}{{ other_dog.age }}세{% endif %}
+                {% if other_dog.age and other_dog.breed.name %}, {% endif %}
+                {{ other_dog.breed.name }}
+              </span>
             </div>
+          </a>
+          <a href="{% url 'dogs:dog_info_join' %}?mode=edit&dog_id={{ dog.id }}"
+            class="dog-edit-button-inline" aria-label="수정">
+            <i class="fas fa-pen"></i>
           </a>
         </li>
         {% endif %}
