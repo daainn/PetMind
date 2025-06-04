@@ -407,3 +407,16 @@ select.error {
   display: none;
 } 
 
+.delete-dog-btn {
+  color: #888;
+  font-size: 14px;
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.delete-dog-btn:hover {
+  color: #e74c3c;
+  text-decoration: underline;
+}

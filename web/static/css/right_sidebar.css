@@ -35,6 +35,19 @@
   background: none;
   border: none;
   cursor: pointer;
+  color: gray;
+}
+
+.dog-edit-button-inline {
+  margin-left: 6px;
+  font-size: 14px;
+  color: #FFC508;
+  text-decoration: none;
+  vertical-align: middle;
+}
+
+.dog-edit-button-inline i {
+  cursor: pointer;
 }
 
 .dog-profile-card {
@@ -120,13 +133,17 @@
 }
 
 .dog-switch-card {
-  background: #fff;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: white;
   border-radius: 12px;
-  padding: 10px;
-  margin-bottom: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  transition: box-shadow 0.2s ease;
+  padding: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
+
 
 .dog-switch-card:hover {
   box-shadow: 0 3px 10px rgba(0,0,0,0.08);
@@ -137,6 +154,17 @@
   align-items: center;
   gap: 10px;
   text-decoration: none;
+}
+
+.dog-switch-edit {
+  margin-left: auto;
+  margin-right: 10px;
+  font-size: 14px;
+  color: #888;
+}
+
+.dog-switch-edit i {
+  pointer-events: none;
 }
 
 .dog-switch-image {

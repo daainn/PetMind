@@ -8,10 +8,6 @@
 
   {% if dog %}
   <div class="dog-profile-card">
-    <a href="{% url 'dogs:dog_info_join' %}?mode=edit&dog_id={{ dog.id }}" class="dog-edit-button" style="position: absolute; top: 12px; right: 12px;">
-      <i class="fas fa-pen" style="color: #888;"></i>
-    </a>
-
     {% if dog.profile_image %}
       <img src="{{ dog.profile_image.url }}" alt="반려견 이미지" class="dog-profile-image">
     {% else %}
@@ -21,6 +17,12 @@
     <div class="dog-profile-header">
       <span class="dog-icon">🐾</span>
       <strong class="dog-name">{{ dog.name }}</strong>
+
+      <a href="{% url 'dogs:dog_info_join' %}?mode=edit&dog_id={{ dog.id }}"
+        class="dog-edit-button-inline" aria-label="수정">
+        <i class="fas fa-pen"></i>
+      </a>
+
       {% if dog.age or dog.breed.name %}
         <span class="dog-info">
           (
@@ -78,6 +80,10 @@
                 {{ other_dog.breed.name }}
               </span>
             </div>
+          </a>
+          <a href="{% url 'dogs:dog_info_join' %}?mode=edit&dog_id={{ dog.id }}"
+            class="dog-edit-button-inline" aria-label="수정">
+            <i class="fas fa-pen"></i>
           </a>
         </li>
         {% endif %}

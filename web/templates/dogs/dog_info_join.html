@@ -22,6 +22,9 @@
     {% if is_add_mode %}
       <strong>새로운 반려견을 등록해보세요!</strong><br/>
       여러 반려견을 등록하면 각 반려견별 맞춤 상담을 받을 수 있어요.
+    {% elif edit_dog_id %}
+      <strong>반려견 정보를 수정해보세요!</strong><br/>
+      수정된 정보는 상담 결과에 반영돼요.
     {% else %}
       <span class="highlight">PetMind</span><strong>에 오신 걸 환영해요!</strong><br/>
       회원가입이 완료되었어요.<br/>
@@ -38,7 +41,7 @@
 {% endif %}
 
 
-<form method="POST" enctype="multipart/form-data" action="{% url 'dogs:dog_info_join' %}">
+<form method="POST" enctype="multipart/form-data" action="{% url 'dogs:dog_info_join' %}?mode={% if is_add_mode %}add{% else %}edit&dog_id={{ edit_dog_id }}{% endif %}">
   {% csrf_token %}
   {% if form.non_field_errors %}
     <div class="field-error">
@@ -181,11 +184,31 @@
     </div>
 
     <div class="button-row">
-      <button type="submit" class="btn-confirm">등록</button>
-    </div>
+    <button type="submit" class="btn-confirm">
+      {% if edit_dog_id %}
+        수정 완료
+      {% else %}
+        등록
+      {% endif %}
+    </button>
   </div>
-</form>
-</div>
+</div> <!-- ✅ .form-box 닫힘 -->
+</form> <!-- ✅ 메인 form 닫힘 -->
+
+{% if edit_dog_id %}
+  <!-- ✅ 삭제 버튼: 카드 내부 하단, 가운데 정렬 -->
+  <div style="text-align: center; margin-top: 20px; margin-bottom: 40px;">
+    <form method="POST" action="{% url 'dogs:delete_dog_profile' edit_dog_id %}"
+          onsubmit="return confirm('정말 반려견 프로필을 삭제하시겠습니까?');"
+          style="display: inline;">
+      {% csrf_token %}
+      <button type="submit"
+              style="background: none; border: none; color: #888; font-size: 14px; text-decoration: underline; cursor: pointer;">
+        반려견 프로필 삭제하기
+      </button>
+    </form>
+  </div>
+{% endif %}
 
 
 <script>

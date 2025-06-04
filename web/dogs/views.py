@@ -8,6 +8,7 @@ from django.core.files.base import ContentFile
 from user.utils import get_logged_in_user
 import os
 from user.models import User
+from django.views.decorators.http import require_POST
 
 
 def dog_info_join_view(request):
@@ -45,6 +46,7 @@ def dog_info_join_view(request):
             return redirect('chat:chat_member', dog_id=dog_profile.id)
         else:
             print("폼 에러 발생:", form.errors)
+
     else:
         form = DogProfileForm(instance=dog_instance)
 
@@ -55,20 +57,38 @@ def dog_info_join_view(request):
         "edit_dog_id": edit_dog_id,
         "dog_instance": dog_instance,
     })
-    
 
+    
+@require_POST
 def delete_dog_profile(request, dog_id):
     user = get_logged_in_user(request)
     if not user:
+        print("🚫 사용자 인증 실패")
         return redirect('user:home')
 
-    dog = get_object_or_404(DogProfile, id=dog_id, user=user)
+    # 삭제 대상 조회
+    try:
+        dog = DogProfile.objects.get(id=dog_id, user=user)
+        print(f"🗑️ 삭제 대상 반려견: {dog.name} (ID: {dog.id})")
+    except DogProfile.DoesNotExist:
+        print(f"❌ 삭제 실패 - 반려견 ID {dog_id} 없음 또는 사용자 불일치")
+        return redirect('user:home')
+
+    # 삭제 수행
     dog.delete()
+    print(f"✅ 삭제 완료 - 반려견 ID {dog_id}")
 
-    remaining_dogs = DogProfile.objects.filter(user=user).order_by('created_at')
+    # 삭제 이후 DB 상태 확인
+    all_dogs = DogProfile.objects.filter(user=user).order_by('created_at')
+    print(f"📦 남아있는 반려견 수: {all_dogs.count()}")
+    for remaining in all_dogs:
+        print(f"   - 🐶 {remaining.name} (ID: {remaining.id})")
 
-    if remaining_dogs.exists():
-        latest_dog = remaining_dogs.last()
+    # 리디렉션 로직
+    if all_dogs.exists():
+        latest_dog = all_dogs.last()
+        print(f"➡️ 최신 반려견으로 이동: {latest_dog.name} (ID: {latest_dog.id})")
         return redirect('chat:chat_member', dog_id=latest_dog.id)
     else:
+        print("📭 반려견이 모두 삭제됨 → 등록 페이지로 이동")
         return redirect('/dogs/join/?mode=add')
