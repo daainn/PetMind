@@ -248,19 +248,17 @@ body {
   height: 40px;
 }
 
-/* 사이드바 열릴 때 레이아웃 이동 */
 .app-wrapper.sidebar-open .chat-main {
-  margin-left: 280px; /* 사이드바 width와 동일하게 설정 */
+  margin-left: 280px; 
   transition: margin-left 0.3s ease;
 }
 
 .app-wrapper.right-open .chat-main {
-  padding-right: 70px; /* 사이드바와 여유 간격 */
+  padding-right: 70px;
   transition: padding-right 0.3s ease;
 }
 
 
-/* 반응형 처리 */
 @media (max-width: 768px) {
   .chat-main {
     padding: 20px;

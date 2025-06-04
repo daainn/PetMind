@@ -106,10 +106,8 @@
           }
         }
       });
-    // ✅ 비회원 기능 제한
     const isGuest = {{ is_guest|yesno:"true,false" }};
 
-    // 이미지 업로드 차단
     if (isGuest) {
       const imageUploadLabel = document.querySelector('.image-upload-btn');
       if (imageUploadLabel) {
@@ -120,7 +118,6 @@
       }
     }
 
-    // 추천 콘텐츠 버튼 차단
     if (isGuest) {
       const recommendBtn = document.getElementById('recommendTrigger');
       if (recommendBtn) {

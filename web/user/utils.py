@@ -7,16 +7,14 @@ def get_or_create_user(request):
     회원 로그인: user_id 세션에서 조회
     비회원: guest_user_id 세션에서 조회 또는 생성
     """
-    # 회원 세션이 있으면 회원 처리
     user_id = request.session.get("user_id")
     if user_id:
         try:
             user = User.objects.get(id=uuid.UUID(user_id))
             return user, False
         except (User.DoesNotExist, ValueError):
-            pass  # 오류 시 비회원 처리로 진행
+            pass  
 
-    # 비회원 세션이 있으면 비회원 처리
     guest_user_id = request.session.get("guest_user_id")
     if guest_user_id:
         try:
@@ -25,7 +23,6 @@ def get_or_create_user(request):
         except User.DoesNotExist:
             pass
 
-    # 비회원 정보 없으면 새로 생성
     user = User.objects.create(
         email=f"guest_{uuid.uuid4().hex[:10]}@example.com",
         password="",
