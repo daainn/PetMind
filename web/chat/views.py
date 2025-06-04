@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
-from django.http import JsonResponse, HttpResponse, FileResponse, HttpResponseNotAllowed, Http404
+from django.http import JsonResponse, FileResponse, HttpResponseNotAllowed, Http404, HttpResponseNotFound, HttpResponseServerError
 from user.models import User
 from .models import Chat, Message, Content, MessageImage, UserReview
 import pandas as pd
@@ -13,17 +13,16 @@ from django.contrib.auth.decorators import login_required
 from user.utils import get_logged_in_user
 import uuid
 import requests
-from datetime import datetime, timedelta
 import json
 from django.template.loader import render_to_string, get_template
-import tempfile
-import io
 import os
 from django.conf import settings
+from .utils.gpt_report import build_prompt, generate_response, clean_and_split
+from dotenv import load_dotenv
+from .utils.db_load import load_chat_and_profile
+from .utils.report_pdf import generate_pdf_from_context
 import time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-import img2pdf
+import tempfile
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
@@ -591,8 +590,16 @@ def submit_review(request):
 
     return JsonResponse({'status': 'error'}, status=400)
 
+
 @api_view(['POST'])
 def generate_report(request):
+    """
+    1) client로부터 chat_id, start_date, end_date를 받아서
+    2) 데이터베이스에서 반려견 정보와 대화 이력을 조회하고,
+    3) GPT로 요약문을 생성한 뒤,
+    4) generate_pdf_from_context를 호출하여 PDF를 만들고,
+    5) 생성된 PDF 파일을 FileResponse로 바로 내려줍니다.
+    """
     data = request.data
     print("📩 받은 데이터:", data)
 
@@ -601,73 +608,125 @@ def generate_report(request):
     end_date = data.get("end_date")
 
     if not (chat_id and start_date and end_date):
-        return Response({"error": "필수 값 누락"}, status=400)
+        return Response({"error": "필수 값(chat_id, start_date, end_date)이 누락되었습니다."}, status=400)
 
-    # ✅ PDF 저장 경로
-    pdf_path = os.path.join(settings.MEDIA_ROOT, f"report_{chat_id}.pdf")
+    # 1) DB에서 반려견 프로필과 대화 이력 불러오기
+    dog, history = load_chat_and_profile(chat_id)
+    if not dog or not history:
+        return Response({"error": "해당 chat_id에 대한 데이터가 없습니다."}, status=404)
 
-    # ✅ 임시 HTML 생성
+    # 2) GPT 요약 (인트로, 조언, 다음 상담)
+    messages = build_prompt(dog, history)
+    raw_output = generate_response(messages)
+    intro, advice, next_ = clean_and_split(raw_output)
+
+    # 3) PDF 템플릿에 넣을 context 구성
     context = {
-        "dog_name": "메이",
-        "age": 2,
-        "breed_name": "푸들",
-        "gender_display": "여아",
-        "neutered": "중성화 완료",
-        "living_period": "1년 이상 3년 미만",
-        "disease_history": "없음",
-        "housing_type": "아파트",
+        "dog_name": dog["name"],
+        "age": dog["age"],
+        "breed_name": dog["breed_name"],
+        "gender_display": dog["gender"],
+        "neutered": dog["neutered"],
+        "disease_history": dog["disease_history"],
+        "living_period": dog["living_period"],
+        "housing_type": dog["housing_type"],
+        # 프로필 이미지는 절대 URL로 만들어서 HTML에서 로드할 수 있도록 합니다.
         "profile_image_url": request.build_absolute_uri("/static/images/sample_dog.jpg"),
         "start_date": start_date,
         "end_date": end_date,
-        "llm_response_html": "<p>매우 활동적인 아이로 분석돼요!</p>",
-        "intro_text": "매일 산책을 하며 활발히 지냅니다.",
-        "advice_text": "간식을 줄 때 말로 칭찬도 함께 해주세요.",
-        "next_text": "무리하지 않도록 일주일에 한 번 휴식을 주세요.",
+        "intro_text": intro,
+        "advice_text": advice,
+        "next_text": next_,
+        "llm_response_html": raw_output,
+        # 템플릿 내에서 request를 참조해야 할 경우를 대비해 전달합니다.
         "request": request,
     }
-    
-    html_str = render_to_string("chat/report_template.html", context)
 
-    html_str = html_str.replace(
-    "/static/css/", f"file://{os.path.join(settings.BASE_DIR, 'static/css/')}"
-    )
-    html_str = html_str.replace(
-    "/static/images/", f"file://{os.path.join(settings.BASE_DIR, 'static/images/')}"
-    )
-    html_path = os.path.join(settings.BASE_DIR, "report_template.html")
-    image_path = os.path.join(settings.BASE_DIR, "petmind_logo.png")
+    # 4) generate_pdf_from_context 호출 → 임시 파일 경로 리턴
+    try:
+        # pdf_filename 파라미터로 원하는 파일명을 넘겨줄 수 있습니다(생략 시 "report.pdf").
+        # 여기서는 chat_id 기반으로 파일명을 지정해 보겠습니다.
+        pdf_temp_path = generate_pdf_from_context(context, pdf_filename=f"report_{chat_id}.pdf")
+        # pdf_temp_path: 예) "/tmp/tmpabcd1234.pdf"
+        # (generate_pdf_from_context 내부에서 NamedTemporaryFile, mkstemp을 썼으므로 시스템 임시 디렉터리에 저장됨)
+    except Exception as e:
+        # PDF 생성 중 에러가 발생하면 500으로 응답
+        return Response({"error": f"PDF 생성 실패: {str(e)}"}, status=500)
 
-    with open(html_path, "w", encoding="utf-8") as f:
-        f.write(html_str)
+    # 5) FileResponse로 생성된 PDF를 클라이언트로 바로 스트리밍
+    if os.path.exists(pdf_temp_path):
+        try:
+            # 'rb' 모드로 열어서 FileResponse로 반환
+            pdf_file = open(pdf_temp_path, 'rb')
+            response = FileResponse(pdf_file, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="report_{chat_id}.pdf"'
 
-    # ✅ 이미지 캡처
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--window-size=1024,2000")
+            # 뷰가 끝날 때 임시 파일을 삭제하도록 합니다.
+            # FileResponse가 닫힐 때까지 기다렸다가 삭제하기 위해 아래와 같이 하거나,
+            # 실제 서비스에서는 celery 같은 작업 큐를 써서 별도 cleanup 작업을 돌려도 좋습니다.
+            def remove_temp_file(response):
+                try:
+                    pdf_file.close()
+                    os.remove(pdf_temp_path)
+                except Exception:
+                    pass
 
-    driver = webdriver.Chrome(options=chrome_options)
-    driver.get("file://" + html_path)
-    time.sleep(2)
-    driver.save_screenshot(image_path)
-    driver.quit()
+            response.call_on_close(remove_temp_file)
+            return response
 
-    # ✅ 이미지 → PDF
-    with open(pdf_path, "wb") as f:
-        f.write(img2pdf.convert(image_path))
+        except Exception as e:
+            # 파일 읽기/스트리밍 중 에러
+            return HttpResponseServerError(f"PDF 파일 전송 중 에러: {str(e)}")
+    else:
+        return HttpResponseNotFound("생성된 PDF 파일을 찾을 수 없습니다.")
 
-    print("✅ PDF 저장 완료:", pdf_path)
+def download_report(request, chat_id):
+    dog, history = load_chat_and_profile(chat_id)
+    if not dog or not history:
+        raise Http404("상담 이력 또는 반려견 정보가 없습니다.")
 
-    return Response({"message": "리포트 생성 완료"}, status=200)
+    messages = build_prompt(dog, history)
+    raw_output = generate_response(messages)
+    intro, advice, next_ = clean_and_split(raw_output)
+
+    context = {
+        "dog_name": dog["name"],
+        "age": dog["age"],
+        "breed_name": dog["breed_name"],
+        "gender_display": dog["gender"],
+        "neutered": dog["neutered"],
+        "disease_history": dog["disease_history"],
+        "living_period": dog["living_period"],
+        "housing_type": dog["housing_type"],
+        "profile_image_url": "file://" + os.path.join(settings.BASE_DIR, "static/images/sample_dog.jpg"),
+        "start_date": "2025-06-01",
+        "end_date": "2025-06-07",
+        "intro_text": intro,
+        "advice_text": advice,
+        "next_text": next_,
+        "llm_response_html": raw_output,
+        "request": request,
+    }
+
+    pdf_path = generate_pdf_from_context(context)
+
+    try:
+        with open(pdf_path, "rb") as f:
+            response = FileResponse(f, as_attachment=True, filename="상담리포트.pdf")
+            return response
+    finally:
+        try:
+            os.remove(pdf_path)
+        except Exception:
+            pass
 
 @api_view(['GET'])
 def check_report_status(request):
     # 테스트용: 항상 완료 상태 반환
     return Response({"status": "done"})
 
-def download_report_pdf(request, chat_id):
-    file_path = os.path.join(settings.MEDIA_ROOT, f"report_{chat_id}.pdf")
-    if not os.path.exists(file_path):
-        raise Http404("PDF 파일이 존재하지 않습니다.")
-    return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"report_{chat_id}.pdf")
+# def download_report_pdf(request, chat_id):
+#     file_path = os.path.join(settings.MEDIA_ROOT, f"report_{chat_id}.pdf")
+#     if not os.path.exists(file_path):
+#         raise Http404("PDF 파일이 존재하지 않습니다.")
+#     return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"report_{chat_id}.pdf")

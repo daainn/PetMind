@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fp.close();
 
     // console.log("✅ 보내는 chatId:", chatId);
-    const response = await fetch('/api/report/generate/', {
+    const response = await fetch('/chat/report/generate/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function pollModelStatus() {
     const interval = setInterval(async () => {
-      const res = await fetch('/api/report/status/');
+      const res = await fetch('/chat/report/status/');
       const data = await res.json();
       if (data.status === 'done') {
         progressBar.style.width = '100%';
@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const response = await fetch('/api/review/submit/', {
+    const response = await fetch('/chat/api/review/submit/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

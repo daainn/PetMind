@@ -8,15 +8,18 @@
 </head>
 <body>
   <div class="header">
-    <img src="{% static 'images/petmind_logo.png' %}" class="logo" alt="PetMind 로고">
+    <img src="{% static 'images/petmind_logo.png' %}" class="petmind-logo" alt="펫마인드 로고">
     <div class="report-date">{{ start_date }} ~ {{ end_date }}</div>
   </div>
 
-  <div class="title">🐾 7일 간의 {{ dog_name }} 🐾</div>
+  <div class="title">🐾 {{ day_range }}일 간의 {{ dog_name }} 🐾</div>
 
   <div class="profile">
-    <img src="{{ profile_image_url }}" class="profile-img" alt="{{ dog_name }} 사진">
-
+    {% if profile_image_url %}
+      <img src="{{ profile_image_url }}" class="profile-img" alt="{{ dog_name }} 사진">
+    {% else %}
+      <img src="{% static 'images/petmind_logo_dog.png' %}" class="profile-img" alt="기본 반려견 사진">
+    {% endif %}
     <div class="profile-box">
       <span class="name">
         {{ dog_name }} ({{ age }}세, {{ breed_name }})
@@ -32,10 +35,7 @@
     </div>
   </div>
 
-  <div class="section-title">{{ dog_name }}에 대해서 알려드릴게요</div>
-  <div class="llm-response">
-    {{ llm_response_html|safe }}
-  </div>
+  <div class="section-title-lg">{{ dog_name }}에 대해서 알려드릴게요!</div>
 
   <div class="section-title">🧾 우리 {{ dog_name }}는요</div>
   <div class="llm-response">

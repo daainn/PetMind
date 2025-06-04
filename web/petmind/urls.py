@@ -8,7 +8,6 @@ urlpatterns = [
     path('', include('user.urls')),
     path('chat/', include('chat.urls', namespace='chat')),
     path('dogs/', include('dogs.urls', namespace='dogs')),
-    path("api/", include("chat.urls")),
 ]
 
 

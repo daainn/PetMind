@@ -18,7 +18,8 @@ urlpatterns = [
     path('api/review/submit/', views.submit_review, name='submit_review'),
     path("report/generate/", views.generate_report),
     path("report/status/", views.check_report_status),
-    path("report/pdf/<int:chat_id>/", views.download_report_pdf),
+    # path("report/pdf/<int:chat_id>/", views.download_report_pdf),
+    path('report/download/<int:chat_id>/', views.download_report, name='download_report'),
 
     # 공통 전송 및 추천
     path('send/', views.chat_send, name='chat_send'),
