@@ -17,12 +17,14 @@
 
   <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <link rel="stylesheet" href="{% static 'css/right_sidebar.css' %}"> 
 
 </head>
 <body>
   <div class="app-wrapper" id="appWrapper">
     {% include 'common/chat_header.html' %}
     {% include 'common/sidebar.html' %}
+    {% include 'common/right_sidebar.html' %} 
 
     <main class="chat-main">
       <div class="chat-history">
@@ -54,7 +56,6 @@
         {% endfor %}
       </div>
 
-      <!-- ✅ 추천 버튼 -->
       <div class="recommend-info-box" id="recommendTrigger"
            data-url="{% url 'chat:recommend_content' chat_id=current_chat.id %}"
            style="cursor:pointer;">
@@ -62,7 +63,6 @@
         <span class="recommend-text">이런 정보는 어때요? 추천 콘텐츠를 확인해보세요.</span>
       </div>
 
-      <!-- ✅ 메시지 입력 폼 -->
       <form method="POST"
             action="{% if is_guest %}
                        {% url 'chat:chat_talk_detail' current_chat.id %}
@@ -92,12 +92,10 @@
     </main>
   </div>
 
-  <!-- ✅ JS 파일들 불러오기 -->
   <script src="{% static 'js/chat_member_sidebar.js' %}"></script>
   <script src="{% static 'js/image_upload.js' %}"></script>
   <script src="{% static 'js/recommend.js' %}"></script>
-
-  <!-- ✅ 시간 포맷 변환 -->
+  <script src="{% static 'js/right_sidebar.js' %}"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       document.querySelectorAll(".chat-time").forEach(el => {
@@ -105,15 +103,39 @@
         if (rawTime) {
           const date = new Date(rawTime);
           if (!isNaN(date)) {
-            el.textContent = date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: true });
+            el.textContent = date.toLocaleTimeString('ko-KR', {
+              hour: '2-digit', minute: '2-digit', hour12: true
+            });
           } else {
             el.textContent = '시간 오류';
           }
         }
       });
-    });
-  </script>
+    // ✅ 비회원 기능 제한
+    const isGuest = {{ is_guest|yesno:"true,false" }};
 
+    // 이미지 업로드 차단
+    if (isGuest) {
+      const imageUploadLabel = document.querySelector('.image-upload-btn');
+      if (imageUploadLabel) {
+        imageUploadLabel.addEventListener('click', function (e) {
+          e.preventDefault();
+          alert("이미지 업로드는 로그인 후 이용하실 수 있습니다.");
+        });
+      }
+    }
 
+    // 추천 콘텐츠 버튼 차단
+    if (isGuest) {
+      const recommendBtn = document.getElementById('recommendTrigger');
+      if (recommendBtn) {
+        recommendBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          alert("추천 콘텐츠는 로그인 후 이용하실 수 있습니다.");
+        });
+      }
+    }
+  });
+</script>
 </body>
 </html>

@@ -37,7 +37,6 @@ class DogProfile(models.Model):
     living_period = models.CharField(max_length=30, choices=LIVING_PERIOD_CHOICES, null=True, blank=True)
     profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True)
     housing_type = models.CharField(max_length=20, choices=HOUSING_CHOICES, null=True, blank=True)
-    profile_image_url = models.URLField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

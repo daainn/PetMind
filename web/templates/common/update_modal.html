@@ -1,0 +1,254 @@
+<!-- 회원 정보 수정 모달 -->
+<div id="updateModal" class="custom-modal" style="display: none;">
+  <div class="modal-content update-modal">
+    <span class="close-btn" onclick="closeModal()">&times;</span>
+
+    <h3 class="modal-title">회원 정보 수정 <span class="required-mark">(*필수입력)</span></h3>
+
+    <form method="post" action="{% url 'user:update_info' %}" id="updateForm">
+      {% csrf_token %}
+
+      <!-- 이메일 -->
+      <label for="email" class="modal-label">이 메 일<span class="label-star">*</span></label>
+      <div class="email-row">
+        <input type="email" id="email" name="email" value="{{ user_email }}" disabled />
+        <select disabled><option>직접 입력</option></select>
+      </div>
+
+      <!-- 기존 비밀번호 -->
+      <label for="current_password" class="modal-label">기존 비밀번호<span class="label-star">*</span></label>
+      <input type="password" id="current_password" name="current_password" placeholder="기존 비밀번호 입력" required />
+      <small class="password-hint">※ 영문 대/소문자, 숫자, 특수문자를 2종류 혼용하여 8~16자 입력</small>
+
+      <!-- 변경 비밀번호 -->
+      <label for="new_password" class="modal-label">변경 비밀번호<span class="label-star">*</span></label>
+      <input type="password" id="new_password" name="new_password" placeholder="변경할 비밀번호 입력" required />
+      <small class="password-hint">※ 영문 대/소문자, 숫자, 특수문자를 2종류 혼용하여 8~16자 입력</small>
+
+      <!-- 결과 메시지 -->
+      <div id="updateMessage" style="margin-top: 10px; font-size: 14px;"></div>
+
+      <!-- 버튼 영역 -->
+      <div class="modal-btns">
+        <button type="submit" class="confirm-btn">확인</button>
+        <button type="button" class="cancel-btn" onclick="closeModal()">취소</button>
+      </div>
+
+      <div class="withdraw-link">
+        <a href="#" onclick="openWithdrawConfirm(); return false;">회원 탈퇴 하기</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 회원 탈퇴 확인 모달 -->
+<div id="withdrawModal" class="custom-modal" style="display: none;">
+  <div class="modal-content update-modal" style="width: 400px; padding: 30px;">
+    <span class="close-btn" onclick="closeWithdrawModal()">&times;</span>
+    <h3 class="modal-title">정말 탈퇴하시겠습니까?</h3>
+    <p style="font-size: 14px; margin-bottom: 25px;">탈퇴 시 모든 정보가 삭제되며 복구할 수 없습니다.</p>
+    <div class="modal-btns">
+      <button class="confirm-btn" onclick="confirmWithdraw()">확인</button>
+      <button class="cancel-btn" onclick="closeWithdrawModal()">취소</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .update-modal *, .update-modal *::before, .update-modal *::after {
+    box-sizing: border-box;
+  }
+
+  .custom-modal {
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+  }
+
+  .modal-content.update-modal {
+    background-color: #fff;
+    width: 520px;
+    margin: 6% auto;
+    padding: 30px 40px;
+    border-radius: 12px;
+    position: relative;
+    font-family: 'Spoqa Han Sans Neo', sans-serif;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .modal-title {
+    margin: 0 0 20px;
+    font-size: 20px;
+    font-weight: bold;
+  }
+
+  .required-mark {
+    color: #F7AE05;
+    font-size: 14px;
+    margin-left: 5px;
+  }
+
+  .close-btn {
+    position: absolute;
+    right: 14px;
+    top: 12px;
+    font-size: 22px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .modal-label {
+    display: block;
+    margin-top: 14px;
+    margin-bottom: 5px;
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  .label-star {
+    color: #F7AE05;
+    margin-left: 3px;
+  }
+
+  .email-row {
+    display: grid;
+    grid-template-columns: 1fr 110px;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .email-row input,
+  .email-row select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    width: 100%;
+    background-color: #f6f6f6;
+  }
+
+  input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 6px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+
+  .password-hint {
+    font-size: 12px;
+    color: gray;
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .modal-btns {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .confirm-btn,
+  .cancel-btn {
+    flex: 1;
+    padding: 12px;
+    font-size: 15px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Spoqa Han Sans Neo', sans-serif;
+  }
+
+  .confirm-btn {
+    background-color: #FFD100;
+    color: white;
+  }
+
+  .cancel-btn {
+    background-color: #f3f3f3;
+  }
+
+  .withdraw-link {
+    text-align: center;
+    margin-top: 20px;
+  }
+
+  .withdraw-link a {
+    font-size: 13px;
+    color: gray;
+    text-decoration: underline;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const updateForm = document.getElementById('updateForm');
+    if (updateForm) {
+      updateForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const current = document.getElementById('current_password').value;
+        const newpw = document.getElementById('new_password').value;
+        const msgBox = document.getElementById('updateMessage');
+
+        const response = await fetch("{% url 'user:update_info' %}", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrftoken
+          },
+          body: new URLSearchParams({
+            'current_password': current,
+            'new_password': newpw
+          })
+        });
+
+        const result = await response.json();
+        msgBox.style.color = result.success ? '#F7AE05' : 'red';
+        msgBox.innerText = result.message;
+
+        if (result.success) {
+          setTimeout(() => {
+            closeModal();
+            msgBox.innerText = '';
+            updateForm.reset();
+          }, 1500);
+        }
+      });
+    }
+  });
+
+  function closeModal() {
+    document.getElementById('updateModal').style.display = 'none';
+  }
+
+  function openWithdrawConfirm() {
+    document.getElementById('withdrawModal').style.display = 'block';
+  }
+
+  function closeWithdrawModal() {
+    document.getElementById('withdrawModal').style.display = 'none';
+  }
+
+  async function confirmWithdraw() {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const response = await fetch("{% url 'user:withdraw' %}", {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrftoken }
+    });
+
+    if (response.ok) {
+      window.location.href = "{% url 'user:home' %}";
+    } else {
+      alert('회원 탈퇴에 실패했습니다.');
+    }
+  }
+</script>

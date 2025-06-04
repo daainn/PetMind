@@ -14,6 +14,12 @@ body {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
+#typewriter-text {
+  white-space: pre-line;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
 .header_tit {
   text-align: center;
   margin-top: 60px;
@@ -407,3 +413,16 @@ select.error {
   display: none;
 } 
 
+.delete-dog-btn {
+  color: #888;
+  font-size: 14px;
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.delete-dog-btn:hover {
+  color: #e74c3c;
+  text-decoration: underline;
+}

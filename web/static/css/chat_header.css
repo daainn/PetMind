@@ -1,9 +1,9 @@
 .chat-header {
   width: 100%;
   background-color: #FFFFF6;
-  border-bottom: 1px solid #e0e0e0;
   padding: 12px 24px;
   box-sizing: border-box;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .chat-header-inner {
@@ -40,9 +40,10 @@ text-decoration: none;
 position: relative;
 }
 .chat-user-icon {
-width: 24px;
-height: 24px;
+width: 45px;
+height: 45px;
 cursor: pointer;
+border-radius: 50%;
 }
 
 /* 드롭다운 메뉴 */

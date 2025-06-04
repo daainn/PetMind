@@ -1,8 +1,9 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .services.auth_service import authenticate_user
 from .repositories.user_repository import user_exists_by_email, get_user_by_email
 from .models import User
+from chat.models import Chat, UserReview
 from dogs.models import DogProfile
 from django.urls import reverse
 import uuid
@@ -17,7 +18,9 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 import json
+from django.utils.crypto import get_random_string
 
 def home(request):
     if request.method == 'POST':
@@ -33,7 +36,6 @@ def home(request):
             print(f"[DEBUG] 저장된 해시 비밀번호: {user.password}")
             messages.error(request, '비밀번호가 올바르지 않습니다.')
         else:
-            # 세션 기반 로그인 처리
             request.session.flush()
             request.session['user_id'] = str(user.id)
             request.session['user_email'] = user.email
@@ -58,17 +60,39 @@ def logout_view(request):
 def find_password(request):
     if request.method == 'POST':
         email = request.POST.get('email')
-        if user_exists_by_email(email):
-            request.session['reset_email'] = email
-            return redirect('user:find_password_complete')
+        user = get_user_by_email(email)
+
+        if user:
+            try:
+                temp_password = get_random_string(length=10)
+                user.password = make_password(temp_password)
+                user.save()
+
+                subject = "[PetMind] 임시 비밀번호 안내"
+                from_email = settings.DEFAULT_FROM_EMAIL
+                to_email = [email]
+
+                html_content = render_to_string('email_temp_password.html', {
+                    'temp_password': temp_password,
+                    'user': user,
+                })
+
+                email_message = EmailMultiAlternatives(subject, '', from_email, to_email)
+                email_message.attach_alternative(html_content, "text/html")
+                email_message.send()
+
+                return render(request, 'user/search_01.html', {
+                    'email_sent': True
+                })
+
+            except Exception as e:
+                messages.error(request, '이메일 발송 중 문제가 발생했습니다. 다시 시도해주세요.')
+                return redirect('user:find_password')
         else:
             messages.error(request, '입력한 이메일 주소를 찾을 수 없습니다.')
+
     return render(request, 'user/search_01.html')
 
-def find_password_complete(request):
-    email = request.session.get('reset_email')
-    user = get_user_by_email(email)
-    return render(request, 'user/search_02.html', {'user': user})
 
 def info(request):
     if request.method == 'POST':
@@ -111,6 +135,31 @@ def join_terms_privacy(request):
 def join_terms_service(request):
     return render(request, 'user/join_p_terms_service.html')
 
+@require_POST
+def update_info(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return JsonResponse({'success': False, 'message': '로그인이 필요합니다.'})
+
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({'success': False, 'message': '사용자를 찾을 수 없습니다.'})
+
+    current_password = request.POST.get('current_password')
+    new_password = request.POST.get('new_password')
+
+    if not check_password(current_password, user.password):
+        return JsonResponse({'success': False, 'message': '기존 비밀번호가 올바르지 않습니다.'})
+
+    user.password = make_password(new_password)
+    user.save()
+
+    return JsonResponse({'success': True, 'message': '비밀번호가 성공적으로 변경되었습니다.'})
+
+def user_feedback(request):
+    return render(request, 'user/user_feedback.html')
+
 
 def join_user_complete(request):
     if request.method == 'POST':
@@ -143,8 +192,6 @@ def join_user_complete(request):
         return render(request, 'user/home_01.html')
 
     return redirect('user:join_01')
-
-
 
 
 @csrf_exempt 
@@ -201,3 +248,46 @@ def verify_auth_code(request):
         return JsonResponse({'success': True})
     
     return JsonResponse({'success': False, 'message': '잘못된 요청입니다.'})
+
+
+@require_POST
+def withdraw_user(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return redirect('user:home')
+
+    try:
+        user = User.objects.get(id=user_id)
+        user.delete()
+        request.session.flush()
+    except User.DoesNotExist:
+        pass
+
+    return redirect('user:home')
+
+@require_POST
+def submit_feedback(request):
+    chat_id = request.POST.get('chat_id')
+    rating = request.POST.get('rating')
+    text = request.POST.get('text')
+
+    if not rating or not chat_id:
+        return JsonResponse({'status': 'error', 'message': '누락된 정보가 있습니다.'}, status=400)
+
+    try:
+        chat_id = int(chat_id)
+    except (TypeError, ValueError):
+        return JsonResponse({'status': 'error', 'message': '유효하지 않은 chat_id입니다.'}, status=400)
+
+    if UserReview.objects.filter(chat_id=chat_id).exists():
+        return JsonResponse({'status': 'duplicate'})
+
+    try:
+        UserReview.objects.create(
+            chat_id=chat_id,
+            review_score=int(rating),
+            review=text
+        )
+        return JsonResponse({'status': 'ok'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

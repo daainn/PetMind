@@ -1,7 +1,7 @@
 /* 헤더 전체 레이아웃 */
 .header {
   width: 100%;
-  padding: 20px 20px;
+  padding: 28px 20px;
   background-color: #FFFFF6;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
@@ -15,10 +15,12 @@
 
 /* 로고 스타일 */
 .logo {
+  position: absolute;
+  left: 11.5%;
+  transform: translateX(-50%);
   font-family: 'Leckerli One', cursive;
-  font-weight: 100;
-  font-size: 32px;
-  color: #FFC508;
+  font-size: 20px;
+  color: #F7AE05;
   text-decoration: none;
 }
 

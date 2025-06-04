@@ -17,11 +17,7 @@
     <!-- 왼쪽 안내 영역 -->
     <div class="left-box">
       <div class="left-content">
-        <p>
-          <strong>우리 강아지가 자꾸 짖어</strong><br />
-          3살 푸들인데 사람이 지나갈 때마다 짖어서<br />
-          걱정이야. 왜 그런거야?_
-        </p>
+        <p id="typewriter-text"></p>
       </div>
     </div>
 
@@ -69,5 +65,53 @@
       </form>
     </div>
   </div>
+<p id="typewriter-text"></p>
+
+<script>
+  const lines = [
+    "<strong>우리 강아지가 자꾸 짖어</strong><br>",
+    "3살 푸들인데 사람이 지나갈 때마다 짖어서<br>",
+    "걱정이야. 왜 그런거야?"
+  ];
+  const target = document.getElementById("typewriter-text");
+
+  const parser = new DOMParser();
+  const html = lines.join("");
+  const parsed = parser.parseFromString(`<div id="wrapper">${html}</div>`, "text/html");
+  const nodes = parsed.body.querySelector("#wrapper").childNodes;
+
+  let outerHTML = "";
+  let currentNodeIndex = 0;
+  let charIndex = 0;
+
+  function typeWriter() {
+    if (currentNodeIndex >= nodes.length) return;
+
+    const currentNode = nodes[currentNodeIndex];
+
+    if (currentNode.nodeType === Node.TEXT_NODE) {
+      // 일반 텍스트 노드
+      if (charIndex < currentNode.textContent.length) {
+        outerHTML += currentNode.textContent[charIndex++];
+        target.innerHTML = outerHTML;
+        setTimeout(typeWriter, 50);
+      } else {
+        currentNodeIndex++;
+        charIndex = 0;
+        setTimeout(typeWriter, 0);
+      }
+    } else if (currentNode.nodeType === Node.ELEMENT_NODE) {
+      // HTML 요소 (strong, br 등)
+      outerHTML += currentNode.outerHTML;
+      target.innerHTML = outerHTML;
+      currentNodeIndex++;
+      charIndex = 0;
+      setTimeout(typeWriter, 0);  // 태그는 바로 출력
+    }
+  }
+
+  window.addEventListener("DOMContentLoaded", typeWriter);
+</script>
+
 </body>
 </html>
