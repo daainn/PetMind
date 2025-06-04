@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const recommendText = document.querySelector('.recommend-text');
   const chatHistory = document.querySelector('.chat-history');
   const textarea = document.querySelector('textarea');
-
   const isGuest = JSON.parse(document.getElementById('isGuestFlag')?.textContent || 'false');
 
   if (!recommendTrigger) return;

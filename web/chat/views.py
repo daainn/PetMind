@@ -502,6 +502,7 @@ def chat_talk_view(request, chat_id):
 
 
 
+
 def recommend_content(request, chat_id):
     if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({"error": "Invalid request"}, status=400)
