@@ -20,6 +20,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 import json
+from django.utils.crypto import get_random_string
 
 def home(request):
     if request.method == 'POST':
@@ -59,17 +60,39 @@ def logout_view(request):
 def find_password(request):
     if request.method == 'POST':
         email = request.POST.get('email')
-        if user_exists_by_email(email):
-            request.session['reset_email'] = email
-            return redirect('user:find_password_complete')
+        user = get_user_by_email(email)
+
+        if user:
+            try:
+                temp_password = get_random_string(length=10)
+                user.password = make_password(temp_password)
+                user.save()
+
+                subject = "[PetMind] 임시 비밀번호 안내"
+                from_email = settings.DEFAULT_FROM_EMAIL
+                to_email = [email]
+
+                html_content = render_to_string('email_temp_password.html', {
+                    'temp_password': temp_password,
+                    'user': user,
+                })
+
+                email_message = EmailMultiAlternatives(subject, '', from_email, to_email)
+                email_message.attach_alternative(html_content, "text/html")
+                email_message.send()
+
+                return render(request, 'user/search_01.html', {
+                    'email_sent': True
+                })
+
+            except Exception as e:
+                messages.error(request, '이메일 발송 중 문제가 발생했습니다. 다시 시도해주세요.')
+                return redirect('user:find_password')
         else:
             messages.error(request, '입력한 이메일 주소를 찾을 수 없습니다.')
+
     return render(request, 'user/search_01.html')
 
-def find_password_complete(request):
-    email = request.session.get('reset_email')
-    user = get_user_by_email(email)
-    return render(request, 'user/search_02.html', {'user': user})
 
 def info(request):
     if request.method == 'POST':
