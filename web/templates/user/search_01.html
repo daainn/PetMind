@@ -17,7 +17,7 @@
       <h2 class="form-title">이메일 입력</h2>
       <p class="form-desc">
         회원가입 시, 사용했던 이메일 주소를 입력해주세요.<br />
-        해당 이메일 주소로 인증 메일이 발송됩니다.
+        해당 이메일 주소로 임시 비밀번호가 발송됩니다.
       </p>
 
       <form method="post" action="{% url 'user:find_password' %}">
@@ -27,6 +27,7 @@
           name="email" 
           class="input-email {% if messages %}error{% endif %}" 
           placeholder="이메일 입력" 
+          value="{{ email|default:'' }}" 
           required 
         />
 
@@ -36,9 +37,16 @@
           {% endfor %}
         {% endif %}
 
-        <button type="submit" class="btn-submit">이메일 인증 요청</button>
+        <button type="submit" class="btn-submit">임시 비밀번호 발급 요청</button>
       </form>
     </div>
   </main>
+
+  {% if email_sent %}
+  <script>
+    alert("입력하신 이메일로 임시 비밀번호가 발송되었습니다.");
+    window.location.href = "/";
+  </script>
+  {% endif %}
 </body>
 </html>
