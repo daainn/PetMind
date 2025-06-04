@@ -505,7 +505,7 @@ def chat_talk_view(request, chat_id):
                 pass
 
         if image_files:
-            answer = get_image_response(image_files, message)
+            answer = get_image_response(image_files, user_message)
         else:
             if is_guest:
                 user_info = get_minimal_guest_info(request.session)
@@ -551,7 +551,6 @@ def recommend_content(request, chat_id):
     if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({"error": "Invalid request"}, status=400)
 
-    # ✅ 비회원 차단
     if request.session.get("guest", False):
         return JsonResponse({
             "error": "비회원은 추천 콘텐츠를 이용할 수 없습니다.",
