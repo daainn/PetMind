@@ -467,6 +467,7 @@ def chat_talk_view(request, chat_id):
             if is_guest:
                 user_info = get_minimal_guest_info(request.session)
             else:
+                user = get_object_or_404(User, id=request.session.get("user_id"))
                 chat_history, prev_q, prev_a = get_chat_history(chat)
                 user_info = get_dog_info(chat.dog)
                 user_info.update({
@@ -474,7 +475,8 @@ def chat_talk_view(request, chat_id):
                     "prev_q": prev_q,
                     "prev_a": prev_a,
                     "prev_cate": None,
-                    "is_first_question": len(chat_history) == 0
+                    "is_first_question": len(chat_history) == 0,
+                    "user_id": str(user.id)
                 })
 
             answer = call_runpod_api(message_text, user_info)
@@ -499,6 +501,7 @@ def chat_talk_view(request, chat_id):
         "dog": dog,
         "dog_list": dog_list
     })
+
 
 
 
