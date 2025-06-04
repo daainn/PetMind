@@ -12,5 +12,4 @@ __pycache__/
 
 db.sqlite3
 
-/media/chat_images/
-/media/profile_images/
+/media/

@@ -5,6 +5,7 @@ from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ValidationError
 from .models import User
 
+# 사용자 정의 회원가입 폼
 class UserCreationForm(forms.ModelForm):
     class Meta:
         model = User
@@ -27,11 +28,12 @@ class UserCreationForm(forms.ModelForm):
         if len(password) < 8 or len(password) > 16:
             raise ValidationError("비밀번호는 8~16자 입력해주세요.")
 
+        # 조건: 대소문자, 숫자, 특수문자 중 2종 이상
         conditions = [
-            bool(re.search(r'[A-Z]', password)),      
-            bool(re.search(r'[a-z]', password)),     
-            bool(re.search(r'[0-9]', password)),      
-            bool(re.search(r'[^A-Za-z0-9]', password))  
+            bool(re.search(r'[A-Z]', password)),      # 대문자
+            bool(re.search(r'[a-z]', password)),      # 소문자
+            bool(re.search(r'[0-9]', password)),      # 숫자
+            bool(re.search(r'[^A-Za-z0-9]', password))  # 특수문자
         ]
 
         if sum(conditions) < 2:

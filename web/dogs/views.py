@@ -66,6 +66,7 @@ def delete_dog_profile(request, dog_id):
         print("🚫 사용자 인증 실패")
         return redirect('user:home')
 
+    # 삭제 대상 조회
     try:
         dog = DogProfile.objects.get(id=dog_id, user=user)
         print(f"🗑️ 삭제 대상 반려견: {dog.name} (ID: {dog.id})")
@@ -73,14 +74,17 @@ def delete_dog_profile(request, dog_id):
         print(f"❌ 삭제 실패 - 반려견 ID {dog_id} 없음 또는 사용자 불일치")
         return redirect('user:home')
 
+    # 삭제 수행
     dog.delete()
     print(f"✅ 삭제 완료 - 반려견 ID {dog_id}")
 
+    # 삭제 이후 DB 상태 확인
     all_dogs = DogProfile.objects.filter(user=user).order_by('created_at')
     print(f"📦 남아있는 반려견 수: {all_dogs.count()}")
     for remaining in all_dogs:
         print(f"   - 🐶 {remaining.name} (ID: {remaining.id})")
 
+    # 리디렉션 로직
     if all_dogs.exists():
         latest_dog = all_dogs.last()
         print(f"➡️ 최신 반려견으로 이동: {latest_dog.name} (ID: {latest_dog.id})")

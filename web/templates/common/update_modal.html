@@ -1,3 +1,4 @@
+<!-- 회원 정보 수정 모달 -->
 <div id="updateModal" class="custom-modal" style="display: none;">
   <div class="modal-content update-modal">
     <span class="close-btn" onclick="closeModal()">&times;</span>
@@ -7,22 +8,27 @@
     <form method="post" action="{% url 'user:update_info' %}" id="updateForm">
       {% csrf_token %}
 
+      <!-- 이메일 -->
       <label for="email" class="modal-label">이 메 일<span class="label-star">*</span></label>
       <div class="email-row">
         <input type="email" id="email" name="email" value="{{ user_email }}" disabled />
         <select disabled><option>직접 입력</option></select>
       </div>
 
+      <!-- 기존 비밀번호 -->
       <label for="current_password" class="modal-label">기존 비밀번호<span class="label-star">*</span></label>
       <input type="password" id="current_password" name="current_password" placeholder="기존 비밀번호 입력" required />
       <small class="password-hint">※ 영문 대/소문자, 숫자, 특수문자를 2종류 혼용하여 8~16자 입력</small>
 
+      <!-- 변경 비밀번호 -->
       <label for="new_password" class="modal-label">변경 비밀번호<span class="label-star">*</span></label>
       <input type="password" id="new_password" name="new_password" placeholder="변경할 비밀번호 입력" required />
       <small class="password-hint">※ 영문 대/소문자, 숫자, 특수문자를 2종류 혼용하여 8~16자 입력</small>
 
+      <!-- 결과 메시지 -->
       <div id="updateMessage" style="margin-top: 10px; font-size: 14px;"></div>
 
+      <!-- 버튼 영역 -->
       <div class="modal-btns">
         <button type="submit" class="confirm-btn">확인</button>
         <button type="button" class="cancel-btn" onclick="closeModal()">취소</button>
@@ -35,6 +41,7 @@
   </div>
 </div>
 
+<!-- 회원 탈퇴 확인 모달 -->
 <div id="withdrawModal" class="custom-modal" style="display: none;">
   <div class="modal-content update-modal" style="width: 400px; padding: 30px;">
     <span class="close-btn" onclick="closeWithdrawModal()">&times;</span>
