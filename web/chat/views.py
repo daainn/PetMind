@@ -324,7 +324,7 @@ def get_chat_history(chat):
 
 def call_runpod_api(message, user_info):
     try:
-        api_url = "https://x76r8kryd0u399-7004.proxy.runpod.net/chat"
+        api_url = "http://38.128.233.224:45310/chat"
         payload = {
             "message": message,
             "user_info": user_info
