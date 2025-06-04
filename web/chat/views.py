@@ -15,7 +15,6 @@ from django.contrib.auth.decorators import login_required
 from user.utils import get_logged_in_user
 from collections import defaultdict
 from datetime import date, timedelta
-
 import uuid
 import requests
 
@@ -413,6 +412,7 @@ def chat_member_delete(request, chat_id):
         return JsonResponse({'status': 'ok'})
     except Chat.DoesNotExist:
         return JsonResponse({'status': 'not_found'}, status=404)
+    
 
 @require_POST
 @csrf_exempt

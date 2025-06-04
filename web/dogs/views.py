@@ -1,10 +1,11 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .forms import DogProfileForm
 from user.utils import get_or_create_user
 from dogs.models import DogBreed, DogProfile
 from django.conf import settings
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+from user.utils import get_logged_in_user
 import os
 from user.models import User
 
@@ -20,24 +21,54 @@ def dog_info_join_view(request):
         return redirect("user:home")
 
     dog_breeds = DogBreed.objects.all().order_by('name')
-    is_add_mode = request.GET.get("mode") == "add"
+
+    mode = request.GET.get("mode", "add")
+    is_add_mode = mode == "add"
+    edit_dog_id = request.GET.get("dog_id")
+
+    dog_instance = None
+    if not is_add_mode and edit_dog_id:
+        dog_instance = get_object_or_404(DogProfile, id=edit_dog_id, user=user)
 
     if request.method == "POST":
-        form = DogProfileForm(request.POST, request.FILES)
+        form = DogProfileForm(request.POST, request.FILES, instance=dog_instance)
 
         if form.is_valid():
             dog_profile = form.save(commit=False)
             dog_profile.user = user
+
+            if not request.FILES.get('profile_image') and dog_instance:
+                dog_profile.profile_image = dog_instance.profile_image
+
             dog_profile.save()
 
             return redirect('chat:chat_member', dog_id=dog_profile.id)
         else:
             print("폼 에러 발생:", form.errors)
     else:
-        form = DogProfileForm()
+        form = DogProfileForm(instance=dog_instance)
 
     return render(request, "dogs/dog_info_join.html", {
         "form": form,
         "dog_breeds": dog_breeds,
-        "is_add_mode": is_add_mode
+        "is_add_mode": is_add_mode,
+        "edit_dog_id": edit_dog_id,
+        "dog_instance": dog_instance,
     })
+    
+
+def delete_dog_profile(request, dog_id):
+    user = get_logged_in_user(request)
+    if not user:
+        return redirect('user:home')
+
+    dog = get_object_or_404(DogProfile, id=dog_id, user=user)
+    dog.delete()
+
+    remaining_dogs = DogProfile.objects.filter(user=user).order_by('created_at')
+
+    if remaining_dogs.exists():
+        latest_dog = remaining_dogs.last()
+        return redirect('chat:chat_member', dog_id=latest_dog.id)
+    else:
+        return redirect('/dogs/join/?mode=add')
