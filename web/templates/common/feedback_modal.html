@@ -1,4 +1,3 @@
-<!-- 의견 보내기 모달 -->
 <div id="feedbackModal" class="custom-modal" style="display: none;">
   <div class="feedback-modal-content feedback-modal">
     <span class="close-btn" onclick="closeFeedbackModal()">&times;</span>
@@ -10,21 +9,17 @@
       여러분의 소중한 피드백은 PetMind를 더 따뜻하고 똑똑하게 만듭니다.
     </p>
 
-    <!-- CSRF, Chat ID -->
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
     <input type="hidden" id="chatId" value="{{ current_chat.id|default:'' }}">
 
-    <!-- 별점 영역 -->
     <div class="star-rating" id="starRating">
       {% for i in "12345" %}
       <span class="star" data-value="{{ forloop.counter }}">&#9733;</span>
       {% endfor %}
     </div>
 
-    <!-- 텍스트 입력 -->
     <textarea id="feedbackText" placeholder="피드백을 작성해주세요."></textarea>
 
-    <!-- 제출 버튼 -->
     <div class="submit-area">
       <button onclick="submitFeedback()">제출</button>
     </div>
