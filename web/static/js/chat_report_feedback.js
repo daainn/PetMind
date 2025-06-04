@@ -9,8 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const downloadBtn = document.getElementById('downloadBtn');
   const submitBtn = document.querySelector('.submit-btn');
   const feedbackInput = document.querySelector('.feedback-input-wrapper textarea');
-  // const chatId = document.getElementById('chatId').value;
-  const chatId = "1";
+  const chatId = document.getElementById('chatId').value;
   let tempSelectedDates = [];
 
   const fp = flatpickr(dateInput, {

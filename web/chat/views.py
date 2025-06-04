@@ -19,14 +19,15 @@ import json
 from django.template.loader import render_to_string, get_template
 import os
 from django.conf import settings
-from .utils.gpt_report import build_prompt, generate_response, clean_and_split
+from .report_utils.gpt_report import build_prompt, generate_response, clean_and_split
 from dotenv import load_dotenv
-from .utils.db_load import load_chat_and_profile
-from .utils.report_pdf import generate_pdf_from_context
+from .report_utils.db_load import load_chat_and_profile
+from .report_utils.report_pdf import generate_pdf_from_context
 import time
 import tempfile
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from chat.utils import get_image_response
 
 
 def chat_entry(request):
@@ -141,19 +142,30 @@ def chat_member_talk_detail(request, dog_id, chat_id):
 
     if request.method == "POST":
         message = request.POST.get("message", "").strip()
+        image_files = request.FILES.getlist("images")
+
         if message:
             user_message = Message.objects.create(chat=chat, sender='user', message=message)
+        elif image_files:
+            user_message = Message.objects.create(chat=chat, sender='user', message="[이미지 전송]")
+        else:
+            return redirect('chat:chat_member_talk_detail', dog_id=dog.id, chat_id=chat.id)
 
-            image_files = request.FILES.getlist("images")
-            for img in image_files[:3]:
-                try:
-                    MessageImage.objects.create(message=user_message, image=img)
-                except Exception:
-                    pass
+        for img in image_files[:3]:
+            try:
+                MessageImage.objects.create(message=user_message, image=img)
+            except Exception:
+                pass
 
+        if image_files:
+            answer = get_image_response(image_files, message)
+        elif message:
             user_info = get_dog_info(dog)
             answer = call_runpod_api(message, user_info)
-            Message.objects.create(chat=chat, sender='bot', message=answer)
+        else:
+            answer = "질문이나 이미지를 입력해주세요."
+
+        Message.objects.create(chat=chat, sender='bot', message=answer)
 
         return redirect('chat:chat_member_talk_detail', dog_id=dog.id, chat_id=chat.id)
 
@@ -167,7 +179,7 @@ def chat_member_talk_detail(request, dog_id, chat_id):
         "messages": messages,
         "current_chat": chat,
         "chat_list": chat_list,
-        "grouped_chat_list": grouped_chat_list,  
+        "grouped_chat_list": grouped_chat_list,
         "user_email": user.email,
         "is_guest": False,
         "now_time": timezone.localtime().strftime("%I:%M %p").lower(),
@@ -323,7 +335,7 @@ def get_chat_history(chat):
 
 def call_runpod_api(message, user_info):
     try:
-        api_url = "https://x76r8kryd0u399-7004.proxy.runpod.net/chat"
+        api_url = "http://38.128.233.224:45310/chat"
         payload = {
             "message": message,
             "user_info": user_info
@@ -345,7 +357,9 @@ def chat_send(request):
 
     user = get_object_or_404(User, id=user_id)
     message = request.POST.get("message", "").strip()
-    if not message:
+    image_files = request.FILES.getlist("images")
+
+    if not message and not image_files:
         return redirect("chat:main")
 
     if is_guest:
@@ -353,35 +367,42 @@ def chat_send(request):
         chat = Chat.objects.filter(id=chat_id, user=user).first()
 
         if not chat:
-            chat = Chat.objects.create(user=user, dog=None, chat_title=message[:20])
+            chat = Chat.objects.create(user=user, dog=None, chat_title=message[:20] if message else "비회원 상담")
             request.session["current_chat_id"] = str(chat.id)
 
-        user_message = Message.objects.create(chat=chat, sender="user", message=message)
+        user_message = Message.objects.create(
+            chat=chat,
+            sender="user",
+            message=message if message else "[이미지 전송]"
+        )
 
-        image_files = request.FILES.getlist("images")
-        for idx, img in enumerate(image_files[:3]):
+        for img in image_files[:3]:
             try:
                 MessageImage.objects.create(message=user_message, image=img)
             except Exception:
                 pass
 
-        guest_info = {
-            "name": "비회원 반려견",
-            "breed": request.POST.get("breed", "알 수 없음"),
-            "age": "알 수 없음",
-            "gender": "모름",
-            "neutered": "모름",
-            "disease": "모름",
-            "disease_desc": "",
-            "period": "모름",
-            "housing": "모름",
-            "chat_history": [],
-            "prev_q": None,
-            "prev_a": None,
-            "prev_cate": None,
-            "is_first_question": True
-        }
-        answer = call_runpod_api(message, guest_info)
+        if image_files:
+            answer = get_image_response(image_files, message)
+        else:
+            guest_info = {
+                "name": "비회원 반려견",
+                "breed": request.POST.get("breed", "알 수 없음"),
+                "age": "알 수 없음",
+                "gender": "모름",
+                "neutered": "모름",
+                "disease": "모름",
+                "disease_desc": "",
+                "period": "모름",
+                "housing": "모름",
+                "chat_history": [],
+                "prev_q": None,
+                "prev_a": None,
+                "prev_cate": None,
+                "is_first_question": True
+            }
+            answer = call_runpod_api(message, guest_info)
+
         Message.objects.create(chat=chat, sender="bot", message=answer)
 
         return redirect('chat:chat_talk_detail', chat_id=chat.id)
@@ -392,18 +413,30 @@ def chat_send(request):
     if not dog:
         return JsonResponse({"error": "반려견이 선택되지 않았습니다."}, status=400)
 
-    chat = Chat.objects.create(dog=dog, user=user, chat_title=message[:20])
-    user_message = Message.objects.create(chat=chat, sender="user", message=message)
+    chat = Chat.objects.create(
+        dog=dog,
+        user=user,
+        chat_title=message[:20] if message else "상담 시작"
+    )
 
-    image_files = request.FILES.getlist("images")
-    for idx, img in enumerate(image_files[:3]):
+    user_message = Message.objects.create(
+        chat=chat,
+        sender="user",
+        message=message if message else "[이미지 전송]"
+    )
+
+    for img in image_files[:3]:
         try:
             MessageImage.objects.create(message=user_message, image=img)
         except Exception:
             pass
 
-    user_info = get_dog_info(dog)
-    answer = call_runpod_api(message, user_info)
+    if image_files:
+        answer = get_image_response(image_files, message)
+    else:
+        user_info = get_dog_info(dog)
+        answer = call_runpod_api(message, user_info)
+
     Message.objects.create(chat=chat, sender="bot", message=answer)
 
     return redirect('chat:chat_member_talk_detail', dog_id=dog.id, chat_id=chat.id)
@@ -465,19 +498,30 @@ def chat_talk_view(request, chat_id):
 
     if request.method == "POST":
         message_text = request.POST.get("message", "").strip()
-        if message_text:
-            user_message = Message.objects.create(chat=chat, sender='user', message=message_text)
+        image_files = request.FILES.getlist("images")
 
-            image_files = request.FILES.getlist("images")
-            for img in image_files[:3]:
-                try:
-                    MessageImage.objects.create(message=user_message, image=img)
-                except Exception:
-                    pass
+        if not message_text and not image_files:
+            return redirect('chat:chat_talk_detail', chat_id=chat.id)
 
+        user_message = Message.objects.create(
+            chat=chat,
+            sender='user',
+            message=message_text if message_text else "[이미지 전송]"
+        )
+
+        for img in image_files[:3]:
+            try:
+                MessageImage.objects.create(message=user_message, image=img)
+            except Exception:
+                pass
+
+        if image_files:
+            answer = get_image_response(image_files, user_message)
+        else:
             if is_guest:
                 user_info = get_minimal_guest_info(request.session)
             else:
+                user = get_object_or_404(User, id=user_id)
                 chat_history, prev_q, prev_a = get_chat_history(chat)
                 user_info = get_dog_info(chat.dog)
                 user_info.update({
@@ -485,12 +529,13 @@ def chat_talk_view(request, chat_id):
                     "prev_q": prev_q,
                     "prev_a": prev_a,
                     "prev_cate": None,
-                    "is_first_question": len(chat_history) == 0
+                    "is_first_question": len(chat_history) == 0,
+                    "user_id": str(user.id)
                 })
 
             answer = call_runpod_api(message_text, user_info)
-            Message.objects.create(chat=chat, sender='bot', message=answer)
 
+        Message.objects.create(chat=chat, sender='bot', message=answer)
         return redirect('chat:chat_talk_detail', chat_id=chat.id)
 
     messages = Message.objects.filter(chat=chat).prefetch_related("images").order_by('created_at')
@@ -513,12 +558,10 @@ def chat_talk_view(request, chat_id):
 
 
 
-
 def recommend_content(request, chat_id):
     if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({"error": "Invalid request"}, status=400)
 
-    # ✅ 비회원 차단
     if request.session.get("guest", False):
         return JsonResponse({
             "error": "비회원은 추천 콘텐츠를 이용할 수 없습니다.",
