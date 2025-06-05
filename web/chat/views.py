@@ -262,72 +262,86 @@ def chat_switch_dog(request, dog_id):
     dog = get_object_or_404(DogProfile, id=dog_id, user_id=user_id)
 
     return redirect('chat:chat_member', dog_id=dog.id)
-
-
-def call_runpod_api(message, user_info):
-    try:
-        api_url = "https://x76r8kryd0u399-7004.proxy.runpod.net/chat"
-        payload = {
-            "message": message,
-            "user_info": user_info
-        }
-        res = requests.post(api_url, json=payload, timeout=120)
-        res.raise_for_status()
-        data = res.json()
-        return data.get("response", "⚠️ 응답이 없습니다.")
-    except Exception as e:
-        return f"❗ 오류 발생: {str(e)}"
     
-def get_dog_info(dog):
-    return {
-        "name": dog.name,
-        "breed": dog.breed_name,
-        "age": dog.age,
-        "gender": dog.gender,
-        "neutered": dog.neutered,
-        "disease": "있음" if dog.disease_history else "없음",
-        "disease_desc": dog.disease_history or "",
-        "period": dog.living_period,
-        "housing": dog.housing_type,
-        "chat_history": [],
-        "prev_q": None,
-        "prev_a": None,
-        "prev_cate": None,
-        "is_first_question": True
-    }
+def get_dog_info(dog, chat=None, user_id=None):
+    if chat is not None:
+        chat_history, prev_q, prev_a = get_chat_history(chat)
+    else:
+        chat_history, prev_q, prev_a = [], None, None
 
-def get_minimal_guest_info(session):
+    def safe(v, default="모름"):
+        if v is None:
+            return default
+        if isinstance(default, str) and isinstance(v, int):
+            return str(v)
+        return v
+
+    info = {
+        "name": safe(dog.name, ""),
+        "breed": safe(getattr(dog, "breed_name", None)),
+        "age": safe(dog.age),
+        "gender": safe(dog.gender),
+        "neutered": safe(dog.neutered),
+        "disease": safe("있음" if dog.disease_history else "없음"),
+        "disease_desc": safe(dog.disease_history, ""),
+        "period": safe(dog.living_period),
+        "housing": safe(dog.housing_type),
+        "chat_history": chat_history,
+        "prev_q": prev_q,
+        "prev_a": prev_a,
+        "prev_cate": None,
+        "is_first_question": len(chat_history) == 0,
+        "user_id": user_id if user_id else (str(dog.user.id) if hasattr(dog, "user") else "unknown")
+    }
+    return info
+
+def get_minimal_guest_info(session, chat=None, user_id=None):
     name = session.get("guest_dog_name", "비회원견")
     breed = session.get("guest_dog_breed", "견종 정보 없음")
-    return {
+    if chat is not None:
+        chat_history, prev_q, prev_a = get_chat_history(chat)
+    else:
+        chat_history, prev_q, prev_a = [], None, None
+
+    info = {
         "name": name,
         "breed": breed,
-        "chat_history": [],
-        "prev_q": None,
-        "prev_a": None,
+        "age": "모름",
+        "gender": "모름",
+        "neutered": "모름",
+        "disease": "모름",
+        "disease_desc": "",
+        "period": "모름",
+        "housing": "모름",
+        "chat_history": chat_history,
+        "prev_q": prev_q,
+        "prev_a": prev_a,
         "prev_cate": None,
-        "is_first_question": True
+        "is_first_question": len(chat_history) == 0,
+        "user_id": user_id if user_id else session.get("guest_user_id", "guest")
     }
+    return info
 
 def get_chat_history(chat):
     past_msgs = Message.objects.filter(chat=chat).order_by("created_at")
-    chat_history = [{"role": m.sender, "content": m.message} for m in past_msgs]
-
+    chat_history = [
+        {"role": "user" if m.sender == "user" else "assistant", "content": m.message}
+        for m in past_msgs
+    ]
     prev_q, prev_a = None, None
     for i in range(len(chat_history) - 2, -1, -2):
-        if chat_history[i]["role"] == "user" and chat_history[i + 1]["role"] == "bot":
+        if chat_history[i]["role"] == "user" and chat_history[i + 1]["role"] == "assistant":
             prev_q = chat_history[i]["content"]
             prev_a = chat_history[i + 1]["content"]
             break
-
     return chat_history, prev_q, prev_a
 
-def call_runpod_api(message, user_info):
+def call_runpod_api(message, dog_info):
     try:
-        api_url = "http://38.128.233.224:45310/chat"
+        api_url = "http://64.247.206.102:37616/chat"
         payload = {
             "message": message,
-            "user_info": user_info
+            "dog_info": dog_info
         }
         res = requests.post(api_url, json=payload, timeout=120)
         res.raise_for_status()
