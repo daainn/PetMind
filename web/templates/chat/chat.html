@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="{% static 'css/chat.css' %}">
   <link rel="stylesheet" href="{% static 'css/chat_header.css' %}">
   <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
-  <link rel="stylesheet" href="{% static 'css/right_sidebar.css' %}">  {# ✅ 오른쪽 사이드바 CSS 추가 #}
+  <link rel="stylesheet" href="{% static 'css/right_sidebar.css' %}">  
 </head>
 <body>
 <div class="app-wrapper" id="appWrapper">
@@ -91,12 +91,10 @@
   </main>
 </div>
 
-<!-- ✅ JS -->
 <script src="{% static 'js/chat_member_sidebar.js' %}"></script>
 <script src="{% static 'js/image_upload.js' %}"></script>
 <script src="{% static 'js/right_sidebar.js' %}"></script>
 
-<!-- ✅ 경고 메시지 -->
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const form = document.querySelector('.chat-input-form');

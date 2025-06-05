@@ -119,12 +119,12 @@ def guest_profile_register(request):
 def chat_member_talk_detail(request, dog_id, chat_id):
     user_id = request.session.get("user_id")
     if not user_id:
-        return redirect('user:login')
+        return JsonResponse({'error': '로그인 필요'}, status=401)  # 로그인 안 된 경우 JSON 응답으로 처리
 
     try:
         user = User.objects.get(id=uuid.UUID(user_id))
     except (User.DoesNotExist, ValueError):
-        return redirect('user:login')
+        return JsonResponse({'error': '사용자를 찾을 수 없습니다.'}, status=404)  # 사용자 없음
 
     dog = get_object_or_404(DogProfile, id=dog_id, user=user)
     chat = get_object_or_404(Chat, id=chat_id, dog=dog)
@@ -138,7 +138,7 @@ def chat_member_talk_detail(request, dog_id, chat_id):
         elif image_files:
             user_message = Message.objects.create(chat=chat, sender='user', message="[이미지 전송]")
         else:
-            return redirect('chat:chat_member_talk_detail', dog_id=dog.id, chat_id=chat.id)
+            return JsonResponse({'error': '메시지나 이미지를 입력해주세요.'}, status=400)  # 메시지나 이미지 없을 경우
 
         for img in image_files[:3]:
             try:
@@ -156,7 +156,8 @@ def chat_member_talk_detail(request, dog_id, chat_id):
 
         Message.objects.create(chat=chat, sender='bot', message=answer)
 
-        return redirect('chat:chat_member_talk_detail', dog_id=dog.id, chat_id=chat.id)
+        # 리디렉션 대신 JSON 응답 반환
+        return JsonResponse({'response': answer, 'chat_id': chat.id})  # JSON 응답으로 변경
 
     messages = Message.objects.filter(chat=chat).prefetch_related("images").order_by('created_at')
     chat_list = Chat.objects.filter(dog=dog).order_by('-created_at')
@@ -338,7 +339,7 @@ def get_chat_history(chat):
 
 def call_runpod_api(message, dog_info):
     try:
-        api_url = "http://64.247.206.102:37616/chat"
+        api_url = "http://141.193.30.39:40595/chat"
         payload = {
             "message": message,
             "dog_info": dog_info
@@ -350,20 +351,22 @@ def call_runpod_api(message, dog_info):
     except Exception as e:
         return f"❗ 오류 발생: {str(e)}"
 
+
 @require_POST
 @csrf_exempt
 def chat_send(request):
     is_guest = request.session.get('guest', False)
     user_id = request.session.get("guest_user_id") if is_guest else request.session.get("user_id")
+    
     if not user_id:
-        return redirect('user:home')
+        return JsonResponse({'error': '사용자가 로그인되지 않았습니다.'}, status=400)  # 로그인 안 됐을 경우 JSON 응답
 
     user = get_object_or_404(User, id=user_id)
     message = request.POST.get("message", "").strip()
     image_files = request.FILES.getlist("images")
 
     if not message and not image_files:
-        return redirect("chat:main")
+        return JsonResponse({'error': '메시지나 이미지가 필요합니다.'}, status=400)  # 메시지나 이미지가 없으면 오류 응답
 
     if is_guest:
         chat_id = request.session.get("current_chat_id")
@@ -408,8 +411,10 @@ def chat_send(request):
 
         Message.objects.create(chat=chat, sender="bot", message=answer)
 
-        return redirect('chat:chat_talk_detail', chat_id=chat.id)
+        # 리디렉션 대신 JSON 응답 반환
+        return JsonResponse({'response': answer, 'chat_id': chat.id})  # JSON 응답으로 반환
 
+    # 반려견이 없으면 에러 반환
     current_dog_id = request.session.get("current_dog_id")
     dog = DogProfile.objects.filter(id=current_dog_id, user=user).first()
 
@@ -442,7 +447,9 @@ def chat_send(request):
 
     Message.objects.create(chat=chat, sender="bot", message=answer)
 
-    return redirect('chat:chat_member_talk_detail', dog_id=dog.id, chat_id=chat.id)
+    # 리디렉션 대신 JSON 응답 반환
+    return JsonResponse({'response': answer, 'chat_id': chat.id})  # JSON 응답으로 반환
+
 
 
 @require_POST
@@ -493,18 +500,18 @@ def chat_talk_view(request, chat_id):
     try:
         chat = Chat.objects.get(id=chat_id)
     except Chat.DoesNotExist:
-        return redirect('chat:main' if is_guest else 'chat:chat_member', dog_id=current_dog_id or 1)
+        return JsonResponse({'error': '채팅을 찾을 수 없습니다.'}, status=404)  # JSON 응답으로 변경
 
     if not is_guest:
         if not user_id or not chat.user or str(chat.user.id) != str(user_id):
-            return redirect('chat:chat_member', dog_id=current_dog_id or (chat.dog.id if chat.dog else 1))
+            return JsonResponse({'error': '권한이 없습니다.'}, status=403)  # JSON 응답으로 변경
 
     if request.method == "POST":
         message_text = request.POST.get("message", "").strip()
         image_files = request.FILES.getlist("images")
 
         if not message_text and not image_files:
-            return redirect('chat:chat_talk_detail', chat_id=chat.id)
+            return JsonResponse({'error': '메시지나 이미지가 필요합니다.'}, status=400)  # 메시지나 이미지 없으면 JSON 응답
 
         user_message = Message.objects.create(
             chat=chat,
@@ -539,7 +546,9 @@ def chat_talk_view(request, chat_id):
             answer = call_runpod_api(message_text, user_info)
 
         Message.objects.create(chat=chat, sender='bot', message=answer)
-        return redirect('chat:chat_talk_detail', chat_id=chat.id)
+
+        # 리디렉션 대신 JSON 응답을 반환
+        return JsonResponse({'response': answer, 'chat_id': chat.id})  # JSON 응답으로 변경
 
     messages = Message.objects.filter(chat=chat).prefetch_related("images").order_by('created_at')
     chat_list = Chat.objects.filter(user__id=user_id).order_by('-created_at') if not is_guest else []
@@ -558,6 +567,7 @@ def chat_talk_view(request, chat_id):
         "dog": dog,
         "dog_list": dog_list
     })
+
 
 
 

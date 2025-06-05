@@ -49,6 +49,7 @@
             </div>
           </div>
         {% endfor %}
+    
       </div>
 
       <div class="recommend-info-box" id="recommendTrigger"
@@ -92,6 +93,22 @@
   <script src="{% static 'js/recommend.js' %}"></script>
   <script src="{% static 'js/right_sidebar.js' %}"></script>
   <script>
+    function startTypingAnimation(target, text) {
+      let idx = 0;
+      let forward = true;
+      return setInterval(() => {
+        if (forward) {
+          target.textContent = text.slice(0, idx + 1);
+          idx++;
+          if (idx === text.length) forward = false;
+        } else {
+          target.textContent = text.slice(0, idx - 1);
+          idx--;
+          if (idx === 0) forward = true;
+        }
+      }, 90);
+    }
+    
     document.addEventListener('DOMContentLoaded', function () {
       document.querySelectorAll(".chat-time").forEach(el => {
         const rawTime = el.getAttribute("data-time");
@@ -106,10 +123,8 @@
           }
         }
       });
-    // ✅ 비회원 기능 제한
-    const isGuest = {{ is_guest|yesno:"true,false" }};
 
-    // 이미지 업로드 차단
+    const isGuest = {{ is_guest|yesno:"true,false" }};
     if (isGuest) {
       const imageUploadLabel = document.querySelector('.image-upload-btn');
       if (imageUploadLabel) {
@@ -120,7 +135,6 @@
       }
     }
 
-    // 추천 콘텐츠 버튼 차단
     if (isGuest) {
       const recommendBtn = document.getElementById('recommendTrigger');
       if (recommendBtn) {
@@ -131,6 +145,79 @@
       }
     }
   });
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('.chat-input-form');
+    const messageInput = form.querySelector('textarea');
+    const chatHistory = document.querySelector('.chat-history');
+
+    let typingInterval = null;  // 전역에서 참조할 변수
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const userMessage = messageInput.value;
+
+      // 사용자 메시지 바로 띄우기
+      const userMessageElement = document.createElement('div');
+      userMessageElement.classList.add('chat-message-wrapper', 'user-side');
+      userMessageElement.innerHTML = `
+        <div class="chat-message-block">
+          <div class="chat-message user-message">
+            <div class="message-content">${userMessage}</div>
+          </div>
+        </div>
+      `;
+      chatHistory.appendChild(userMessageElement);
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+
+      // 로딩 애니메이션(타자 효과) 추가
+      const loadingMessageElement = document.createElement('div');
+      loadingMessageElement.classList.add('chat-message-wrapper', 'bot-side');
+      loadingMessageElement.innerHTML = `
+        <div class="chat-message-block">
+          <div class="chat-message bot-message">
+            <div class="message-content">
+              <span id="typing-loader"></span>
+            </div>
+          </div>
+        </div>
+      `;
+      chatHistory.appendChild(loadingMessageElement);
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+
+      // 타자 애니메이션 시작
+      const typingText = "반려견의 마음을 분석중...";
+      const loaderSpan = loadingMessageElement.querySelector('#typing-loader');
+      typingInterval = startTypingAnimation(loaderSpan, typingText);
+
+      // AJAX 전송
+      fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: {
+          'X-CSRFToken': form.querySelector('[name="csrfmiddlewaretoken"]').value
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        // 타자 애니메이션 종료
+        clearInterval(typingInterval);
+        // 모델 응답 출력
+        loadingMessageElement.querySelector('.message-content').textContent = data.response;
+        messageInput.value = '';
+      })
+      .catch(error => {
+        clearInterval(typingInterval);
+        loadingMessageElement.querySelector('.message-content').textContent = "응답을 받을 수 없습니다.";
+        console.error("오류 발생:", error);
+      });
+    });
+  });
+
+  // 타자 애니메이션 함수는 이 스크립트의 상단에 같이 두면 됨!
+
+
 </script>
 </body>
 </html>
