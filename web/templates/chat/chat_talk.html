@@ -93,22 +93,7 @@
   <script src="{% static 'js/recommend.js' %}"></script>
   <script src="{% static 'js/right_sidebar.js' %}"></script>
   <script>
-    function startTypingAnimation(target, text) {
-      let idx = 0;
-      let forward = true;
-      return setInterval(() => {
-        if (forward) {
-          target.textContent = text.slice(0, idx + 1);
-          idx++;
-          if (idx === text.length) forward = false;
-        } else {
-          target.textContent = text.slice(0, idx - 1);
-          idx--;
-          if (idx === 0) forward = true;
-        }
-      }, 90);
-    }
-    
+
     document.addEventListener('DOMContentLoaded', function () {
       document.querySelectorAll(".chat-time").forEach(el => {
         const rawTime = el.getAttribute("data-time");
@@ -151,14 +136,14 @@
     const messageInput = form.querySelector('textarea');
     const chatHistory = document.querySelector('.chat-history');
 
-    let typingInterval = null;  // 전역에서 참조할 변수
-
     form.addEventListener('submit', function (e) {
       e.preventDefault();
 
+      // 1. 입력값 백업하고 인풋은 즉시 비움!
       const userMessage = messageInput.value;
+      messageInput.value = '';
 
-      // 사용자 메시지 바로 띄우기
+      // 2. 사용자 메시지 바로 출력
       const userMessageElement = document.createElement('div');
       userMessageElement.classList.add('chat-message-wrapper', 'user-side');
       userMessageElement.innerHTML = `
@@ -171,14 +156,18 @@
       chatHistory.appendChild(userMessageElement);
       chatHistory.scrollTop = chatHistory.scrollHeight;
 
-      // 로딩 애니메이션(타자 효과) 추가
+      // 3. 점 3개 애니메이션 추가
       const loadingMessageElement = document.createElement('div');
       loadingMessageElement.classList.add('chat-message-wrapper', 'bot-side');
       loadingMessageElement.innerHTML = `
         <div class="chat-message-block">
           <div class="chat-message bot-message">
             <div class="message-content">
-              <span id="typing-loader"></span>
+              <span class="dot-loader">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+              </span>
             </div>
           </div>
         </div>
@@ -186,37 +175,37 @@
       chatHistory.appendChild(loadingMessageElement);
       chatHistory.scrollTop = chatHistory.scrollHeight;
 
-      // 타자 애니메이션 시작
-      const typingText = "반려견의 마음을 분석중...";
-      const loaderSpan = loadingMessageElement.querySelector('#typing-loader');
-      typingInterval = startTypingAnimation(loaderSpan, typingText);
+      // 4. formData를 새로 만들어서 userMessage를 직접 append
+      const formData = new FormData();
+      formData.append('message', userMessage);
 
-      // AJAX 전송
+      // (이미지, 기타 필드도 있으면 formData.append로 추가)
+      const imageInput = document.getElementById('imageInput');
+      if (imageInput && imageInput.files.length > 0) {
+        for (let i = 0; i < imageInput.files.length; i++) {
+          formData.append('images', imageInput.files[i]);
+        }
+      }
+
+      // 5. AJAX 요청
       fetch(form.action, {
         method: 'POST',
-        body: new FormData(form),
+        body: formData,
         headers: {
           'X-CSRFToken': form.querySelector('[name="csrfmiddlewaretoken"]').value
         }
       })
       .then(response => response.json())
       .then(data => {
-        // 타자 애니메이션 종료
-        clearInterval(typingInterval);
-        // 모델 응답 출력
         loadingMessageElement.querySelector('.message-content').textContent = data.response;
-        messageInput.value = '';
       })
       .catch(error => {
-        clearInterval(typingInterval);
         loadingMessageElement.querySelector('.message-content').textContent = "응답을 받을 수 없습니다.";
         console.error("오류 발생:", error);
       });
     });
+
   });
-
-  // 타자 애니메이션 함수는 이 스크립트의 상단에 같이 두면 됨!
-
 
 </script>
 </body>
