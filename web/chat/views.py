@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from chat.utils import get_image_response
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from user.models import User
 from .models import Chat, Message, Content, MessageImage
-import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from dogs.models import DogProfile, DogBreed
@@ -17,7 +17,8 @@ from collections import defaultdict
 from datetime import date, timedelta
 import uuid
 import requests
-from chat.utils import get_image_response
+import pandas as pd
+
 
 def chat_entry(request):
     if request.session.get('guest'):
@@ -632,3 +633,13 @@ def recommend_content(request, chat_id):
         "cards_html": html,
         "has_recommendation": True
     })
+
+# 채팅방 삭제
+@require_POST
+@csrf_exempt
+def chat_member_delete(request, dog_id, chat_id):
+    if request.method == "POST":
+        chat = get_object_or_404(Chat, id=chat_id, dog_id=dog_id)
+        chat.delete()  # DB에서 삭제
+        return JsonResponse({'status': 'ok'})
+    return JsonResponse({'error': 'Invalid method'}, status=405)

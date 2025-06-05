@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+  <link rel="icon" href="{% static 'images/petmind_logo_dog.png' %}" type="image/png" />
+
   <meta charset="UTF-8">
   <title>PetMind | 상담 채팅</title>
   <link href="//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css" rel="stylesheet">
@@ -14,8 +16,10 @@
   <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
   <link rel="stylesheet" href="{% static 'css/right_sidebar.css' %}">  {# ✅ 오른쪽 사이드바 CSS 추가 #}
 </head>
+
 <body>
-<div class="app-wrapper" id="appWrapper">
+
+  <div class="app-wrapper" id="appWrapper">
   {% include 'common/chat_header.html' %}
   {% include 'common/sidebar.html' %}
   {% include 'common/right_sidebar.html' %}

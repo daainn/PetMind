@@ -89,41 +89,38 @@ function saveChatTitle(chatId, input) {
   });
 }
 
-// 채팅 삭제
-function deleteChat(chatId) {
+
+function deleteChat(chatId, dogId) {
+  console.log("Deleting chat:", chatId);  
   if (!confirm("이 채팅을 삭제하시겠습니까?")) return;
 
-  const currentPath = window.location.pathname;
-  const isCurrentChat = currentPath.includes(`/member/chat/${chatId}/`);
-
-  fetch(`/chat/member/delete/${chatId}/`, {
+  // 현재 페이지 경로에서 이 채팅방을 보고 있는지 확인
+  const currentPath = window.location.pathname;  
+  const expectedPath = `/chat/${dogId}/talk/${chatId}/`;
+  const isCurrentChat = currentPath === expectedPath;
+  // 서버에 삭제 요청 보내기
+  fetch(`/chat/${dogId}/delete/${chatId}/`, {
     method: "POST",
     headers: {
-      "X-CSRFToken": getCSRFToken(),
+      "X-CSRFToken": getCSRFToken(), // CSRF 보안 토큰 포함
     },
   }).then((res) => {
     if (res.ok) {
+      // 사이드바에서 채팅 항목 제거
       document.querySelector(`#chat-${chatId}`)?.remove();
 
       if (isCurrentChat) {
-        const firstRemainingChat = document.querySelector(".question-item");
-        if (firstRemainingChat) {
-          const firstInput = firstRemainingChat.querySelector("input");
-          if (firstInput) {
-            const id = firstInput.id.replace("chat-title-", "");
-            goToChat(id);
-          }
-        } else {
-          window.location.href = "/chat/main/";
-        }
+        // 현재 삭제한 채팅이 열려 있던 채팅이면 메인화면으로 이동
+        window.location.href = "/chat/main/";
       }
+      // 현재 채팅이 아니면 별도 이동 없이 사이드바만 갱신
     } else {
       alert("삭제 실패");
     }
   });
 }
 
-// 이동 함수
+  // 이동 함수
 function goToChat(chatId) {
   const form = document.createElement("form");
   form.method = "POST";
