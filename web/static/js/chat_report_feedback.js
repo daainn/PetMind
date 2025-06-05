@@ -56,6 +56,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   confirmBtn.addEventListener('click', async () => {
+    const chatId = document.getElementById('chatId')?.value;
+    if (!chatId) {
+      alert("chatId가 유효하지 않습니다.");
+      return;
+  }
+
     if (tempSelectedDates.length === 0) {
       alert("날짜를 선택해주세요.");
       return;
@@ -72,6 +78,10 @@ document.addEventListener('DOMContentLoaded', () => {
     feedbackModal.style.display = 'block';
     calendarPopup.style.display = 'none';
     fp.close();
+
+    console.log("chatId", chatId);
+    console.log("startDate", startDate);
+    console.log("endDate", endDate);
 
     // console.log("✅ 보내는 chatId:", chatId);
     const response = await fetch('/chat/report/generate/', {

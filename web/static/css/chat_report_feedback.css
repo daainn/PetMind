@@ -272,7 +272,7 @@ body, button, input, textarea {
   width: 0%;
   height: 100%;
   background-color: #FFC508;
-  animation: loading 3s ease-in-out forwards;
+  transition: width 0.5s ease;
 }
 
 @keyframes loading {

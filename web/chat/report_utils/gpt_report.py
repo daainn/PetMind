@@ -66,15 +66,36 @@ def generate_response(messages):
     )
     return response.choices[0].message.content.strip()
 
+# def clean_and_split(text):
+#     cleaned = re.sub(r"<.*?>", "", text).strip()
+#     intro = re.search(r"\*\*우리 .*?는요\*\*\s*(.*?)(?=\*\*보호자님에게 드리는 조언\*\*)", cleaned, re.DOTALL)
+#     advice = re.search(r"\*\*보호자님에게 드리는 조언\*\*\s*(.*?)(?=\*\*다음 상담 시에는\*\*)", cleaned, re.DOTALL)
+#     next_ = re.search(r"\*\*다음 상담 시에는\*\*\s*(.*)", cleaned, re.DOTALL)
+
+#     def strip_leading_spaces(t): return "\n".join([line.lstrip() for line in t.strip().splitlines()])
+#     return (
+#         strip_leading_spaces(intro.group(1)) if intro else "[추출 실패]",
+#         strip_leading_spaces(advice.group(1)) if advice else "[추출 실패]",
+#         strip_leading_spaces(next_.group(1)) if next_ else "[추출 실패]"
+#     )
+
+
 def clean_and_split(text):
+    lines = text.splitlines()
+    if lines and "요약리포트" in lines[0]:
+        text = "\n".join(lines[1:])
     cleaned = re.sub(r"<.*?>", "", text).strip()
     intro = re.search(r"\*\*우리 .*?는요\*\*\s*(.*?)(?=\*\*보호자님에게 드리는 조언\*\*)", cleaned, re.DOTALL)
     advice = re.search(r"\*\*보호자님에게 드리는 조언\*\*\s*(.*?)(?=\*\*다음 상담 시에는\*\*)", cleaned, re.DOTALL)
     next_ = re.search(r"\*\*다음 상담 시에는\*\*\s*(.*)", cleaned, re.DOTALL)
 
-    def strip_leading_spaces(t): return "\n".join([line.lstrip() for line in t.strip().splitlines()])
-    return (
-        strip_leading_spaces(intro.group(1)) if intro else "[추출 실패]",
-        strip_leading_spaces(advice.group(1)) if advice else "[추출 실패]",
-        strip_leading_spaces(next_.group(1)) if next_ else "[추출 실패]"
-    )
+    def strip_leading_spaces(t):
+        return "\n".join([line.lstrip() for line in t.strip().splitlines()])
+
+    intro_text = strip_leading_spaces(intro.group(1)) if intro else None
+    advice_text = strip_leading_spaces(advice.group(1)) if advice else None
+    next_text = strip_leading_spaces(next_.group(1)) if next_ else None
+
+    is_split_success = bool(intro_text and advice_text and next_text)
+
+    return intro_text, advice_text, next_text, is_split_success

@@ -5,7 +5,7 @@
 
 body {
   font-family: 'Spoqa Han Sans', sans-serif;
-  padding: 25mm 25mm;
+  padding: 20mm 20mm;
   color: #333;
   margin: 0 auto;
   box-sizing: border-box;
@@ -18,7 +18,7 @@ body {
 }
 
 .petmind-logo, .logo {
-  height: 28px;
+  height: 20px;
 }
 
 .report-date {
@@ -28,7 +28,7 @@ body {
 
 .title {
   text-align: center;
-  font-size: 32px;
+  font-size: 24px;
   margin: 40px 0 20px;
   font-weight: 700;
 }
@@ -39,20 +39,20 @@ body {
 }
 
 .profile-img {
-  width: 140px;        /* 원하는 크기 */
-  height: 140px;       /* width와 height를 동일하게 */
-  border-radius: 50%;  /* 완벽한 원형 */
-  object-fit: cover;   /* 중앙을 기준으로 원형 crop */
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
   border: 3px solid #fbdc41;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  background: #fff;    /* 이미지 없을 때 대비 */
+  background: #fff;
   display: block;
-  margin: 0 auto;      /* 중앙 정렬 */
+  margin: 0 auto;
 }
 
 .name {
   display: block;
-  font-size: 20px;
+  font-size: 12px;
   font-weight: bold;
   margin-top: 10px;
 }
@@ -62,36 +62,21 @@ body {
   color: #666;
 }
 
-.badges {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.badge {
-  background-color: #fff9cc;
-  padding: 6px 12px;
-  border-radius: 16px;
-  font-size: 13px;
-  border: 1px solid #eee;
-}
-
 .section-title-lg {
-  font-size: 28px; 
+  font-size: 24px; 
   font-weight: bold;
   margin: 30px 0 10px;
 }
 
 .section-title {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: bold;
-  margin: 30px 0 10px;
+  margin-bottom: 20px;
 }
 
 .llm-response {
   font-size: 15px;
   line-height: 1.6;
   white-space: pre-wrap;
+  margin-top: 5px;
 }

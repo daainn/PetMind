@@ -41,7 +41,7 @@
     <img src="{% static 'images/star_g.png' %}" class="star" data-value="5">
     </div>
     <input type="hidden" id="ratingValue" value="0">
-    <input type="hidden" id="chatId" value="{{ chat.id }}">
+    <input type="hidden" id="chatId" value="{{ current_chat.id }}">
 
     <div class="feedback-input-wrapper">
     <textarea placeholder="피드백을 작성해주세요."></textarea>

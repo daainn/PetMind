@@ -7,6 +7,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from django.conf import settings
 
+
 def generate_pdf_from_context(context, pdf_filename="report.pdf"):
     html_str = render_to_string("chat/report_template.html", context)
     html_str = html_str.replace(
@@ -15,6 +16,7 @@ def generate_pdf_from_context(context, pdf_filename="report.pdf"):
     html_str = html_str.replace(
         "/static/images/", f"file://{os.path.join(settings.BASE_DIR, 'static/images/')}"
     )
+
 
     with tempfile.NamedTemporaryFile(suffix='.html', delete=False, mode='w', encoding='utf-8') as tmp_html:
         tmp_html.write(html_str)

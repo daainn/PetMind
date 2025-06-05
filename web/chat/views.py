@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
-from django.http import JsonResponse, FileResponse, HttpResponseNotAllowed, Http404, HttpResponseNotFound, HttpResponseServerError
+from django.http import JsonResponse, FileResponse, HttpResponseNotAllowed, Http404, HttpResponseNotFound, HttpResponseServerError, HttpResponse
 from user.models import User
 from .models import Chat, Message, Content, MessageImage, UserReview
 import pandas as pd
@@ -346,7 +346,7 @@ def get_chat_history(chat):
 
 def call_runpod_api(message, dog_info):
     try:
-        api_url = "http://64.247.206.102:37616/chat"
+        api_url = "http://213.173.105.9:27616/chat"
         payload = {
             "message": message,
             "dog_info": dog_info
@@ -568,7 +568,6 @@ def chat_talk_view(request, chat_id):
     })
 
 
-
 def recommend_content(request, chat_id):
     if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({"error": "Invalid request"}, status=400)
@@ -659,7 +658,6 @@ def submit_review(request):
 
     return JsonResponse({'status': 'error'}, status=400)
 
-
 def load_chat_and_profile(chat_id):
     try:
         chat = Chat.objects.select_related("dog").get(id=chat_id)
@@ -673,7 +671,7 @@ def load_chat_and_profile(chat_id):
     dog_dict = {
         "name": dog.name,
         "age": dog.age,
-        "breed_name": dog.breed_name,
+        "breed_name": dog.breed.name if dog.breed else "알 수 없음",
         "gender": dog.gender,
         "neutered": dog.neutered,
         "disease_history": dog.disease_history,
@@ -689,37 +687,34 @@ def load_chat_and_profile(chat_id):
 
     return dog_dict, history
 
+def chat_report_feedback_view(request, chat_id):
+    chat = get_object_or_404(Chat, id=chat_id)
+    return render(request, 'chat/chat_report_feedback.html', {
+        "chat_id": chat_id,
+    })
 
 @api_view(['POST'])
 def generate_report(request):
-    """
-    1) client로부터 chat_id, start_date, end_date를 받아서
-    2) 데이터베이스에서 반려견 정보와 대화 이력을 조회하고,
-    3) GPT로 요약문을 생성한 뒤,
-    4) generate_pdf_from_context를 호출하여 PDF를 만들고,
-    5) 생성된 PDF 파일을 FileResponse로 바로 내려줍니다.
-    """
     data = request.data
-    print("📩 받은 데이터:", data)
-
     chat_id = data.get("chat_id")
     start_date = data.get("start_date")
     end_date = data.get("end_date")
+    print("📩 받은 데이터:", data)
 
     if not (chat_id and start_date and end_date):
-        return Response({"error": "필수 값(chat_id, start_date, end_date)이 누락되었습니다."}, status=400)
+        return Response({"error": "필수 값 누락"}, status=400)
 
-    # 1) DB에서 반려견 프로필과 대화 이력 불러오기
     dog, history = load_chat_and_profile(chat_id)
     if not dog or not history:
         return Response({"error": "해당 chat_id에 대한 데이터가 없습니다."}, status=404)
 
-    # 2) GPT 요약 (인트로, 조언, 다음 상담)
-    messages = build_prompt(dog, history)
-    raw_output = generate_response(messages)
-    intro, advice, next_ = clean_and_split(raw_output)
+    try:
+        messages = build_prompt(dog, history)
+        raw_output = generate_response(messages)
+        intro, advice, next_, is_split_success = clean_and_split(raw_output)
+    except Exception as e:
+        return Response({"error": f"GPT 처리 중 오류: {str(e)}"}, status=500)
 
-    # 3) PDF 템플릿에 넣을 context 구성
     context = {
         "dog_name": dog["name"],
         "age": dog["age"],
@@ -729,104 +724,52 @@ def generate_report(request):
         "disease_history": dog["disease_history"],
         "living_period": dog["living_period"],
         "housing_type": dog["housing_type"],
-        # 프로필 이미지는 절대 URL로 만들어서 HTML에서 로드할 수 있도록 합니다.
         "profile_image_url": request.build_absolute_uri("/static/images/sample_dog.jpg"),
         "start_date": start_date,
         "end_date": end_date,
         "intro_text": intro,
         "advice_text": advice,
         "next_text": next_,
-        "llm_response_html": raw_output,
-        # 템플릿 내에서 request를 참조해야 할 경우를 대비해 전달합니다.
+        "is_split_success": is_split_success,
+        "full_text": raw_output,
         "request": request,
     }
 
-    # 4) generate_pdf_from_context 호출 → 임시 파일 경로 리턴
     try:
-        # pdf_filename 파라미터로 원하는 파일명을 넘겨줄 수 있습니다(생략 시 "report.pdf").
-        # 여기서는 chat_id 기반으로 파일명을 지정해 보겠습니다.
-        pdf_temp_path = generate_pdf_from_context(context, pdf_filename=f"report_{chat_id}.pdf")
-        # pdf_temp_path: 예) "/tmp/tmpabcd1234.pdf"
-        # (generate_pdf_from_context 내부에서 NamedTemporaryFile, mkstemp을 썼으므로 시스템 임시 디렉터리에 저장됨)
+        pdf_path = generate_pdf_from_context(context, pdf_filename=f"report_{chat_id}.pdf")
+        request.session[f"pdf_path_{chat_id}"] = pdf_path
+        print("✅ PDF 생성 완료:", pdf_path)
+        return Response({"status": "success"})
     except Exception as e:
-        # PDF 생성 중 에러가 발생하면 500으로 응답
         return Response({"error": f"PDF 생성 실패: {str(e)}"}, status=500)
 
-    # 5) FileResponse로 생성된 PDF를 클라이언트로 바로 스트리밍
-    if os.path.exists(pdf_temp_path):
-        try:
-            # 'rb' 모드로 열어서 FileResponse로 반환
-            pdf_file = open(pdf_temp_path, 'rb')
-            response = FileResponse(pdf_file, content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="report_{chat_id}.pdf"'
-
-            # 뷰가 끝날 때 임시 파일을 삭제하도록 합니다.
-            # FileResponse가 닫힐 때까지 기다렸다가 삭제하기 위해 아래와 같이 하거나,
-            # 실제 서비스에서는 celery 같은 작업 큐를 써서 별도 cleanup 작업을 돌려도 좋습니다.
-            def remove_temp_file(response):
-                try:
-                    pdf_file.close()
-                    os.remove(pdf_temp_path)
-                except Exception:
-                    pass
-
-            response.call_on_close(remove_temp_file)
-            return response
-
-        except Exception as e:
-            # 파일 읽기/스트리밍 중 에러
-            return HttpResponseServerError(f"PDF 파일 전송 중 에러: {str(e)}")
-    else:
-        return HttpResponseNotFound("생성된 PDF 파일을 찾을 수 없습니다.")
-
-def download_report(request, chat_id):
-    dog, history = load_chat_and_profile(chat_id)
-    if not dog or not history:
-        raise Http404("상담 이력 또는 반려견 정보가 없습니다.")
-
-    messages = build_prompt(dog, history)
-    raw_output = generate_response(messages)
-    intro, advice, next_ = clean_and_split(raw_output)
-
-    context = {
-        "dog_name": dog["name"],
-        "age": dog["age"],
-        "breed_name": dog["breed_name"],
-        "gender_display": dog["gender"],
-        "neutered": dog["neutered"],
-        "disease_history": dog["disease_history"],
-        "living_period": dog["living_period"],
-        "housing_type": dog["housing_type"],
-        "profile_image_url": "file://" + os.path.join(settings.BASE_DIR, "static/images/sample_dog.jpg"),
-        "start_date": "2025-06-01",
-        "end_date": "2025-06-07",
-        "intro_text": intro,
-        "advice_text": advice,
-        "next_text": next_,
-        "llm_response_html": raw_output,
-        "request": request,
-    }
-
-    pdf_path = generate_pdf_from_context(context)
+def download_report_pdf(request, chat_id):
+    pdf_path = request.session.get(f"pdf_path_{chat_id}")
+    if not pdf_path or not os.path.exists(pdf_path):
+        raise Http404("리포트 파일이 존재하지 않거나 세션이 만료되었습니다.")
 
     try:
-        with open(pdf_path, "rb") as f:
-            response = FileResponse(f, as_attachment=True, filename="상담리포트.pdf")
-            return response
-    finally:
-        try:
-            os.remove(pdf_path)
-        except Exception:
-            pass
+        pdf_file = open(pdf_path, "rb")
+        response = FileResponse(pdf_file, as_attachment=True, filename=f"report_{chat_id}.pdf")
+
+        def cleanup():
+            try:
+                pdf_file.close()
+                os.remove(pdf_path)
+                print("🧹 다운로드 후 PDF 삭제 완료")
+            except Exception:
+                pass
+
+        response.close = cleanup
+
+        return response
+
+    except Exception as e:
+        print("❌ PDF 전송 에러:", str(e))
+        raise Http404("리포트 다운로드 중 문제가 발생했습니다.")
+
 
 @api_view(['GET'])
 def check_report_status(request):
-    # 테스트용: 항상 완료 상태 반환
     return Response({"status": "done"})
-
-# def download_report_pdf(request, chat_id):
-#     file_path = os.path.join(settings.MEDIA_ROOT, f"report_{chat_id}.pdf")
-#     if not os.path.exists(file_path):
-#         raise Http404("PDF 파일이 존재하지 않습니다.")
-#     return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"report_{chat_id}.pdf")
 
