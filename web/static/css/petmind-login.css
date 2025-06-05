@@ -159,63 +159,71 @@ body {
 }
 
 @media (max-width: 768px) {
-    body, .container-flex {
-        flex-direction: column;
-        height: auto;
-    }
+  .container-flex {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    width: 100vw;
+  }
 
-    .left-box {
-        display: none;
-    }
+  .left-box {
+    display: none !important;
+  }
 
-    .right-box {
-        width: 100vw;
-        min-height: 97vh;
-        background: #FFFFF6;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 24px 0;
-    }
+  .right-box {
+    width: 100vw;
+    min-height: 100vh;
+    background: #FFFFF6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    box-sizing: border-box;
+  }
 
-    .form-box {
-        max-width: 92vw;
-        width: 100%;
-        padding: 0 12px;
-        margin-top: 120px;
+  .form-box {
+    max-width: 92vw;
+    width: 100%;
+    padding: 0 12px;
+    margin-top: 120px;
+  }
 
-    }
+  .form-title.horizontal-logo {
+    margin-bottom: 24px;
+  }
 
-    .form-title.horizontal-logo {
-        margin-bottom: 24px;
-    }
+  /* 로고 크기 조정 */
+  .logo-icon {
+    width: 48px;
+    height: 48px;
+  }
 
-    .logo-icon {
-        width: 48px;
-        height: 48px;
-    }
+  .logo-text {
+    height: 38px;
+  }
 
-    .logo-text {
-        height: 38px;
-    }
+  .button-row {
+    flex-direction: column;
+    height: auto;
+    border-radius: 16px;
+    box-shadow: none;
+    gap: 12px;
+  }
 
-    .button-row {
-        flex-direction: column;
-        height: auto;
-        border-radius: 16px;
-        box-shadow: none;
-    }
+  .btn-login,
+  .btn-join {
+    border-radius: 16px !important;
+    height: 48px;
+    padding: 10px;
+    font-size: 15px;
+  }
 
-    .btn-login, .btn-join {
-        border-radius: 16px !important;
-        margin-bottom: 12px;
-        height: 48px;
-        padding: 10px;
-        font-size: 15px;
-    }
+  .find-password {
+    text-align: center;
+    margin-bottom: 16px;
+  }
 
-    .find-password {
-        text-align: center;
-        margin-bottom: 16px;
-    }
+  .guest-link {
+    font-size: 14px;
+  }
 }

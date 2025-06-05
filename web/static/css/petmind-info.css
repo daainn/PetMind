@@ -352,3 +352,87 @@ body {
   font-size: 0.9rem;
   margin-top: 4px;
 }
+
+@media (max-width: 768px) {
+  .top-title {
+    font-size: 20px;
+    margin: 40px 0 20px;
+  }
+
+  .top-title strong {
+    font-size: 26px;
+  }
+
+  .form-box {
+    padding: 30px 20px;
+    border-radius: 20px;
+  }
+
+  .section-block {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .section {
+    flex: 1 1 100%;
+  }
+
+  .profile-title {
+    font-size: 22px;
+  }
+
+  .profile-subtitle,
+  .inline-input-row .profile-subtitle,
+  .profile-subtitle-disease {
+    font-size: 18px;
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+
+  .profile-subtext {
+    font-size: 15px;
+  }
+
+  .inline-input-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .inline-input-row input[type="text"],
+  .inline-input-row select,
+  .inline-input-row .radio-row {
+    width: 100%;
+  }
+
+  .radio-row label {
+    font-size: 14px;
+    padding: 10px 14px;
+  }
+
+  .image-upload-wrapper {
+    margin-left: 0;
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .image-upload-label {
+    width: 160px;
+  }
+
+  .btn-confirm {
+    width: 100%;
+    font-size: 18px;
+    padding: 12px 0;
+  }
+
+  .info-banner {
+    font-size: 16px;
+    padding: 20px;
+  }
+
+  .info-banner strong {
+    font-size: 18px;
+  }
+}
