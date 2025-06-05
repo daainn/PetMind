@@ -20,14 +20,11 @@ from django.template.loader import render_to_string, get_template
 import os
 from django.conf import settings
 from .report_utils.gpt_report import build_prompt, generate_response, clean_and_split
-from dotenv import load_dotenv
-from .report_utils.db_load import load_chat_and_profile
 from .report_utils.report_pdf import generate_pdf_from_context
-import time
-import tempfile
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from chat.utils import get_image_response
+from chat.models import Chat, Message
 
 
 def chat_entry(request):
@@ -274,20 +271,6 @@ def chat_switch_dog(request, dog_id):
 
     return redirect('chat:chat_member', dog_id=dog.id)
 
-
-def call_runpod_api(message, user_info):
-    try:
-        api_url = "https://x76r8kryd0u399-7004.proxy.runpod.net/chat"
-        payload = {
-            "message": message,
-            "user_info": user_info
-        }
-        res = requests.post(api_url, json=payload, timeout=120)
-        res.raise_for_status()
-        data = res.json()
-        return data.get("response", "⚠️ 응답이 없습니다.")
-    except Exception as e:
-        return f"❗ 오류 발생: {str(e)}"
     
 def get_dog_info(dog):
     return {
@@ -335,7 +318,7 @@ def get_chat_history(chat):
 
 def call_runpod_api(message, user_info):
     try:
-        api_url = "http://38.128.233.224:45310/chat"
+        api_url = "http://38.128.232.232:31758/chat"
         payload = {
             "message": message,
             "user_info": user_info
@@ -649,6 +632,36 @@ def submit_review(request):
     return JsonResponse({'status': 'error'}, status=400)
 
 
+def load_chat_and_profile(chat_id):
+    try:
+        chat = Chat.objects.select_related("dog").get(id=chat_id)
+    except Chat.DoesNotExist:
+        return None, None
+
+    dog = chat.dog
+    if not dog:
+        return None, None
+
+    dog_dict = {
+        "name": dog.name,
+        "age": dog.age,
+        "breed_name": dog.breed_name,
+        "gender": dog.gender,
+        "neutered": dog.neutered,
+        "disease_history": dog.disease_history,
+        "living_period": dog.living_period,
+        "housing_type": dog.housing_type,
+    }
+
+    messages = Message.objects.filter(chat_id=chat_id).order_by("created_at")
+    history = [
+        {"role": "user" if msg.sender == "user" else "assistant", "content": msg.message}
+        for msg in messages
+    ]
+
+    return dog_dict, history
+
+
 @api_view(['POST'])
 def generate_report(request):
     """
@@ -788,3 +801,4 @@ def check_report_status(request):
 #     if not os.path.exists(file_path):
 #         raise Http404("PDF 파일이 존재하지 않습니다.")
 #     return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"report_{chat_id}.pdf")
+
