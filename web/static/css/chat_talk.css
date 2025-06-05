@@ -6,7 +6,6 @@
   font-family: 'Spoqa Han Sans Neo', sans-serif;
 }
 
-/* 중앙 정렬 */
 .chat-main {
   flex: 1;
   padding: 40px 20px;
@@ -16,7 +15,6 @@
   align-items: center;
 }
 
-/* 채팅 내역 */
 .chat-history {
   flex-grow: 1;
   display: flex;
@@ -28,12 +26,11 @@
   box-sizing: border-box;
 }
 
-/* 메시지 래퍼 */
 .chat-message-wrapper {
   display: flex;
   width: 100%;
   max-width: 100%;
-  padding: 0 12px; /* 좌우 여백 줘서 말풍선이 너무 붙지 않도록 */
+  padding: 0 12px;
   box-sizing: border-box;
 }
 .chat-message-wrapper.user-side {
@@ -43,15 +40,12 @@
   justify-content: flex-start;
 }
 
-/* 메시지 공통 */
 .chat-message {
   width: fit-content;
   max-width: 100%;
   padding: 16px 20px;
   border-radius: 12px;
   font-size: 15px;
-  /* line-height: 1.8; */
-  /* white-space: pre-wrap; */
   word-break: break-word;
   box-sizing: border-box;
   display: flex;
@@ -72,7 +66,6 @@
   border-top-left-radius: 0;
 }
 
-/* 시간 및 서브텍스트 */
 .chat-message-block {
   display: flex;
   align-items: flex-end;
@@ -109,7 +102,6 @@
   margin-top: 8px;
 }
 
-/* 입력 폼 */
 .chat-input-form {
   width: 100%;
   max-width: 70%;
@@ -251,7 +243,6 @@
   cursor: pointer;
 }
 
-/* 버튼 그룹 */
 .info-btn-wrapper {
   display: flex;
   align-items: center;
@@ -300,7 +291,6 @@
   display: block;
 }
 
-/* 보내기 버튼 */
 .send-btn {
   background-color: #FFC508;
   border: none;
@@ -317,7 +307,6 @@
   height: 40px;
 }
 
-/* 사이드바 */
 .sidebar {
   transform: translateX(-100%);
   transition: transform 0.3s ease;
@@ -330,12 +319,24 @@
   transition: margin-left 0.3s ease;
 }
 .app-wrapper.right-open .chat-main {
-  padding-right: 70px; /* 사이드바와 여유 간격 */
+  padding-right: 70px;
   transition: padding-right 0.3s ease;
 }
+.recommend-card {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
 
+.recommend-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
 
-/* 반응형 대응 */
+.link-icon {
+  font-size: 14px;
+  color: #888;
+}
+
 @media (max-width: 768px) {
   .chat-main {
     padding: 20px;
@@ -363,10 +364,13 @@
     height: 36px;
   }
 
-  /* ✅ 반응형에서는 좀 더 넓게 */
   .chat-history,
   .chat-input-form,
   .chat-message-wrapper {
     max-width: 95%;
   }
+  .recommend-description {
+    display: none;
+  }
+
 }

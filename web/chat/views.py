@@ -610,15 +610,18 @@ def recommend_content(request, chat_id):
     </p>
     <div style="display:flex; flex-direction:column; gap:12px;">
     '''
+
     for item in top_contents.to_dict(orient="records"):
         html += f'''
         <a href="{item['reference_url']}" target="_blank" style="text-decoration:none; color:inherit;">
-        <div style="border:1px solid #eee; border-radius:10px; padding:12px 16px; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <div class="recommend-card" style="position:relative; border:1px solid #eee; border-radius:10px; padding:12px 16px; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.05); transition:all 0.2s ease;">
+            <span class="link-icon" style="position:absolute; top:8px; right:10px;">🔗</span>
             <p style="font-size:14px; font-weight:600; margin:0 0 4px;">{item['title']}</p>
-            <p style="font-size:13px; color:#555; margin:0; line-height:1.4;">{item['body'][:80]}...</p>
+            <p class="recommend-description" style="font-size:13px; color:#555; margin:0; line-height:1.4;">{item['body'][:80]}...</p>
         </div>
         </a>
         '''
+
     html += '</div></div>'
 
     Message.objects.create(
