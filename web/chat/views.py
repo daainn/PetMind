@@ -604,21 +604,40 @@ def recommend_content(request, chat_id):
     top_contents = df.iloc[top_indices]
 
     html = '''
-    <div style="padding: 10px 16px;">
-    <p style="font-weight:600; margin: 0 0 12px 0; font-size:15px;">
+    <div class="recommend-content">
+    <p style="font-weight:400; margin: 0 0 12px 0; font-size:15px;">
     🐾 반려견의 마음을 이해하는 데 도움 되는 이야기들이에요:
     </p>
     <div style="display:flex; flex-direction:column; gap:12px;">
     '''
+
     for item in top_contents.to_dict(orient="records"):
-        html += f'''
-        <a href="{item['reference_url']}" target="_blank" style="text-decoration:none; color:inherit;">
-        <div style="border:1px solid #eee; border-radius:10px; padding:12px 16px; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-            <p style="font-size:14px; font-weight:600; margin:0 0 4px;">{item['title']}</p>
-            <p style="font-size:13px; color:#555; margin:0; line-height:1.4;">{item['body'][:80]}...</p>
-        </div>
-        </a>
-        '''
+        image_url = item['image_url']
+        has_image = image_url and image_url.strip().startswith("http")
+
+        if has_image:
+            html += f'''
+            <a href="{item['reference_url']}" target="_blank" class="recommend-card-link">
+            <div class="recommend-card with-image">
+                <div class="card-content-section">
+                <p class="recommend-title">{item['title']}</p>
+                <p class="recommend-description">{item['body'][:80]}...</p>
+                <span class="recommend-link-text">👉 자세히 보기</span>
+                </div>
+            </div>
+            </a>
+            '''
+        else:
+            html += f'''
+            <a href="{item['reference_url']}" target="_blank" class="recommend-card-link">
+            <div class="recommend-card no-image">
+                <p class="recommend-title">{item['title']}</p>
+                <p class="recommend-description">{item['body'][:80]}...</p>
+                <span class="recommend-link-text">👉 자세히 보기</span>
+            </div>
+            </a>
+            '''
+
     html += '</div></div>'
 
     Message.objects.create(

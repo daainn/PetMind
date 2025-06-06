@@ -6,7 +6,7 @@ body {
 
 .chat-main {
   flex: 1;
-  min-height: calc(100vh - 80px); /* 헤더 높이 제외 */
+  min-height: calc(100vh - 80px);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -29,7 +29,6 @@ body {
   margin-bottom: 32px;
 }
 
-/* 입력폼 전체 감싸는 박스 */
 .chat-input-form {
   width: 100%;
   background-color: #fff;
@@ -41,7 +40,6 @@ body {
   flex-direction: column;
 }
 
-/* 텍스트 입력창 */
 .chat-input-form textarea {
   width: 100%;
   min-height: 60px;
@@ -169,7 +167,6 @@ body {
   cursor: pointer;
 }
 
-/* 하단 버튼 레이아웃 (의뢰인 버튼 + ? + 전송) */
 .chat-input-bottom {
   display: flex;
   justify-content: space-between;
@@ -192,7 +189,6 @@ body {
   text-decoration: none;
 }
 
-/* ? 툴팁 버튼 */
 .tooltip-container {
   position: relative;
 }
@@ -230,7 +226,6 @@ body {
   display: block;
 }
 
-/* 전송 버튼 */
 .send-btn {
   background-color: #FFC508;
   border: none;
@@ -248,50 +243,129 @@ body {
   height: 40px;
 }
 
-/* 사이드바 열릴 때 레이아웃 이동 */
 .app-wrapper.sidebar-open .chat-main {
-  margin-left: 280px; /* 사이드바 width와 동일하게 설정 */
+  margin-left: 280px; 
   transition: margin-left 0.3s ease;
 }
 
 .app-wrapper.right-open .chat-main {
-  padding-right: 70px; /* 사이드바와 여유 간격 */
+  padding-right: 70px;
   transition: padding-right 0.3s ease;
 }
 
 
-/* 반응형 처리 */
 @media (max-width: 768px) {
-  .chat-main {
-    padding: 20px;
+  .chat-empty {
+    max-width: 100%;
+    padding: 0 6px;
+  }
+
+  body.member .chat-empty,
+  .chat-empty {
+    margin: 170px 0px 0px 0px;
+  }
+
+  body.guest .chat-empty {
+    margin: 20px 0px 0px 0px;
+  }
+
+  .chat-title {
+    font-size: 20px;
+    padding: 0 6px;
+    word-break: keep-all;
+  }
+
+  body.member .chat-title,
+  .chat-title {
+    margin-bottom: 200px;
+  }
+
+  body.guest .chat-title {
+    margin-bottom: 70px;
   }
 
   .chat-input-form {
-    padding: 16px;
+    padding: 10px 8px;
+    border-radius: 13px;
+    max-width: 100%;
+    width: 100%;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
   }
 
-  .chat-input-form textarea {
+  body.guest .chat-input-form {
+    margin-top: 40px;
+  }
+
+  .chat-message.bot-message {
+    padding: 16px;
+    border-radius: 12px;
+    max-width: 100% !important;
+    margin: 0 auto 16px;
     font-size: 14px;
   }
 
-  .info-btn {
-    font-size: 13px;
+  .chat-message.bot-message form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .chat-message.bot-message input[type="text"],
+  .chat-message.bot-message select,
+  .chat-message.bot-message button {
+    width: 100% !important;
+    font-size: 14px;
+    padding: 10px 12px;
+    box-sizing: border-box;
+  }
+
+  .chat-message.bot-message button {
+    background-color: #ffd400;
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .chat-input-form textarea {
+    font-size: 15px;
+    min-height: 38px;
+    padding: 7px;
+    border-radius: 7px;
+    margin-bottom: 10px;
+  }
+  .chat-input-bottom {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    width: 100%;
+    margin-top: 2px;
+  }
+  .image-upload-btn {
+    font-size: 12.5px;
     padding: 5px 10px;
+    border-radius: 15px;
   }
-
   .send-btn {
-    width: 36px;
-    height: 36px;
+    min-width: 34px;
+    min-height: 34px;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    margin-left: 8px;
+    border-radius: 50%;
   }
-
   .send-btn img {
-    width: 36px;
-    height: 36px;
+    width: 22px;
+    height: 22px;
   }
 
   .app-wrapper.sidebar-open .chat-main,
-  .app-wrapper.sidebar-open .chat-header-inner {
-    margin-left: 0;
-    padding-left: 0;
+  .app-wrapper.right-open .chat-main {
+    display: none;
   }
 }

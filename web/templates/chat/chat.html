@@ -5,6 +5,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PetMind | 상담 채팅</title>
   <link href="//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Koh+Santepheap:wght@700&display=swap" rel="stylesheet">
@@ -12,9 +13,9 @@
   <link rel="stylesheet" href="{% static 'css/chat.css' %}">
   <link rel="stylesheet" href="{% static 'css/chat_header.css' %}">
   <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
-  <link rel="stylesheet" href="{% static 'css/right_sidebar.css' %}">  {# ✅ 오른쪽 사이드바 CSS 추가 #}
+  <link rel="stylesheet" href="{% static 'css/right_sidebar.css' %}">
 </head>
-<body>
+<body class="{% if is_guest %}guest{% else %}member{% endif %}">
 <div class="app-wrapper" id="appWrapper">
   {% include 'common/chat_header.html' %}
   {% include 'common/sidebar.html' %}
@@ -29,12 +30,12 @@
         <div class="message-text" style="margin-bottom: 14px;">
           🐶 <strong>비회원이시군요!</strong> 상담을 시작하려면 반려견 정보를 입력해주세요.
         </div>
-        <form method="POST" action="{% url 'chat:guest_profile_register' %}" style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <form method="POST" action="{% url 'chat:guest_profile_register' %}" style="display: flex; gap: 13px; flex-wrap: wrap;">
           {% csrf_token %}
           <input type="text" name="guest_name" placeholder="반려견 이름" required
-                style="padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc; width: 140px;">
+                style="padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc; width: 200px;">
           <select name="guest_breed" required
-                  style="padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc; width: 200px;">
+                  style="padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc; width: 300px;">
             <option value="">견종을 선택하세요</option>
             {% for breed in dog_breeds %}
               <option value="{{ breed.name }}">{{ breed.name }}</option>
@@ -42,7 +43,7 @@
             <option value="기타">기타</option>
           </select>
           <button type="submit"
-                  style="padding: 8px 16px; background-color: #ffd400; border: none; border-radius: 8px; color: #000; font-weight: bold;">
+                  style="padding: 8px 30px; background-color: #ffd400; border: none; border-radius: 8px; color: #000; font-weight: bold;">
             확인
           </button>
         </form>
