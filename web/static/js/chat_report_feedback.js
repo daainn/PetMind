@@ -49,6 +49,13 @@ document.addEventListener('DOMContentLoaded', () => {
   fp.clear();
   calendarPopup.style.display = 'none';
 
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   reportBtn.addEventListener('click', () => {
     const isHidden = calendarPopup.style.display === 'none';
     calendarPopup.style.display = isHidden ? 'block' : 'none';
@@ -60,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!chatId) {
       alert("chatId가 유효하지 않습니다.");
       return;
-  }
+    }
 
     if (tempSelectedDates.length === 0) {
       alert("날짜를 선택해주세요.");
@@ -71,11 +78,10 @@ document.addEventListener('DOMContentLoaded', () => {
       ? [tempSelectedDates[0], tempSelectedDates[0]]
       : [...tempSelectedDates];
 
-    const startDate = finalDates[0].toISOString().split('T')[0];
-    const endDate = finalDates[1].toISOString().split('T')[0];
+    const startDate = formatDate(finalDates[0]);
+    const endDate = formatDate(finalDates[1]);
 
     fp.setDate(finalDates, true);
-    feedbackModal.style.display = 'block';
     calendarPopup.style.display = 'none';
     fp.close();
 
@@ -83,7 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("startDate", startDate);
     console.log("endDate", endDate);
 
-    // console.log("✅ 보내는 chatId:", chatId);
     const response = await fetch('/chat/report/generate/', {
       method: 'POST',
       headers: {
@@ -98,8 +103,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (!response.ok) {
-      alert("리포트 날짜 전송 실패");
+      alert("해당 날짜에는 상담을 진행하지 않았습니다!");
     } else {
+      feedbackModal.style.display = 'block';
       pollModelStatus();
     }
   });
@@ -186,4 +192,3 @@ document.addEventListener('DOMContentLoaded', () => {
       ?.split('=')[1];
   }
 });
-

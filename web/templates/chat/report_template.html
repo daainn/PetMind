@@ -15,14 +15,15 @@
   <div class="title">🐾 {{ dog_name }} 상담 일지 🐾</div>
 
   <div class="profile">
-    {% if dog.profile_image %}
-      <img src="{{ dog.profile_image }}" class="profile-img" alt="{{ dog_name }} 사진">
+    {% if image %}
+      <img src="data:{{ image_mime_type }};base64,{{ image }}" class="profile-img">
     {% else %}
       <img src="{% static 'images/petmind_logo_dog.png' %}" class="profile-img" alt="기본 반려견 사진">
     {% endif %}
     <div class="profile-box">
       <span class="name">
-        {{ dog_name }} ({{ age }}세, {{ breed_name }})
+        {{ dog_name }}
+        {% if age %} ({{ age }}세{% if breed_name %}, {{ breed_name }}{% endif %}){% elif breed_name %} ({{ breed_name }}){% endif %}
       </span>
     </div>
   </div>
