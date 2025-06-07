@@ -33,13 +33,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     input.addEventListener('change', () => {
-      console.log('미리보기 영역 초기화 전:', imagePreviewContainer.innerHTML);
       imagePreviewContainer.innerHTML = '';
-      console.log('미리보기 영역 초기화 후:', imagePreviewContainer.innerHTML);
       currentFileURLs.forEach(url => URL.revokeObjectURL(url));
       currentFileURLs = [];
-      [...input.files].forEach(file => {
-         const url = URL.createObjectURL(file);
+      let files = [...input.files];
+      if (files.length > 3) {
+        alert('이미지는 최대 3장까지만 첨부할 수 있습니다.');
+        files = files.slice(0, 3);
+      }
+      files.forEach(file => {
+        const url = URL.createObjectURL(file);
         currentFileURLs.push(url);
         imagePreviewContainer.insertAdjacentHTML(
           'beforeend',
