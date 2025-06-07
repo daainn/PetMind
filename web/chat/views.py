@@ -1,23 +1,31 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
-from django.http import JsonResponse
+from django.views.decorators.http import require_POST, require_http_methods
+from django.http import JsonResponse, FileResponse, HttpResponseNotAllowed, Http404, HttpResponseNotFound, HttpResponseServerError, HttpResponse
 from user.models import User
-from .models import Chat, Message, Content, MessageImage
+from .models import Chat, Message, Content, MessageImage, UserReview
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from dogs.models import DogProfile, DogBreed
-from django.http import HttpResponseNotAllowed
-from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from user.utils import get_logged_in_user
 from collections import defaultdict
 from datetime import date, timedelta
 import uuid
 import requests
+import json
+from django.template.loader import render_to_string, get_template
+import os
+from django.conf import settings
+from .report_utils.gpt_report import build_prompt, generate_response, clean_and_split
+from .report_utils.report_pdf import generate_pdf_from_context
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 from chat.utils import get_image_response
+from chat.models import Chat, Message
+
 
 def chat_entry(request):
     if request.session.get('guest'):
@@ -338,7 +346,7 @@ def get_chat_history(chat):
 
 def call_runpod_api(message, dog_info):
     try:
-        api_url = "http://64.247.206.102:37616/chat"
+        api_url = "http://213.173.105.9:27616/chat"
         payload = {
             "message": message,
             "dog_info": dog_info
@@ -560,7 +568,6 @@ def chat_talk_view(request, chat_id):
     })
 
 
-
 def recommend_content(request, chat_id):
     if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({"error": "Invalid request"}, status=400)
@@ -651,3 +658,137 @@ def recommend_content(request, chat_id):
         "cards_html": html,
         "has_recommendation": True
     })
+
+@csrf_exempt
+def submit_review(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        chat_id = data.get('chat_id')
+        score = data.get('review_score')
+        review = data.get('review')
+
+        chat = Chat.objects.get(id=chat_id)
+        UserReview.objects.create(
+            chat=chat,
+            review_score=score,
+            review=review
+        )
+        return JsonResponse({'status': 'ok'})
+
+    return JsonResponse({'status': 'error'}, status=400)
+
+def load_chat_and_profile(chat_id):
+    try:
+        chat = Chat.objects.select_related("dog").get(id=chat_id)
+    except Chat.DoesNotExist:
+        return None, None
+
+    dog = chat.dog
+    if not dog:
+        return None, None
+
+    dog_dict = {
+        "name": dog.name,
+        "age": dog.age,
+        "breed_name": dog.breed.name if dog.breed else "알 수 없음",
+        "gender": dog.gender,
+        "neutered": dog.neutered,
+        "disease_history": dog.disease_history,
+        "living_period": dog.living_period,
+        "housing_type": dog.housing_type,
+    }
+
+    messages = Message.objects.filter(chat_id=chat_id).order_by("created_at")
+    history = [
+        {"role": "user" if msg.sender == "user" else "assistant", "content": msg.message}
+        for msg in messages
+    ]
+
+    return dog_dict, history
+
+def chat_report_feedback_view(request, chat_id):
+    chat = get_object_or_404(Chat, id=chat_id)
+    return render(request, 'chat/chat_report_feedback.html', {
+        "chat_id": chat_id,
+    })
+
+@api_view(['POST'])
+def generate_report(request):
+    data = request.data
+    chat_id = data.get("chat_id")
+    start_date = data.get("start_date")
+    end_date = data.get("end_date")
+    print("📩 받은 데이터:", data)
+
+    if not (chat_id and start_date and end_date):
+        return Response({"error": "필수 값 누락"}, status=400)
+
+    dog, history = load_chat_and_profile(chat_id)
+    if not dog or not history:
+        return Response({"error": "해당 chat_id에 대한 데이터가 없습니다."}, status=404)
+
+    try:
+        messages = build_prompt(dog, history)
+        raw_output = generate_response(messages)
+        intro, advice, next_, is_split_success = clean_and_split(raw_output)
+    except Exception as e:
+        return Response({"error": f"GPT 처리 중 오류: {str(e)}"}, status=500)
+
+    context = {
+        "dog_name": dog["name"],
+        "age": dog["age"],
+        "breed_name": dog["breed_name"],
+        "gender_display": dog["gender"],
+        "neutered": dog["neutered"],
+        "disease_history": dog["disease_history"],
+        "living_period": dog["living_period"],
+        "housing_type": dog["housing_type"],
+        "profile_image_url": request.build_absolute_uri("/static/images/sample_dog.jpg"),
+        "start_date": start_date,
+        "end_date": end_date,
+        "intro_text": intro,
+        "advice_text": advice,
+        "next_text": next_,
+        "is_split_success": is_split_success,
+        "full_text": raw_output,
+        "request": request,
+    }
+
+    try:
+        pdf_path = generate_pdf_from_context(context, pdf_filename=f"report_{chat_id}.pdf")
+        request.session[f"pdf_path_{chat_id}"] = pdf_path
+        print("✅ PDF 생성 완료:", pdf_path)
+        return Response({"status": "success"})
+    except Exception as e:
+        return Response({"error": f"PDF 생성 실패: {str(e)}"}, status=500)
+
+def download_report_pdf(request, chat_id):
+    pdf_path = request.session.get(f"pdf_path_{chat_id}")
+    if not pdf_path or not os.path.exists(pdf_path):
+        raise Http404("리포트 파일이 존재하지 않거나 세션이 만료되었습니다.")
+
+    try:
+        pdf_file = open(pdf_path, "rb")
+        response = FileResponse(pdf_file, as_attachment=True, filename=f"report_{chat_id}.pdf")
+
+        def cleanup():
+            try:
+                pdf_file.close()
+                os.remove(pdf_path)
+                print("🧹 다운로드 후 PDF 삭제 완료")
+            except Exception:
+                pass
+
+        response.close = cleanup
+
+        return response
+
+    except Exception as e:
+        print("❌ PDF 전송 에러:", str(e))
+        raise Http404("리포트 다운로드 중 문제가 발생했습니다.")
+
+
+@api_view(['GET'])
+def check_report_status(request):
+    return Response({"status": "done"})
+

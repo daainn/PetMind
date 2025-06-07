@@ -1,0 +1,82 @@
+@page {
+  size: A4;
+  margin: 25mm;
+}
+
+body {
+  font-family: 'Spoqa Han Sans', sans-serif;
+  padding: 20mm 20mm;
+  color: #333;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.petmind-logo, .logo {
+  height: 20px;
+}
+
+.report-date {
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.title {
+  text-align: center;
+  font-size: 24px;
+  margin: 40px 0 20px;
+  font-weight: 700;
+}
+
+.profile {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.profile-img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #fbdc41;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  background: #fff;
+  display: block;
+  margin: 0 auto;
+}
+
+.name {
+  display: block;
+  font-size: 12px;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.gender {
+  font-size: 15px;
+  color: #666;
+}
+
+.section-title-lg {
+  font-size: 24px; 
+  font-weight: bold;
+  margin: 30px 0 10px;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.llm-response {
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  margin-top: 5px;
+}

@@ -14,6 +14,8 @@ from pathlib import Path
 import os
 from decouple import config
 from decouple import Config, RepositoryEnv
+# import pymysql
+# pymysql.install_as_MySQLdb()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -47,6 +49,7 @@ INSTALLED_APPS = [
     'user',
     'dogs',
     'chat',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
