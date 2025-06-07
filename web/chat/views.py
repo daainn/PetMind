@@ -16,6 +16,7 @@ from datetime import date, timedelta
 import uuid
 import requests
 import json
+import base64
 from django.template.loader import render_to_string, get_template
 import os
 from django.conf import settings
@@ -25,6 +26,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from chat.utils import get_image_response
 from chat.models import Chat, Message
+from datetime import datetime
+from django.utils.timezone import make_aware
 
 
 def chat_entry(request):
@@ -83,6 +86,7 @@ def chat_member_view(request, dog_id):
         'user_email': user.email,
         'dog': dog,
         'dog_list': dog_list,
+        'can_generate_report': False,
     })
 
 
@@ -182,6 +186,7 @@ def chat_member_talk_detail(request, dog_id, chat_id):
         "now_time": timezone.localtime().strftime("%I:%M %p").lower(),
         "dog": dog,
         "dog_list": dog_list,
+        'can_generate_report': True,
     })
 
 
@@ -658,7 +663,7 @@ def submit_review(request):
 
     return JsonResponse({'status': 'error'}, status=400)
 
-def load_chat_and_profile(chat_id):
+def load_chat_and_profile(chat_id, start_date, end_date):
     try:
         chat = Chat.objects.select_related("dog").get(id=chat_id)
     except Chat.DoesNotExist:
@@ -677,12 +682,24 @@ def load_chat_and_profile(chat_id):
         "disease_history": dog.disease_history,
         "living_period": dog.living_period,
         "housing_type": dog.housing_type,
+        "image": dog.profile_image.url if dog.profile_image else None,
     }
 
-    messages = Message.objects.filter(chat_id=chat_id).order_by("created_at")
+    try:
+        start_dt = make_aware(datetime.strptime(start_date, "%Y-%m-%d"))
+        end_dt = make_aware(datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1))
+    except ValueError:
+        return dog_dict, []
+
+    messages = Message.objects.filter(
+        chat_id=chat_id,
+        created_at__gte=start_dt,
+        created_at__lt=end_dt
+    ).order_by("created_at")
+
     history = [
         {"role": "user" if msg.sender == "user" else "assistant", "content": msg.message}
-        for msg in messages
+        for msg in messages if msg.message
     ]
 
     return dog_dict, history
@@ -692,6 +709,18 @@ def chat_report_feedback_view(request, chat_id):
     return render(request, 'chat/chat_report_feedback.html', {
         "chat_id": chat_id,
     })
+
+def get_base64_image(image_path):
+    if image_path.startswith("media/") or image_path.startswith("/media/"):
+        image_path = image_path.replace("media/", "").lstrip("/")
+
+    full_path = os.path.join(settings.MEDIA_ROOT, image_path)
+    try:
+        with open(full_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode("utf-8")
+    except FileNotFoundError:
+        print(f"[오류] 파일을 찾을 수 없습니다: {full_path}")
+        return None
 
 @api_view(['POST'])
 def generate_report(request):
@@ -704,7 +733,7 @@ def generate_report(request):
     if not (chat_id and start_date and end_date):
         return Response({"error": "필수 값 누락"}, status=400)
 
-    dog, history = load_chat_and_profile(chat_id)
+    dog, history = load_chat_and_profile(chat_id, start_date, end_date)
     if not dog or not history:
         return Response({"error": "해당 chat_id에 대한 데이터가 없습니다."}, status=404)
 
@@ -715,6 +744,14 @@ def generate_report(request):
     except Exception as e:
         return Response({"error": f"GPT 처리 중 오류: {str(e)}"}, status=500)
 
+    base64_img = None
+    if dog.get("image"):
+        try:
+            base64_img = get_base64_image(dog["image"])
+        except Exception as e:
+            print(f"[경고] 이미지 Base64 변환 실패: {e}")
+            base64_img = None
+
     context = {
         "dog_name": dog["name"],
         "age": dog["age"],
@@ -724,7 +761,7 @@ def generate_report(request):
         "disease_history": dog["disease_history"],
         "living_period": dog["living_period"],
         "housing_type": dog["housing_type"],
-        "profile_image_url": request.build_absolute_uri("/static/images/sample_dog.jpg"),
+        "image": base64_img,
         "start_date": start_date,
         "end_date": end_date,
         "intro_text": intro,
@@ -738,7 +775,6 @@ def generate_report(request):
     try:
         pdf_path = generate_pdf_from_context(context, pdf_filename=f"report_{chat_id}.pdf")
         request.session[f"pdf_path_{chat_id}"] = pdf_path
-        print("✅ PDF 생성 완료:", pdf_path)
         return Response({"status": "success"})
     except Exception as e:
         return Response({"error": f"PDF 생성 실패: {str(e)}"}, status=500)
