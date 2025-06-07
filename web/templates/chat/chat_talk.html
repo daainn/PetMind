@@ -22,14 +22,14 @@
     {% include 'common/right_sidebar.html' %} 
 
     <main class="chat-main">
-      <div class="chat-history">
+      <div class="chat-history" data-chat-id="{{ chat.id }}" data-dog-id="{{ dog.id }}">
         {% for m in messages %}
           <div class="chat-message-wrapper {% if m.sender == 'user' %}user-side{% else %}bot-side{% endif %}">
             <div class="chat-message-block" style="display: flex; flex-direction: column; align-items: center;">
               {% if m.images.all %}
-                <div class="chat-image-block" style="margin-bottom: 6px;">
+                <div class="chat-image-block" style="margin-bottom: 8px;">
                   {% for img in m.images.all %}
-                    <img src="{{ img.image.url }}" class="preview-image" alt="업로드 이미지" style="display: block; margin: 4px auto;">
+                    <img src="{{ img.image.url }}" class="preview-image" alt="업로드 이미지" style="width:80px;height:80px;object-fit:cover;border-radius:8px;display:block;margin:4px auto;">
                   {% endfor %}
                 </div>
               {% endif %}
@@ -49,7 +49,7 @@
             </div>
           </div>
         {% endfor %}
-    
+          
       </div>
 
       <div class="recommend-info-box" id="recommendTrigger"
@@ -93,120 +93,8 @@
   <script src="{% static 'js/recommend.js' %}"></script>
   <script src="{% static 'js/right_sidebar.js' %}"></script>
   <script>
-
-    document.addEventListener('DOMContentLoaded', function () {
-      document.querySelectorAll(".chat-time").forEach(el => {
-        const rawTime = el.getAttribute("data-time");
-        if (rawTime) {
-          const date = new Date(rawTime);
-          if (!isNaN(date)) {
-            el.textContent = date.toLocaleTimeString('ko-KR', {
-              hour: '2-digit', minute: '2-digit', hour12: true
-            });
-          } else {
-            el.textContent = '시간 오류';
-          }
-        }
-      });
-
-    const isGuest = {{ is_guest|yesno:"true,false" }};
-    if (isGuest) {
-      const imageUploadLabel = document.querySelector('.image-upload-btn');
-      if (imageUploadLabel) {
-        imageUploadLabel.addEventListener('click', function (e) {
-          e.preventDefault();
-          alert("이미지 업로드는 로그인 후 이용하실 수 있습니다.");
-        });
-      }
-    }
-
-    if (isGuest) {
-      const recommendBtn = document.getElementById('recommendTrigger');
-      if (recommendBtn) {
-        recommendBtn.addEventListener('click', function (e) {
-          e.preventDefault();
-          alert("추천 콘텐츠는 로그인 후 이용하실 수 있습니다.");
-        });
-      }
-    }
-  });
-
-  document.addEventListener('DOMContentLoaded', function () {
-    const form = document.querySelector('.chat-input-form');
-    const messageInput = form.querySelector('textarea');
-    const chatHistory = document.querySelector('.chat-history');
-
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-
-      // 1. 입력값 백업하고 인풋은 즉시 비움!
-      const userMessage = messageInput.value;
-      messageInput.value = '';
-
-      // 2. 사용자 메시지 바로 출력
-      const userMessageElement = document.createElement('div');
-      userMessageElement.classList.add('chat-message-wrapper', 'user-side');
-      userMessageElement.innerHTML = `
-        <div class="chat-message-block">
-          <div class="chat-message user-message">
-            <div class="message-content">${userMessage}</div>
-          </div>
-        </div>
-      `;
-      chatHistory.appendChild(userMessageElement);
-      chatHistory.scrollTop = chatHistory.scrollHeight;
-
-      // 3. 점 3개 애니메이션 추가
-      const loadingMessageElement = document.createElement('div');
-      loadingMessageElement.classList.add('chat-message-wrapper', 'bot-side');
-      loadingMessageElement.innerHTML = `
-        <div class="chat-message-block">
-          <div class="chat-message bot-message">
-            <div class="message-content">
-              <span class="dot-loader">
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-              </span>
-            </div>
-          </div>
-        </div>
-      `;
-      chatHistory.appendChild(loadingMessageElement);
-      chatHistory.scrollTop = chatHistory.scrollHeight;
-
-      // 4. formData를 새로 만들어서 userMessage를 직접 append
-      const formData = new FormData();
-      formData.append('message', userMessage);
-
-      // (이미지, 기타 필드도 있으면 formData.append로 추가)
-      const imageInput = document.getElementById('imageInput');
-      if (imageInput && imageInput.files.length > 0) {
-        for (let i = 0; i < imageInput.files.length; i++) {
-          formData.append('images', imageInput.files[i]);
-        }
-      }
-
-      // 5. AJAX 요청
-      fetch(form.action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'X-CSRFToken': form.querySelector('[name="csrfmiddlewaretoken"]').value
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        loadingMessageElement.querySelector('.message-content').textContent = data.response;
-      })
-      .catch(error => {
-        loadingMessageElement.querySelector('.message-content').textContent = "응답을 받을 수 없습니다.";
-        console.error("오류 발생:", error);
-      });
-    });
-
-  });
-
-</script>
+    window.isGuest = {{ is_guest|yesno:"true,false" }};
+  </script>
+  <script src="{% static 'js/chat_talk.js' %}"></script>
 </body>
 </html>
