@@ -4,6 +4,8 @@
   <link href="https://cdn.jsdelivr.net/npm/spoqa-han-sans@2.1.2/css/SpoqaHanSans.min.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Koh+Santepheap&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Leckerli+One&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="{% static 'css/chat_report_feedback.css' %}">
 
   <div class="chat-header-inner">
     <button id="sidebarToggle" class="chat-sidebar-btn header-sidebar-toggle">
@@ -11,6 +13,9 @@
     </button>
 
     <a href="/" class="chat-logo">PetMind</a>
+
+    
+    {% include 'chat/chat_report_feedback.html' %}
 
     {% if is_guest %}
       <div class="chat-user-menu">
@@ -27,3 +32,5 @@
     {% endif %}
   </div>
 </header>
+
+<script src="{% static 'js/chat_report_feedback.js' %}"></script>

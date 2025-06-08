@@ -83,14 +83,11 @@
   </div>
 </div>
 
-<!-- 공통 모달 파일 include -->
 {% include 'common/update_modal.html' %}
 {% include 'common/feedback_modal.html' %}
 
-<!-- FontAwesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-<!-- JavaScript -->
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const settingsBtn = document.getElementById("settingsBtn");
@@ -132,7 +129,6 @@
   window.currentDogId = {{ current_dog.id }};
 </script>
 
-<!-- ✓ 스타일 -->
 <style>
   .sidebar {
     width: 280px;
