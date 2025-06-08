@@ -53,11 +53,8 @@ def get_user_id(request):
     return request.session.get("guest_user_id") if is_guest_user(request) else request.session.get("user_id")
 
 def is_chat_owner(request, chat):
-    user_id = request.session.get("guest_user_id") if request.session.get("guest", False) else request.session.get("user_id")
-    if request.session.get("guest", False):
-        return str(chat.guest_id) == str(user_id)
-    else:
-        return str(chat.dog.user.id) == str(user_id)
+    current_user_id = get_user_id(request)
+    return str(chat.user_id) == str(current_user_id)
 
     
 def group_chats_by_date(chat_list):
@@ -389,10 +386,12 @@ def call_runpod_api(message, dog_info):
 def chat_send(request):
     is_guest = is_guest_user(request)
     user_id = get_user_id(request)
+
     if not user_id:
         return redirect('user:home')
 
     user = get_object_or_404(User, id=user_id)
+
     message = request.POST.get("message", "").strip()
     image_files = request.FILES.getlist("images")
 
@@ -465,6 +464,7 @@ def chat_send(request):
     Message.objects.create(chat=chat, sender="bot", message=answer)
 
     return redirect('chat:chat_member_talk_detail', dog_id=dog.id, chat_id=chat.id)
+
 
 
 @require_POST
@@ -581,6 +581,7 @@ def chat_talk_view(request, chat_id):
         "dog": dog,
         "dog_list": dog_list
     })
+
 
 
 @require_http_methods(["GET"])

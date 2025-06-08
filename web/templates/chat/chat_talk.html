@@ -18,7 +18,6 @@
   <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
   <link rel="stylesheet" href="{% static 'css/chat_talk.css' %}">
 
-  <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <link rel="stylesheet" href="{% static 'css/right_sidebar.css' %}"> 
 
@@ -96,7 +95,8 @@
       </form>
     </main>
   </div>
-
+  <span id="isGuestFlag" style="display: none;">{{ is_guest|yesno:"true,false" }}</span>
+  
   <script src="{% static 'js/chat_member_sidebar.js' %}"></script>
   <script src="{% static 'js/image_upload.js' %}"></script>
   <script src="{% static 'js/recommend.js' %}"></script>
@@ -116,10 +116,8 @@
           }
         }
       });
-    // ✅ 비회원 기능 제한
     const isGuest = {{ is_guest|yesno:"true,false" }};
 
-    // 이미지 업로드 차단
     if (isGuest) {
       const imageUploadLabel = document.querySelector('.image-upload-btn');
       if (imageUploadLabel) {
@@ -130,7 +128,6 @@
       }
     }
 
-    // 추천 콘텐츠 버튼 차단
     if (isGuest) {
       const recommendBtn = document.getElementById('recommendTrigger');
       if (recommendBtn) {
