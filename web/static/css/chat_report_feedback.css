@@ -31,7 +31,7 @@ body, button, input, textarea {
 }
 
 .chat-report-btn:hover {
-  background-color: #ffe063
+  background-color: #ffe063;
 }
 
 /* 달력 상자 전체 위치 및 스타일 */
@@ -201,7 +201,8 @@ body, button, input, textarea {
   display: none !important;
 }
 
-.modal {
+/* === 여기부터 모달 === */
+#chat_feedbackModal {
   display: none;
   position: fixed;
   top: 50%;
@@ -217,7 +218,7 @@ body, button, input, textarea {
   z-index: 1000;
 }
 
-.modal-close-btn {
+#chat_modalCloseBtn {
   position: absolute;
   top: 16px;
   right: 20px;
@@ -230,7 +231,7 @@ body, button, input, textarea {
   transition: color 0.2s ease;
 }
 
-.modal-close-btn:hover {
+#chat_modalCloseBtn:hover {
   color: #333;
 }
 
@@ -241,7 +242,7 @@ body, button, input, textarea {
   gap: 10px;
 }
 
-.modal h2 {
+#chat_feedbackModal h2 {
   font-size: 30px;
   margin-bottom: 6px;
   font-weight: bold;
@@ -295,16 +296,15 @@ body, button, input, textarea {
   margin-bottom: 20px;
 }
 
-.star-rating-img img {
+.star-rating-img .chat-star {
   width: 80px;
   height: 70px;
   transition: transform 0.2s;
 }
 
-.star-rating-img img:hover {
+.star-rating-img .chat-star:hover {
   transform: scale(1.1);
 }
-
 
 .feedback-input-wrapper {
   transform: translateX(-10px);
@@ -328,7 +328,7 @@ body, button, input, textarea {
   resize: none;
 }
 
-.feedback-input-wrapper .submit-btn {
+.feedback-input-wrapper #chat_submitBtn {
   position: absolute;
   top: 50%;
   right: 12px;
@@ -350,12 +350,11 @@ body, button, input, textarea {
   justify-content: center;
 }
 
-
-.feedback-input-wrapper .submit-btn:hover {
+.feedback-input-wrapper #chat_submitBtn:hover {
   background-color: #ffe063;
 }
 
-.download-btn {
+#chat_downloadBtn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -372,21 +371,21 @@ body, button, input, textarea {
   transition: background-color 0.3s;
 }
 
-.download-btn img {
+#chat_downloadBtn img {
   width: 20px;
   height: 20px;
 }
 
-.download-btn.active {
+#chat_downloadBtn.active {
   background-color: #FFC508;
   cursor: pointer;
   color: #333;
 }
 
-.download-btn:hover {
+#chat_downloadBtn:hover {
   background-color: #ffe063;
 }
 
-.download-btn:disabled {
+#chat_downloadBtn:disabled {
   pointer-events: none;
 }
