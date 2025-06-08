@@ -21,8 +21,8 @@
 </div>
 
 {% if not is_guest and can_generate_report %}
-<div class="modal" id="feedbackModal">
-  <button class="modal-close-btn" id="modalCloseBtn">×</button>
+<div class="modal" id="chat_feedbackModal">
+  <button class="modal-close-btn" id="chat_modalCloseBtn">×</button>
 
   <div class="modal-header">
     <img src="{% static 'images/petmind_logo.png' %}" alt="펫마인드 로고" class="petmind-logo">
@@ -43,21 +43,21 @@
   <div class="star-rating-img"
     data-yellow="{% static 'images/star_y.png' %}" 
     data-gray="{% static 'images/star_g.png' %}">
-    <img src="{% static 'images/star_g.png' %}" class="star" data-value="1">
-    <img src="{% static 'images/star_g.png' %}" class="star" data-value="2">
-    <img src="{% static 'images/star_g.png' %}" class="star" data-value="3">
-    <img src="{% static 'images/star_g.png' %}" class="star" data-value="4">
-    <img src="{% static 'images/star_g.png' %}" class="star" data-value="5">
+    <img src="{% static 'images/star_g.png' %}" class="chat-star" data-value="1">
+    <img src="{% static 'images/star_g.png' %}" class="chat-star" data-value="2">
+    <img src="{% static 'images/star_g.png' %}" class="chat-star" data-value="3">
+    <img src="{% static 'images/star_g.png' %}" class="chat-star" data-value="4">
+    <img src="{% static 'images/star_g.png' %}" class="chat-star" data-value="5">
   </div>
 
-  <input type="hidden" id="ratingValue" value="0">
-  <input type="hidden" id="chatId" value="{{ current_chat.id }}">
+  <input type="hidden" id="chat_ratingValue" value="0">
+  <input type="hidden" id="chat_chatId" value="{{ current_chat.id }}">
 
   <div class="feedback-input-wrapper">
-    <textarea placeholder="피드백을 작성해주세요."></textarea>
-    <button class="submit-btn">제출</button>
+    <textarea id="chat_feedbackText" placeholder="피드백을 작성해주세요."></textarea>
+    <button class="submit-btn" id="chat_submitBtn">제출</button>
   </div>
-  <button class="download-btn" id="downloadBtn" disabled>
+  <button class="download-btn" id="chat_downloadBtn" disabled>
     <img src="{% static 'images/download_icon.png' %}" alt="다운로드 아이콘" class="download-icon">
     다운로드
   </button>

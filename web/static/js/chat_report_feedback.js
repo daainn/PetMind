@@ -3,13 +3,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const calendarPopup = document.getElementById('chatCalendar');
   const confirmBtn = document.getElementById('calendarConfirmBtn');
   const dateInput = document.getElementById('reportDate');
-  const feedbackModal = document.getElementById('feedbackModal');
-  const modalClose = document.getElementById('modalCloseBtn');
+  const feedbackModal = document.getElementById('chat_feedbackModal');
+  const modalClose = document.getElementById('chat_modalCloseBtn');
   const progressBar = document.querySelector('.progress-bar');
-  const downloadBtn = document.getElementById('downloadBtn');
-  const submitBtn = document.querySelector('.submit-btn');
-  const feedbackInput = document.querySelector('.feedback-input-wrapper textarea');
-  const chatId = document.getElementById('chatId').value;
+  const downloadBtn = document.getElementById('chat_downloadBtn');
+  const submitBtn = document.getElementById('chat_submitBtn');
+  const feedbackInput = document.getElementById('chat_feedbackText');
+  const chatId = document.getElementById('chat_chatId')?.value;
   let tempSelectedDates = [];
 
   const fp = flatpickr(dateInput, {
@@ -63,7 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   confirmBtn.addEventListener('click', async () => {
-    const chatId = document.getElementById('chatId')?.value;
     if (!chatId) {
       alert("chatId가 유효하지 않습니다.");
       return;
@@ -111,8 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const starContainer = document.querySelector('.star-rating-img');
-  const stars = document.querySelectorAll('.star-rating-img .star');
-  const ratingValue = document.getElementById('ratingValue');
+  const stars = document.querySelectorAll('.star-rating-img .chat-star');
+  const ratingValue = document.getElementById('chat_ratingValue');
   const yellowStar = starContainer.dataset.yellow;
   const grayStar = starContainer.dataset.gray;
 
