@@ -3,6 +3,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>회원 가입 | PetMind</title>
   <link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css' rel='stylesheet' type='text/css'>
   <link href="https://fonts.googleapis.com/css2?family=Koh+Santepheap:wght@700&display=swap" rel="stylesheet">
@@ -24,7 +25,6 @@
     <form id="joinForm" method="post" action="{% url 'user:join_complete' %}">
       {% csrf_token %}
 
-      <!-- 약관 -->
       <div>
         <div class="section-title">약관 동의</div>
         <div class="checkbox-area">
@@ -53,21 +53,21 @@
 
       <div class="line"></div>
 
-      <!-- 개인정보 입력 -->
       <div class="input-group">
         <label for="email_id">이메일<span style="color:#FFC508;">*</span></label>
         <div class="email-field-wrapper">
-          <div class="email-flex-wrap">
-            <div class="email-combined" id="email-combined">
-              <input type="text" name="email_id" id="email_id" placeholder="이메일을 입력하세요" />
-              <span>@</span>
-              <input type="text" name="email_domain" id="email_domain" placeholder="" />
-              <select id="domain_selector" onchange="setEmailDomain(this.value)">
-                <option value="">직접 입력</option>
-                <option value="gmail.com">gmail.com</option>
-                <option value="naver.com">naver.com</option>
-              </select>
+          <div class="email-combined-row">
+            <div class="email-id-line">
+              <input type="text" name="email_id" id="email_id" placeholder="이메일 아이디" />
+              <span class="at">@</span>
             </div>
+
+            <input type="text" name="email_domain" id="email_domain"/>
+            <select id="domain_selector" onchange="setEmailDomain(this.value)">
+              <option value="">직접 입력</option>
+              <option value="gmail.com">gmail.com</option>
+              <option value="naver.com">naver.com</option>
+            </select>
             <button type="button" class="btn-auth-request">인증 번호 요청</button>
           </div>
 

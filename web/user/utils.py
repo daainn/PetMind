@@ -13,8 +13,7 @@ def get_or_create_user(request):
             user = User.objects.get(id=uuid.UUID(user_id))
             return user, False
         except (User.DoesNotExist, ValueError):
-            pass  
-
+            pass 
     guest_user_id = request.session.get("guest_user_id")
     if guest_user_id:
         try:

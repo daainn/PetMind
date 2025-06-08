@@ -352,3 +352,124 @@ body {
   font-size: 0.9rem;
   margin-top: 4px;
 }
+
+@media (max-width: 768px) {
+  body {
+    font-size: 16px;
+  }
+
+  .top-title {
+    font-size: 18px;
+    margin: 32px 0 20px;
+    line-height: 1.5;
+    padding: 0 12px;
+  }
+
+  .top-title strong {
+    font-size: 22px;
+  }
+
+  .dog-info-form {
+    padding: 0 16px;
+  }
+
+  .form-box {
+    padding: 24px 16px;
+    border-radius: 18px;
+  }
+
+  .info-banner {
+    font-size: 15px;
+    padding: 16px 18px;
+    margin-bottom: 30px;
+    line-height: 1.6;
+  }
+
+  .info-banner strong {
+    font-size: 17px;
+  }
+
+  .section-block {
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  .section {
+    flex: 1 1 100%;
+  }
+  .image-delete-btn {
+    top: 10px;
+    left: 200px;
+    right: 10px;
+  }
+
+  .image-delete-btn img {
+    width: 24px;
+    height: 24px;
+  }
+
+  .profile-subtitle:empty {
+    display: none;
+  }
+
+  .profile-title {
+    font-size: 20px;
+    margin-top: 10px;
+  }
+
+  .profile-subtitle,
+  .inline-input-row .profile-subtitle,
+  .profile-subtitle-disease {
+    font-size: 16px;
+    margin-bottom: 6px;
+    margin-right: 0;
+  }
+
+  .profile-subtext {
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+  
+
+  .inline-input-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .inline-input-row input::placeholder {
+    font-size: 13px;
+  }
+
+  .radio-row label {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .image-upload-wrapper {
+    margin: 20px auto 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  .image-upload-label {
+    width: 140px;
+    aspect-ratio: 1 / 1;
+  }
+
+  .btn-confirm {
+    width: 100%;
+    font-size: 17px;
+    padding: 12px 0;
+    border-radius: 10px;
+  }
+  .section-content input[type="text"], .section-content select {
+    width: 91%;
+    padding: 14px 14px;
+    font-size: 16px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+}

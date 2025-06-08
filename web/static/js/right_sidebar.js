@@ -5,7 +5,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (userIcon && appWrapper) {
     userIcon.addEventListener('click', () => {
-      appWrapper.classList.toggle('right-open');
+      const isOpen = appWrapper.classList.toggle('right-open');
+
+      if (isOpen) {
+        appWrapper.classList.remove('sidebar-open');
+
+        const sidebar = document.getElementById("sidebar") || document.querySelector(".sidebar");
+        if (sidebar?.classList.contains("active")) {
+          sidebar.classList.remove("active");
+        }
+      }
     });
   }
 

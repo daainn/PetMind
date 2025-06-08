@@ -6,8 +6,12 @@ document.addEventListener("DOMContentLoaded", () => {
   sidebarButtons.forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      sidebar.classList.toggle("active");
-      appWrapper?.classList.toggle("sidebar-open");
+      const isOpen = sidebar.classList.toggle("active");
+      appWrapper?.classList.toggle("sidebar-open", isOpen);
+
+      if (isOpen) {
+        appWrapper?.classList.remove("right-open");
+      }
     });
   });
 
@@ -31,7 +35,8 @@ document.addEventListener("DOMContentLoaded", () => {
 function handleTitleClick(event, chatId) {
   const input = document.querySelector(`#chat-title-${chatId}`);
   if (!input.hasAttribute("readonly")) {
-    event.stopPropagation();
+    event.stopPropagation(); 
+    return;
   }
   goToChat(chatId);
 }

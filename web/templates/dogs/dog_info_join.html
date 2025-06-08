@@ -2,10 +2,8 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- jQuery 먼저 로드 -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-  <!-- Select2 CSS + JS -->
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
   <meta charset="UTF-8" />
@@ -69,7 +67,14 @@
 
           <label class="image-upload-label">
             <img src="{% static 'images/image.png' %}" alt="기본 아이콘" class="upload-icon" />
-            <img id="uploaded-image" class="uploaded-preview" style="display: none;" />
+
+            {% if form.instance.profile_image %}
+              <img id="uploaded-image" class="uploaded-preview"
+                  src="{{ form.instance.profile_image.url }}" style="display: block;" />
+            {% else %}
+              <img id="uploaded-image" class="uploaded-preview" style="display: none;" />
+            {% endif %}
+
             <input type="file" name="profile_image" accept=".jpg, .jpeg, .png" id="image-input" />
           </label>
         </div>
@@ -192,11 +197,10 @@
       {% endif %}
     </button>
   </div>
-</div> <!-- ✅ .form-box 닫힘 -->
-</form> <!-- ✅ 메인 form 닫힘 -->
+</div>
+</form>
 
 {% if edit_dog_id %}
-  <!-- ✅ 삭제 버튼: 카드 내부 하단, 가운데 정렬 -->
   <div style="text-align: center; margin-top: 20px; margin-bottom: 40px;">
     <form method="POST" action="{% url 'dogs:delete_dog_profile' edit_dog_id %}"
           onsubmit="return confirm('정말 반려견 프로필을 삭제하시겠습니까?');"
@@ -277,7 +281,7 @@
       }
 
       if (!isValid) {
-        e.preventDefault();  // 서버 전송 막음
+        e.preventDefault();
       } else {
         alert("등록이 완료되었습니다!");
       }

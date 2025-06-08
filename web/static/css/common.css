@@ -25,3 +25,16 @@
 .is-invalid {
   border: 1px solid #e53935;
 }
+
+@media (max-width: 768px) {
+  .header {
+    padding: 18px 16px;
+  }
+
+  .logo {
+    position: static;
+    transform: none;
+    font-size: 18px;
+    text-align: center;
+  }
+}

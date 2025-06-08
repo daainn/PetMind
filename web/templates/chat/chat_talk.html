@@ -1,25 +1,33 @@
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PetMind | 상담 채팅</title>
 
   <link href="//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Koh+Santepheap:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet" >
 
   <link rel="stylesheet" href="{% static 'css/chat.css' %}">
   <link rel="stylesheet" href="{% static 'css/chat_header.css' %}">
   <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
   <link rel="stylesheet" href="{% static 'css/chat_talk.css' %}">
+
+  <!-- JS -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <link rel="stylesheet" href="{% static 'css/right_sidebar.css' %}"> 
+
 </head>
 <body>
   <div class="app-wrapper" id="appWrapper">
     {% include 'common/chat_header.html' %}
     {% include 'common/sidebar.html' %}
-    {% include 'common/right_sidebar.html' %} 
+    {% include 'common/right_sidebar.html' %}
+    {% comment %} {% include 'chat/chat_report_feedback.html' %} {% endcomment %}
+ 
 
     <main class="chat-main">
       <div class="chat-history">
@@ -106,8 +114,10 @@
           }
         }
       });
+    // ✅ 비회원 기능 제한
     const isGuest = {{ is_guest|yesno:"true,false" }};
 
+    // 이미지 업로드 차단
     if (isGuest) {
       const imageUploadLabel = document.querySelector('.image-upload-btn');
       if (imageUploadLabel) {
@@ -118,6 +128,7 @@
       }
     }
 
+    // 추천 콘텐츠 버튼 차단
     if (isGuest) {
       const recommendBtn = document.getElementById('recommendTrigger');
       if (recommendBtn) {
@@ -127,7 +138,7 @@
         });
       }
     }
-    });
-  </script>
+  });
+</script>
 </body>
 </html>
