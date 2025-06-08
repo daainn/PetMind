@@ -27,11 +27,11 @@
       <div class="chat-history" data-chat-id="{{ chat.id }}" data-dog-id="{{ dog.id }}">
         {% for m in messages %}
           <div class="chat-message-wrapper {% if m.sender == 'user' %}user-side{% else %}bot-side{% endif %}">
-            <div class="chat-message-block" style="display: flex; flex-direction: column; align-items: center;">
+            <div class="chat-message-block" style="display: flex; flex-direction: column;">
               {% if m.images.all %}
-                <div class="chat-image-block" style="margin-bottom: 8px;">
+                <div class="chat-image-block" style="margin-bottom: 8px; display: flex; width: 100%; justify-content: flex-end; align-items: flex-end;">
                   {% for img in m.images.all %}
-                    <img src="{{ img.image.url }}" class="preview-image" alt="업로드 이미지" style="width:80px;height:80px;object-fit:cover;border-radius:8px;display:block;margin:4px auto;">
+                    <img src="{{ img.image.url }}" class="preview-image" alt="업로드 이미지" style="width:80px;height:80px;object-fit:cover;border-radius:8px;margin:4px;">
                   {% endfor %}
                 </div>
               {% endif %}

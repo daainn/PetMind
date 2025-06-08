@@ -111,7 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (message) {
-      // side가 'bot'이면 마크다운 파싱
       const parsed = (side === 'bot') ? customMarkdownParse(message) : message;
       html += `
         <div class="chat-message-block">
@@ -207,7 +206,6 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         fileUrls.forEach(url => URL.revokeObjectURL(url));
       }, 5000);
-      // currentFileURLs도 즉시 비워줌 (미리보기용)
       currentFileURLs = [];
   });
   }

@@ -362,7 +362,6 @@ def chat_send(request):
     user_id = request.session.get("guest_user_id") if is_guest else request.session.get("user_id")
     
     if not user_id:
-        # 로그인 안 됐을 경우: 로그인 페이지로 이동 or 에러 페이지
         return redirect('user:login')
 
     user = get_object_or_404(User, id=user_id)
@@ -370,7 +369,6 @@ def chat_send(request):
     image_files = request.FILES.getlist("images")
 
     if not message and not image_files:
-        # 메시지나 이미지가 없으면 다시 채팅 입력 폼으로 리다이렉트
         return redirect(request.META.get('HTTP_REFERER', '/'))
 
     # ---- 비회원일 때 ----
@@ -393,9 +391,6 @@ def chat_send(request):
                 MessageImage.objects.create(message=user_message, image=img)
             except Exception:
                 pass
-
-        # 답변 생성은 여기서 하지 않음 (대화 상세에서 비동기로 처리)
-        # 대화방 상세 페이지로 리다이렉트, just_sent=1 파라미터 부여
         return redirect('chat:chat_talk_detail', chat_id=chat.id)
 
     # ---- 회원/반려견일 때 ----
@@ -403,7 +398,6 @@ def chat_send(request):
     dog = DogProfile.objects.filter(id=current_dog_id, user=user).first()
 
     if not dog:
-        # 반려견 선택 안 됐을 때
         return redirect('dogs:dog_info_join')
 
     chat = Chat.objects.create(
@@ -424,7 +418,6 @@ def chat_send(request):
         except Exception:
             pass
 
-    # 답변 생성은 여기서 하지 않음 (대화 상세에서 비동기로 처리)
     url = reverse('chat:chat_member_talk_detail', args=[dog.id, chat.id])
     return redirect(f"{url}?just_sent=1&last_msg={quote(message)}")
 
@@ -525,8 +518,7 @@ def chat_talk_view(request, chat_id):
 
         Message.objects.create(chat=chat, sender='bot', message=answer)
 
-        # 리디렉션 대신 JSON 응답을 반환
-        return JsonResponse({'response': answer, 'chat_id': chat.id})  # JSON 응답으로 변경
+        return JsonResponse({'response': answer, 'chat_id': chat.id}) 
 
     messages = Message.objects.filter(chat=chat).prefetch_related("images").order_by('created_at')
     chat_list = Chat.objects.filter(user__id=user_id).order_by('-created_at') if not is_guest else []
