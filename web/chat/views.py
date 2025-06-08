@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from chat.utils import get_image_response
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
 from django.http import JsonResponse, FileResponse, HttpResponseNotAllowed, Http404, HttpResponseNotFound, HttpResponseServerError, HttpResponse
 from user.models import User
 from .models import Chat, Message, Content, MessageImage, UserReview
-import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from dogs.models import DogProfile, DogBreed
@@ -17,6 +17,7 @@ from datetime import date, timedelta
 import uuid
 import requests
 import json
+import pandas as pd
 import base64
 from django.template.loader import render_to_string, get_template
 import os
@@ -52,11 +53,8 @@ def get_user_id(request):
     return request.session.get("guest_user_id") if is_guest_user(request) else request.session.get("user_id")
 
 def is_chat_owner(request, chat):
-    user_id = request.session.get("guest_user_id") if request.session.get("guest", False) else request.session.get("user_id")
-    if request.session.get("guest", False):
-        return str(chat.guest.id) == str(user_id)
-    else:
-        return str(chat.dog.user.id) == str(user_id)
+    current_user_id = get_user_id(request)
+    return str(chat.user_id) == str(current_user_id)
 
     
 def group_chats_by_date(chat_list):
@@ -388,10 +386,12 @@ def call_runpod_api(message, dog_info):
 def chat_send(request):
     is_guest = is_guest_user(request)
     user_id = get_user_id(request)
+
     if not user_id:
         return redirect('user:home')
 
     user = get_object_or_404(User, id=user_id)
+
     message = request.POST.get("message", "").strip()
     image_files = request.FILES.getlist("images")
 
@@ -466,20 +466,22 @@ def chat_send(request):
     return redirect('chat:chat_member_talk_detail', dog_id=dog.id, chat_id=chat.id)
 
 
+
 @require_POST
 @csrf_exempt
-def chat_member_delete(request, chat_id):
+def chat_member_delete(request, dog_id, chat_id):
     try:
-        chat = get_object_or_404(Chat, id=chat_id)
+        if request.method == "POST":
+            chat = get_object_or_404(Chat, id=chat_id, dog_id=dog_id)
 
-        if not is_chat_owner(request, chat):
-            return JsonResponse({'status': 'unauthorized'}, status=403)
+            if not is_chat_owner(request, chat):
+                return JsonResponse({'status': 'unauthorized'}, status=403)
 
-        chat.delete()
-        return JsonResponse({'status': 'ok'})
+            chat.delete()
+            return JsonResponse({'status': 'ok'})
 
     except Chat.DoesNotExist:
-        return JsonResponse({'status': 'not_found'}, status=404)
+        return JsonResponse({'error': 'Invalid method'}, status=405)
     
 
 @require_POST
@@ -581,6 +583,7 @@ def chat_talk_view(request, chat_id):
     })
 
 
+
 @require_http_methods(["GET"])
 def recommend_content(request, chat_id):
     if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -673,7 +676,6 @@ def recommend_content(request, chat_id):
         "cards_html": html,
         "has_recommendation": True
     })
-
 
 @csrf_exempt
 @require_POST
