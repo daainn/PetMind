@@ -95,21 +95,20 @@ function deleteChat(chatId, dogId) {
   const expectedPath = `/chat/${dogId}/talk/${chatId}/`;
   const isCurrentChat = currentPath === expectedPath;
   fetch(`/chat/${dogId}/delete/${chatId}/`, {
-    method: "POST",
-    headers: {
-      "X-CSRFToken": getCSRFToken(),
-    },
-  }).then((res) => {
-    if (res.ok) {
-      document.querySelector(`#chat-${chatId}`)?.remove();
-
-      if (isCurrentChat) {
-        window.location.href = "/chat/main/";
-      }
-    } else {
+  method: "POST",
+  headers: {
+    "X-CSRFToken": getCSRFToken(),
+  },
+}).then((res) => {
+  if (res.ok) {
+    document.querySelector(`#chat-${chatId}`)?.remove();
+    if (isCurrentChat) window.location.href = "/chat/main/";
+  } else {
+    res.text().then(msg => {
       alert("삭제 실패");
-    }
-  });
+    });
+  }
+});
 }
 
 function goToChat(chatId) {
