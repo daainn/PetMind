@@ -84,9 +84,11 @@ document.addEventListener('DOMContentLoaded', () => {
     calendarPopup.style.display = 'none';
     fp.close();
 
-    console.log("chatId", chatId);
-    console.log("startDate", startDate);
-    console.log("endDate", endDate);
+
+    feedbackModal.style.display = 'block';
+    progressBar.style.width = '0%';
+    downloadBtn.disabled = true;
+    downloadBtn.classList.remove('active');
 
     const response = await fetch('/chat/report/generate/', {
       method: 'POST',
@@ -103,8 +105,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!response.ok) {
       alert("해당 날짜에는 상담을 진행하지 않았습니다!");
+      feedbackModal.style.display = 'none';
     } else {
-      feedbackModal.style.display = 'block';
       pollModelStatus();
     }
   });
@@ -130,7 +132,9 @@ document.addEventListener('DOMContentLoaded', () => {
     ratingValue.value = 0;
     feedbackInput.value = '';
     stars.forEach(s => s.src = grayStar);
-    pollModelStatus();
+    progressBar.style.width = '0%';
+    downloadBtn.disabled = true;
+    downloadBtn.classList.remove('active');
   });
 
   function pollModelStatus() {
