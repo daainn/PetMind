@@ -14,6 +14,7 @@
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
+  padding-top: 72px;
 }
 
 /* 채팅 내역 */
@@ -22,7 +23,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-bottom: 24px;
+  margin: 0 0 24px 0;
   width: 100%;
   max-width: 60%;
   box-sizing: border-box;

@@ -1,5 +1,9 @@
 .chat-header {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
+  z-index: 1000;
   background-color: #FFFFF6;
   padding: 12px 24px;
   box-sizing: border-box;
@@ -89,6 +93,11 @@ display: block;
 
 .chat-dropdown-menu a:hover {
 background-color: #E3EFFF;
+}
+
+/* 채팅 메인에 헤더 높이만큼 패딩 추가 (헤더가 60px~80px 정도라면) */
+.chat-main {
+  padding-top: 72px;
 }
 
 /* 반응형 대응 */
