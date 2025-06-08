@@ -84,12 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
     calendarPopup.style.display = 'none';
     fp.close();
 
-
-    feedbackModal.style.display = 'block';
-    progressBar.style.width = '0%';
-    downloadBtn.disabled = true;
-    downloadBtn.classList.remove('active');
-
+    // 서버에 보고서 생성 요청
     const response = await fetch('/chat/report/generate/', {
       method: 'POST',
       headers: {
@@ -105,8 +100,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!response.ok) {
       alert("해당 날짜에는 상담을 진행하지 않았습니다!");
-      feedbackModal.style.display = 'none';
     } else {
+      // ✅ 요청 성공 시에만 모달창 열기
+      feedbackModal.style.display = 'block';
+      progressBar.style.width = '0%';
+      downloadBtn.disabled = true;
+      downloadBtn.classList.remove('active');
       pollModelStatus();
     }
   });
