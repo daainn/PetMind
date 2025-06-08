@@ -53,10 +53,51 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   attachImagePreviewListener(imageInput);
- 
+
+  function customMarkdownParse(text) {
+    if (!text) return '';
+
+    text = text.replace(/"[^"]*"|'[^']*'|`[^`]*`/g, (match) => {
+        return match.replace(/\./g, '[[DOT]]')
+                    .replace(/!/g, '[[EXCL]]')
+                    .replace(/\?/g, '[[QST]]');
+    });
+
+    text = text.replace(/\*\*?분석\*\*?(?::)?\s?/g, '### ✅ 문제 행동 분석\n');
+    text = text.replace(/\*\*?해결책 제시\*\*?(?::)?\s?/g, '\n### 🐾 솔루션\n');
+    text = text.replace(/\*\*?추가 질문\*\*?(?::)?\s?/g, '\n### 추가 질문\n');
+    text = text.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+
+    text = text.replace(/(\d+)\.\s/g, '<br><span style="margin-left:1em; display:inline-block;">$1.</span> ');
+    text = text.replace(/([.!?])(?=[^\d<\n])/g, '$1<br>');
+    text = text.replace(/(<br>\s*){2,}/g, '<br>');
+    text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+
+    let sectionRegex = /<h3>(.*?)<\/h3>(.*?)(?=(<h3>|$))/gs;
+    let result = '';
+    let lastIndex = 0;
+    let match;
+    while ((match = sectionRegex.exec(text)) !== null) {
+        result += `<div class="answer-section"><h3>${match[1]}</h3>${match[2].trim()}</div>`;
+        lastIndex = sectionRegex.lastIndex;
+    }
+
+    if (!result) {
+        result = `<div class="answer-section">${text.trim()}</div>`;
+    }
+
+    result = result.replace(/<hr>/g, '');
+    result = result.replace(/\[\[DOT\]\]/g, '.').replace(/\[\[EXCL\]\]/g, '!').replace(/\[\[QST\]\]/g, '?');
+    return result;
+  }
+
+
+
+
   // 채팅 메시지/답변 말풍선 출력
   const chatHistory = document.querySelector('.chat-history');
   const addChatBubble = (message, side = 'user', images = []) => {
+    console.log('[addChatBubble] message:', message, 'side:', side, 'images:', images);
     let html = '';
 
     if (images.length) {
@@ -64,16 +105,18 @@ document.addEventListener('DOMContentLoaded', () => {
       images.forEach(url => {
         if (url.startsWith('blob:') || url.startsWith('/media/')) {
           html += `<img src="${url}" class="preview-image" style="width:80px;height:80px;object-fit:cover;border-radius:8px;margin-right:4px;">`;
-          }
-        });
-        html += `</div>`;
+        }
+      });
+      html += `</div>`;
     }
 
     if (message) {
+      // side가 'bot'이면 마크다운 파싱
+      const parsed = (side === 'bot') ? customMarkdownParse(message) : message;
       html += `
         <div class="chat-message-block">
           <div class="chat-message ${side}-message">
-            <div class="message-content">${message}</div>
+            <div class="message-content">${parsed}</div>
           </div>
         </div>
       `;
@@ -82,6 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const wrapper = document.createElement('div');
     wrapper.classList.add('chat-message-wrapper', `${side}-side`);
     wrapper.innerHTML = html;
+    console.log('[addChatBubble] wrapper.innerHTML:', wrapper.innerHTML);
     chatHistory.appendChild(wrapper);
     chatHistory.scrollTop = chatHistory.scrollHeight;
     return wrapper;
@@ -107,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
       credentials: 'same-origin'
     })
     .then(res => res.json())
-    .then(data => { loadingElem.querySelector('.message-content').textContent = data.response; })
+    .then(data => { loadingElem.querySelector('.message-content').innerHTML = customMarkdownParse(data.response); })
     .catch(err => {
       loadingElem.querySelector('.message-content').textContent = "응답을 받을 수 없습니다.";
       console.error("오류 발생:", err);
@@ -135,7 +179,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (fileUrls.length > 0) {
         addChatBubble('', 'user', fileUrls);
       }
-      addChatBubble(userMsg, 'user');
+      if (userMsg && userMsg.trim() !== '') {
+        addChatBubble(userMsg, 'user');
+      }
 
       const loadingElem = addLoadingBubble();
 
@@ -208,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
       credentials: 'same-origin'
     })
       .then(res => res.json())
-      .then(data => { loadingElem.querySelector('.message-content').textContent = data.response; })
+      .then(data => { loadingElem.querySelector('.message-content').innerHTML = customMarkdownParse(data.response); })
       .catch(() => { loadingElem.querySelector('.message-content').textContent = "응답을 받을 수 없습니다."; });
 
     if (window.history.replaceState) {
@@ -218,4 +264,6 @@ document.addEventListener('DOMContentLoaded', () => {
       window.history.replaceState({}, document.title, url.pathname + url.search);
     }
   }
+
+  
 });

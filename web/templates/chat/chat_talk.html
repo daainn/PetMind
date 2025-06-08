@@ -15,6 +15,8 @@
   <link rel="stylesheet" href="{% static 'css/chat_talk.css' %}">
   <link rel="stylesheet" href="{% static 'css/right_sidebar.css' %}"> 
 </head>
+
+{% load custom_markdown %}
 <body>
   <div class="app-wrapper" id="appWrapper">
     {% include 'common/chat_header.html' %}
@@ -39,7 +41,13 @@
                     <span class="chat-time side-time" data-time="{{ m.created_at|date:'c' }}"></span>
                   {% endif %}
                   <div class="chat-message {{ m.sender }}-message">
-                    <div class="message-content">{{ m.message|safe }}</div>
+                    <div class="message-content">
+                      {% if m.sender == 'bot' %}
+                        {{ m.message|custom_markdown_parse|safe }}
+                      {% else %}
+                        {{ m.message }}
+                      {% endif %}
+                    </div>
                   </div>
                   {% if m.sender == 'bot' %}
                     <span class="chat-time side-time" data-time="{{ m.created_at|date:'c' }}"></span>

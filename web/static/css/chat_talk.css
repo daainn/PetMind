@@ -35,6 +35,7 @@
   max-width: 100%;
   padding: 0 12px; /* 좌우 여백 줘서 말풍선이 너무 붙지 않도록 */
   box-sizing: border-box;
+  margin-bottom: 15px;
 }
 .chat-message-wrapper.user-side {
   justify-content: flex-end;
@@ -50,7 +51,7 @@
   padding: 16px 20px;
   border-radius: 12px;
   font-size: 15px;
-  /* line-height: 1.8; */
+  line-height: 1.8;
   /* white-space: pre-wrap; */
   word-break: break-word;
   box-sizing: border-box;
@@ -62,14 +63,42 @@
   align-self: flex-end;
 }
 .user-message {
-  background-color: #FFFFDB;
-  color: #01143F;
+  background: #FFFFDB;
+  color: #2B2F31;
   border-top-right-radius: 0;
 }
 .bot-message {
-  background-color: #FFFFDB;
   color: #2B2F31;
   border-top-left-radius: 0;
+}
+
+.message-content h3 {
+  font-size: 1.13em;
+  font-weight: bold;
+  color: #1a2234;
+  margin: 1.1em 0 0.4em 0;
+}
+.message-content hr {
+  border: none;
+  border-top: 1.5px solid #e6e6e6;
+  margin: 1.3em 0;
+}
+
+.answer-section {
+  background: #FFFFDB;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(180,180,100,0.04);
+  margin-bottom: 24px;
+  padding: 20px 24px 16px 24px;
+  transition: box-shadow .2s;
+}
+.answer-section h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+.answer-section:not(:last-child) {
+  margin-bottom: 22px;
 }
 
 /* 시간 및 서브텍스트 */
