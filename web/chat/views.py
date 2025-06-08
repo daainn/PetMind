@@ -54,7 +54,7 @@ def get_user_id(request):
 def is_chat_owner(request, chat):
     user_id = request.session.get("guest_user_id") if request.session.get("guest", False) else request.session.get("user_id")
     if request.session.get("guest", False):
-        return str(chat.guest_id) == str(user_id)
+        return str(chat.guest.id) == str(user_id)
     else:
         return str(chat.dog.user.id) == str(user_id)
 
