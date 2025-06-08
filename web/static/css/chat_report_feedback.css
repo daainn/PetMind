@@ -1,9 +1,8 @@
-/* 기본 폰트 적용 */
+
 body, button, input, textarea {
   font-family: 'Spoqa Han Sans', sans-serif;
 }
 
-/* 상담 리포트 버튼 */
 .chat-report-wrapper {
   margin-left: auto;
   margin-right: 50px;
@@ -31,10 +30,9 @@ body, button, input, textarea {
 }
 
 .chat-report-btn:hover {
-  background-color: #ffe063
+  background-color: #ffe063;
 }
 
-/* 달력 상자 전체 위치 및 스타일 */
 #chatCalendar {
   position: absolute;
   top: 120%;
@@ -51,7 +49,6 @@ body, button, input, textarea {
   align-items: center;
 }
 
-/* Flatpickr 기본 박스 설정 */
 .flatpickr-calendar {
   position: absolute !important;
   top: 10px !important;
@@ -65,7 +62,6 @@ body, button, input, textarea {
   padding: 0 !important;
 }
 
-/* 월/연도 헤더 영역 */
 .flatpickr-months {
   justify-content: center;
   border-bottom: 2px solid #f7f1f1dd;
@@ -93,7 +89,6 @@ body, button, input, textarea {
   text-align: left;
 }
 
-/* 날짜 셀 스타일 */
 .flatpickr-day {
   width: 30px !important;
   height: 30px !important;
@@ -106,7 +101,6 @@ body, button, input, textarea {
   z-index: 1;
 }
 
-/* 오늘 날짜 표시 */
 .flatpickr-day.today:not(.selected) {
   border: none !important;
   background: transparent !important;
@@ -114,12 +108,10 @@ body, button, input, textarea {
   font-weight: 600;
 }
 
-/* hover */
 .flatpickr-day:hover {
   background-color: #ffe063;
 }
 
-/* 선택 날짜 및 범위 스타일 */
 .flatpickr-day.selected:not(.startRange):not(.endRange),
 .flatpickr-day.startRange,
 .flatpickr-day.endRange,
@@ -129,7 +121,6 @@ body, button, input, textarea {
   border: none !important;
 }
 
-/* 범위 시작일: 왼쪽 둥글게 */
 .flatpickr-day.startRange {
   border-top-left-radius: 999px !important;
   border-bottom-left-radius: 999px !important;
@@ -137,7 +128,6 @@ body, button, input, textarea {
   border-bottom-right-radius: 0 !important;
 }
 
-/* 범위 종료일: 오른쪽 둥글게 */
 .flatpickr-day.endRange {
   border-top-right-radius: 999px !important;
   border-bottom-right-radius: 999px !important;
@@ -145,12 +135,10 @@ body, button, input, textarea {
   border-bottom-left-radius: 0 !important;
 }
 
-/* 범위 내부: 각진 배경 */
 .flatpickr-day.inRange {
   border-radius: 0 !important;
 }
 
-/* 날짜 부모 구조의 배경 제거 */
 .flatpickr-innerContainer,
 .flatpickr-days,
 .flatpickr-dayContainer,
@@ -158,14 +146,12 @@ body, button, input, textarea {
   background: transparent !important;
 }
 
-/* 셀 간 틈 제거 */
 .flatpickr-days .dayContainer {
   display: flex !important;
   flex-wrap: wrap;
   gap: 0 !important;
 }
 
-/* 시작일과 종료일이 같은 경우 둥근 원 스타일 */
 .flatpickr-day.startRange.endRange {
   border-radius: 999px !important;
   background-color: #FEDF66 !important;
@@ -173,7 +159,6 @@ body, button, input, textarea {
   border: none !important;
 }
 
-/* 확인 버튼 위치 및 스타일 */
 #calendarConfirmBtn {
   position: absolute;
   bottom: 15px;
@@ -196,12 +181,11 @@ body, button, input, textarea {
   background-color: #ffe063;
 }
 
-/* 날짜 input 숨김 */
 #reportDate {
   display: none !important;
 }
 
-.modal {
+#chat_feedbackModal {
   display: none;
   position: fixed;
   top: 50%;
@@ -211,13 +195,13 @@ body, button, input, textarea {
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   padding: 40px 24px;
-  width: 1000px;
+  width: 800px;
   font-family: 'Spoqa Han Sans', sans-serif;
   text-align: center;
   z-index: 1000;
 }
 
-.modal-close-btn {
+#chat_modalCloseBtn {
   position: absolute;
   top: 16px;
   right: 20px;
@@ -230,7 +214,7 @@ body, button, input, textarea {
   transition: color 0.2s ease;
 }
 
-.modal-close-btn:hover {
+#chat_modalCloseBtn:hover {
   color: #333;
 }
 
@@ -241,7 +225,7 @@ body, button, input, textarea {
   gap: 10px;
 }
 
-.modal h2 {
+#chat_feedbackModal h2 {
   font-size: 30px;
   margin-bottom: 6px;
   font-weight: bold;
@@ -295,16 +279,15 @@ body, button, input, textarea {
   margin-bottom: 20px;
 }
 
-.star-rating-img img {
+.star-rating-img .chat-star {
   width: 80px;
   height: 70px;
   transition: transform 0.2s;
 }
 
-.star-rating-img img:hover {
+.star-rating-img .chat-star:hover {
   transform: scale(1.1);
 }
-
 
 .feedback-input-wrapper {
   transform: translateX(-10px);
@@ -328,7 +311,7 @@ body, button, input, textarea {
   resize: none;
 }
 
-.feedback-input-wrapper .submit-btn {
+.feedback-input-wrapper #chat_submitBtn {
   position: absolute;
   top: 50%;
   right: 12px;
@@ -350,12 +333,11 @@ body, button, input, textarea {
   justify-content: center;
 }
 
-
-.feedback-input-wrapper .submit-btn:hover {
+.feedback-input-wrapper #chat_submitBtn:hover {
   background-color: #ffe063;
 }
 
-.download-btn {
+#chat_downloadBtn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -372,21 +354,122 @@ body, button, input, textarea {
   transition: background-color 0.3s;
 }
 
-.download-btn img {
+#chat_downloadBtn img {
   width: 20px;
   height: 20px;
 }
 
-.download-btn.active {
+#chat_downloadBtn.active {
   background-color: #FFC508;
   cursor: pointer;
   color: #333;
 }
 
-.download-btn:hover {
+#chat_downloadBtn:hover {
   background-color: #ffe063;
 }
 
-.download-btn:disabled {
+#chat_downloadBtn:disabled {
   pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .chat-report-wrapper {
+    margin-right: 16px;
+  }
+
+  .chat-report-btn {
+    font-size: 10px;
+    padding: 8px 12px;
+    gap: 6px;
+  }
+
+  .report-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  #chat_feedbackModal {
+    width: 80%;
+    padding: 24px 16px;
+  }
+
+  #chat_feedbackModal h2 {
+    font-size: 20px;
+  }
+
+  .petmind-logo {
+    width: 80px;
+    margin-top: 10px;
+  }
+
+  .modal-header {
+    flex-direction: column;
+  }
+
+  .progress-container {
+    width: 100%;
+  }
+
+  .star-rating-img .chat-star {
+    width: 48px;
+    height: 42px;
+  }
+
+  .feedback-input-wrapper {
+    width: 100%;
+    margin: 0 auto 16px;
+  }
+
+  .feedback-input-wrapper textarea {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+
+  .feedback-input-wrapper #chat_submitBtn {
+    width: 64px;
+    font-size: 12px;
+    padding: 0 10px;
+  }
+
+  #chat_downloadBtn {
+    font-size: 12px;
+    padding: 8px 12px;
+    width: 100%;
+    max-width: 220px;
+  }
+
+  #chat_downloadBtn img {
+    width: 16px;
+    height: 16px;
+  }
+
+  #calendarConfirmBtn {
+    width: 80px;
+    font-size: 13px;
+    padding: 8px;
+  }
+
+  .sub-text, .desc-text {
+    font-size: 13px;
+  }
+
+  #chatCalendar {
+    right: auto;
+    left: 5%;
+    transform: translateX(-50%);
+  }
+
+  .flatpickr-calendar {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+
+  .feedback-description {
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 0 25px;
+    text-align: center;
+    word-break: keep-all;
+  }
 }

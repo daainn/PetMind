@@ -86,37 +86,29 @@ function saveChatTitle(chatId, input) {
   });
 }
 
-function deleteChat(chatId) {
+
+function deleteChat(chatId, dogId) {
+  console.log("Deleting chat:", chatId);  
   if (!confirm("이 채팅을 삭제하시겠습니까?")) return;
 
-  const currentPath = window.location.pathname;
-  const isCurrentChat = currentPath.includes(`/member/chat/${chatId}/`);
-
-  fetch(`/chat/member/delete/${chatId}/`, {
-    method: "POST",
-    headers: {
-      "X-CSRFToken": getCSRFToken(),
-    },
-  }).then((res) => {
-    if (res.ok) {
-      document.querySelector(`#chat-${chatId}`)?.remove();
-
-      if (isCurrentChat) {
-        const firstRemainingChat = document.querySelector(".question-item");
-        if (firstRemainingChat) {
-          const firstInput = firstRemainingChat.querySelector("input");
-          if (firstInput) {
-            const id = firstInput.id.replace("chat-title-", "");
-            goToChat(id);
-          }
-        } else {
-          window.location.href = "/chat/main/";
-        }
-      }
-    } else {
+  const currentPath = window.location.pathname;  
+  const expectedPath = `/chat/${dogId}/talk/${chatId}/`;
+  const isCurrentChat = currentPath === expectedPath;
+  fetch(`/chat/${dogId}/delete/${chatId}/`, {
+  method: "POST",
+  headers: {
+    "X-CSRFToken": getCSRFToken(),
+  },
+}).then((res) => {
+  if (res.ok) {
+    document.querySelector(`#chat-${chatId}`)?.remove();
+    if (isCurrentChat) window.location.href = "/chat/main/";
+  } else {
+    res.text().then(msg => {
       alert("삭제 실패");
-    }
-  });
+    });
+  }
+});
 }
 
 function goToChat(chatId) {

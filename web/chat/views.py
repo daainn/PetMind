@@ -1,21 +1,23 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from chat.utils import get_image_response
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
 from django.http import JsonResponse, FileResponse, HttpResponseNotAllowed, Http404, HttpResponseNotFound, HttpResponseServerError, HttpResponse
 from user.models import User
 from .models import Chat, Message, Content, MessageImage, UserReview
-import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from dogs.models import DogProfile, DogBreed
 from django.contrib.auth.decorators import login_required
 from user.utils import get_logged_in_user
 from collections import defaultdict
+from django.http import HttpResponseForbidden
 from datetime import date, timedelta
 import uuid
 import requests
 import json
+import pandas as pd
 import base64
 from django.template.loader import render_to_string, get_template
 import os
@@ -43,6 +45,17 @@ def chat_entry(request):
 
     else:
         return redirect('user:home')
+    
+def is_guest_user(request):
+    return request.session.get("guest", False)
+
+def get_user_id(request):
+    return request.session.get("guest_user_id") if is_guest_user(request) else request.session.get("user_id")
+
+def is_chat_owner(request, chat):
+    current_user_id = get_user_id(request)
+    return str(chat.user_id) == str(current_user_id)
+
     
 def group_chats_by_date(chat_list):
     today = date.today()
@@ -138,8 +151,13 @@ def chat_member_talk_detail(request, dog_id, chat_id):
     except (User.DoesNotExist, ValueError):
         return redirect('user:login')
 
-    dog = get_object_or_404(DogProfile, id=dog_id, user=user)
-    chat = get_object_or_404(Chat, id=chat_id, dog=dog)
+    dog = DogProfile.objects.filter(id=dog_id).first()
+    if not dog or str(dog.user.id) != str(user.id):
+        return HttpResponseForbidden("접근 권한이 없습니다.")
+
+    chat = Chat.objects.filter(id=chat_id, dog=dog).first()
+    if not chat:
+        return HttpResponseForbidden("접근 권한이 없습니다.")
 
     if request.method == "POST":
         message = request.POST.get("message", "").strip()
@@ -366,12 +384,14 @@ def call_runpod_api(message, dog_info):
 @require_POST
 @csrf_exempt
 def chat_send(request):
-    is_guest = request.session.get('guest', False)
-    user_id = request.session.get("guest_user_id") if is_guest else request.session.get("user_id")
+    is_guest = is_guest_user(request)
+    user_id = get_user_id(request)
+
     if not user_id:
         return redirect('user:home')
 
     user = get_object_or_404(User, id=user_id)
+
     message = request.POST.get("message", "").strip()
     image_files = request.FILES.getlist("images")
 
@@ -380,7 +400,10 @@ def chat_send(request):
 
     if is_guest:
         chat_id = request.session.get("current_chat_id")
-        chat = Chat.objects.filter(id=chat_id, user=user).first()
+        chat = Chat.objects.filter(id=chat_id).first()
+
+        if chat and not is_chat_owner(request, chat):
+            return JsonResponse({"error": "비회원 권한 없음"}, status=403)
 
         if not chat:
             chat = Chat.objects.create(user=user, dog=None, chat_title=message[:20] if message else "비회원 상담")
@@ -401,22 +424,7 @@ def chat_send(request):
         if image_files:
             answer = get_image_response(image_files, message)
         else:
-            guest_info = {
-                "name": "비회원 반려견",
-                "breed": request.POST.get("breed", "알 수 없음"),
-                "age": "알 수 없음",
-                "gender": "모름",
-                "neutered": "모름",
-                "disease": "모름",
-                "disease_desc": "",
-                "period": "모름",
-                "housing": "모름",
-                "chat_history": [],
-                "prev_q": None,
-                "prev_a": None,
-                "prev_cate": None,
-                "is_first_question": True
-            }
+            guest_info = get_minimal_guest_info(request.session, chat=chat, user_id=user_id)
             answer = call_runpod_api(message, guest_info)
 
         Message.objects.create(chat=chat, sender="bot", message=answer)
@@ -450,7 +458,7 @@ def chat_send(request):
     if image_files:
         answer = get_image_response(image_files, message)
     else:
-        user_info = get_dog_info(dog)
+        user_info = get_dog_info(dog, chat=chat, user_id=user_id)
         answer = call_runpod_api(message, user_info)
 
     Message.objects.create(chat=chat, sender="bot", message=answer)
@@ -458,59 +466,63 @@ def chat_send(request):
     return redirect('chat:chat_member_talk_detail', dog_id=dog.id, chat_id=chat.id)
 
 
+
 @require_POST
 @csrf_exempt
-def chat_member_delete(request, chat_id):
+def chat_member_delete(request, dog_id, chat_id):
     try:
-        chat = Chat.objects.get(id=chat_id)
-        user_id = request.session.get('user_id')
+        if request.method == "POST":
+            chat = get_object_or_404(Chat, id=chat_id, dog_id=dog_id)
 
-        if not user_id or str(chat.dog.user.id) != str(user_id):
-            return JsonResponse({'status': 'unauthorized'}, status=403)
+            if not is_chat_owner(request, chat):
+                return JsonResponse({'status': 'unauthorized'}, status=403)
 
-        chat.delete()
-        return JsonResponse({'status': 'ok'})
+            chat.delete()
+            return JsonResponse({'status': 'ok'})
+
     except Chat.DoesNotExist:
-        return JsonResponse({'status': 'not_found'}, status=404)
+        return JsonResponse({'error': 'Invalid method'}, status=405)
     
 
 @require_POST
 @csrf_exempt
 def chat_member_update_title(request, chat_id):
-    import json
     try:
-        chat = Chat.objects.get(id=chat_id)
-        user_id = request.session.get('user_id')
+        chat = get_object_or_404(Chat, id=chat_id)
 
-        if not user_id or str(chat.dog.user.id) != str(user_id):
+        if not is_chat_owner(request, chat):
             return JsonResponse({'status': 'unauthorized'}, status=403)
 
         data = json.loads(request.body)
         new_title = data.get('title', '').strip()
+
         if new_title:
             chat.chat_title = new_title
             chat.save()
             return JsonResponse({'status': 'ok'})
-        return JsonResponse({'status': 'empty_title'}, status=400)
+        else:
+            return JsonResponse({'status': 'empty_title'}, status=400)
+
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'invalid_json'}, status=400)
+
     except Chat.DoesNotExist:
         return JsonResponse({'status': 'not_found'}, status=404)
     
 
 @require_http_methods(["GET", "POST"])
 def chat_talk_view(request, chat_id):
-    is_guest = request.session.get('guest', False)
+    is_guest = is_guest_user(request)
+    user_id = get_user_id(request)
+    if not user_id:
+        return redirect('user:home')
+
+    chat = get_object_or_404(Chat, id=chat_id)
+
+    if not is_chat_owner(request, chat):
+        return HttpResponseForbidden("접근 권한이 없습니다.")
+
     user_email = request.session.get("user_email")
-    current_dog_id = request.session.get("current_dog_id")
-    user_id = request.session.get("guest_user_id") if is_guest else request.session.get("user_id")
-
-    try:
-        chat = Chat.objects.get(id=chat_id)
-    except Chat.DoesNotExist:
-        return redirect('chat:main' if is_guest else 'chat:chat_member', dog_id=current_dog_id or 1)
-
-    if not is_guest:
-        if not user_id or not chat.user or str(chat.user.id) != str(user_id):
-            return redirect('chat:chat_member', dog_id=current_dog_id or (chat.dog.id if chat.dog else 1))
 
     if request.method == "POST":
         message_text = request.POST.get("message", "").strip()
@@ -535,18 +547,16 @@ def chat_talk_view(request, chat_id):
             answer = get_image_response(image_files, user_message)
         else:
             if is_guest:
-                user_info = get_minimal_guest_info(request.session)
+                user_info = get_minimal_guest_info(request.session, chat=chat, user_id=user_id)
             else:
-                user = get_object_or_404(User, id=user_id)
                 chat_history, prev_q, prev_a = get_chat_history(chat)
-                user_info = get_dog_info(chat.dog)
+                user_info = get_dog_info(chat.dog, chat=chat, user_id=user_id)
                 user_info.update({
                     "chat_history": chat_history,
                     "prev_q": prev_q,
                     "prev_a": prev_a,
                     "prev_cate": None,
                     "is_first_question": len(chat_history) == 0,
-                    "user_id": str(user.id)
                 })
 
             answer = call_runpod_api(message_text, user_info)
@@ -573,18 +583,21 @@ def chat_talk_view(request, chat_id):
     })
 
 
+
+@require_http_methods(["GET"])
 def recommend_content(request, chat_id):
     if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({"error": "Invalid request"}, status=400)
 
-    if request.session.get("guest", False):
+    chat = get_object_or_404(Chat, id=chat_id)
+
+    if not is_chat_owner(request, chat):
         return JsonResponse({
-            "error": "비회원은 추천 콘텐츠를 이용할 수 없습니다.",
+            "error": "접근 권한이 없습니다.",
             "cards_html": "",
             "has_recommendation": False
         }, status=403)
 
-    chat = Chat.objects.get(id=chat_id)
     history = Message.objects.filter(chat=chat).order_by("created_at")
     chat_history = [
         {"role": "user" if m.sender == "user" else "assistant", "content": m.message}
@@ -665,14 +678,22 @@ def recommend_content(request, chat_id):
     })
 
 @csrf_exempt
+@require_POST
 def submit_review(request):
-    if request.method == 'POST':
+    try:
         data = json.loads(request.body)
         chat_id = data.get('chat_id')
         score = data.get('review_score')
         review = data.get('review')
 
-        chat = Chat.objects.get(id=chat_id)
+        if not chat_id or score is None:
+            return JsonResponse({'status': 'invalid_input'}, status=400)
+
+        chat = get_object_or_404(Chat, id=chat_id)
+
+        if not is_chat_owner(request, chat):
+            return JsonResponse({'status': 'unauthorized'}, status=403)
+
         UserReview.objects.create(
             chat=chat,
             review_score=score,
@@ -680,7 +701,9 @@ def submit_review(request):
         )
         return JsonResponse({'status': 'ok'})
 
-    return JsonResponse({'status': 'error'}, status=400)
+    except (json.JSONDecodeError, KeyError):
+        return JsonResponse({'status': 'invalid_json'}, status=400)
+    
 
 def load_chat_and_profile(chat_id, start_date, end_date):
     try:
@@ -747,10 +770,14 @@ def generate_report(request):
     chat_id = data.get("chat_id")
     start_date = data.get("start_date")
     end_date = data.get("end_date")
-    print("📩 받은 데이터:", data)
 
     if not (chat_id and start_date and end_date):
         return Response({"error": "필수 값 누락"}, status=400)
+
+    chat = get_object_or_404(Chat, id=chat_id)
+    
+    if not is_chat_owner(request, chat):
+        return Response({"error": "접근 권한이 없습니다."}, status=403)
 
     dog, history = load_chat_and_profile(chat_id, start_date, end_date)
     if not dog or not history:
@@ -797,8 +824,14 @@ def generate_report(request):
         return Response({"status": "success"})
     except Exception as e:
         return Response({"error": f"PDF 생성 실패: {str(e)}"}, status=500)
+    
 
 def download_report_pdf(request, chat_id):
+    chat = get_object_or_404(Chat, id=chat_id)
+
+    if not is_chat_owner(request, chat):
+        raise Http404("다운로드 권한이 없습니다.")
+
     pdf_path = request.session.get(f"pdf_path_{chat_id}")
     if not pdf_path or not os.path.exists(pdf_path):
         raise Http404("리포트 파일이 존재하지 않거나 세션이 만료되었습니다.")
