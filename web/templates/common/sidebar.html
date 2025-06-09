@@ -12,9 +12,11 @@
         <img src="{% static 'images/petmind_logo.png' %}" alt="PetMind 로고" class="sidebar-logo">
       </a>
     </div>
-    <a href="{% url 'chat:main' %}" class="chat-new-btn">
-      <img src="{% static 'images/new-chat.png' %}" alt="새 채팅">
-    </a>
+    {% if not is_guest %}
+      <a href="{% url 'chat:chat_member' dog_id %}" class="chat-new-btn">
+        <img src="{% static 'images/new-chat.png' %}" alt="새 채팅">
+      </a>
+    {% endif %}
   </div>
 
   <div class="sidebar-scrollable">
