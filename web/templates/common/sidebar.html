@@ -39,8 +39,8 @@
                 <input class="question-text" type="text" id="chat-title-{{ c.id }}" name="title" value="{{ c.chat_title|truncatechars:10 }}" readonly />
               </div>
               <div class="question-icons">
-                <i class="fas fa-pencil-alt" onclick="editChatTitle({{ c.id }})" title="제목 수정"></i>
-                <i class="fas fa-trash" onclick="deleteChat({{ c.id }})" title="삭제하기"></i>
+                <i class="fas fa-pencil-alt" onclick="editChatTitle({{ c.id }}, {{ c.dog.id }})" title="제목 수정"></i>
+                <i class="fas fa-trash" onclick="deleteChat({{ c.id }}, {{ c.dog.id }})" title="삭제하기"></i>
                 <span class="chat-active-indicator"></span>
               </div>
             </div>
