@@ -17,7 +17,9 @@ def custom_markdown_parse(value):
     value = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', value)
 
     value = re.sub(r'(\d+)\.\s', r'<br><span style="margin-left:1em; display:inline-block;">\1.</span> ', value)
-    value = re.sub(r'([.!?])(?=[^\d<\n])', r'\1<br>', value)
+
+    if not re.search(r'상담을\s*시작해볼까요\?', value):
+        value = re.sub(r'([.!?])(?=[^\d<\n])', r'\1<br>', value)
     value = re.sub(r'(<br>\s*){2,}', '<br>', value)
     value = re.sub(r'^### (.+)$', r'<h3>\1</h3>', value, flags=re.MULTILINE)
 

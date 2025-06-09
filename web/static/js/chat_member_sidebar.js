@@ -102,7 +102,7 @@ function deleteChat(chatId, dogId) {
   }).then((res) => {
     if (res.ok) {
       document.querySelector(`#chat-${chatId}`)?.remove();
-      if (isCurrentChat) window.location.href = "/chat/main/";
+      if (isCurrentChat) window.location.href = `/chat/${dogId}/`;
     } else {
       res.text().then(msg => {
         alert("삭제 실패");

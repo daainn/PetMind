@@ -1,11 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
+  function formatKoreanTime(isoString) {
+    const date = new Date(isoString);
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const isAM = hours < 12;
+    let ampm = isAM ? "오전" : "오후";
+    if (hours === 0) {
+      hours = 12;
+    } else if (hours > 12) {
+      hours -= 12;
+    }
+    return `${ampm} ${String(hours).padStart(2, '0')}:${minutes}`;
+  }
+
   document.querySelectorAll(".chat-time").forEach(el => {
     const rawTime = el.getAttribute("data-time");
     if (!rawTime) return;
-    const date = new Date(rawTime);
-    el.textContent = !isNaN(date)
-      ? date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: true })
-      : '시간 오류';
+    el.textContent = formatKoreanTime(rawTime);
   });
 
   const isGuest = window.isGuest; 
@@ -88,8 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const chatHistory = document.querySelector('.chat-history');
-  const addChatBubble = (message, side = 'user', images = []) => {
-    console.log('[addChatBubble] message:', message, 'side:', side, 'images:', images);
+  const addChatBubble = (message, side = 'user', images = [], createdAt = null) => {
     let html = '';
 
     if (images.length) {
@@ -104,32 +114,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (message) {
       const parsed = (side === 'bot') ? customMarkdownParse(message) : message;
-      html += `
-        <div class="chat-message-block">
-          <div class="chat-message ${side}-message">
-            <div class="message-content">${parsed}</div>
+      let timeHtml = '';
+      if (createdAt) {
+        const timeClass = side === 'user' ? 'chat-time side-time left-time' : 'chat-time side-time right-time';
+        timeHtml = `<span class="${timeClass}" data-time="${createdAt}">${formatKoreanTime(createdAt)}</span>`;
+      }
+      if (side === 'user') {
+        html += `
+          <div class="chat-message-block" style="display: flex; justify-content: flex-end; align-items: center; gap: 6px; width: 100%;">
+            ${timeHtml}
+            <div class="chat-message ${side}-message">
+              <div class="message-content">${parsed}</div>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      } else {
+        html += `
+          <div class="chat-message-block" style="display: flex; justify-content: flex-start; align-items: center; gap: 6px; width: 100%;">
+            <div class="chat-message ${side}-message">
+              <div class="message-content">${parsed}</div>
+            </div>
+            ${timeHtml}
+          </div>
+        `;
+      }
     }
 
     const wrapper = document.createElement('div');
     wrapper.classList.add('chat-message-wrapper', `${side}-side`);
     wrapper.innerHTML = html;
-    console.log('[addChatBubble] wrapper.innerHTML:', wrapper.innerHTML);
     chatHistory.appendChild(wrapper);
     chatHistory.scrollTop = chatHistory.scrollHeight;
     return wrapper;
   };
 
-
   const addLoadingBubble = () => addChatBubble(
     `<span class="dot-loader">
       <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-    </span>`, 'bot'
+    </span>`, 'bot', [], null
   );
 
-  const sendChat = (form, message, loadingElem) => {
+  const sendChat = (form, message, loadingElem, userMsgTime) => {
     const formData = new FormData(form);
     formData.set('message', message); 
     fetch(form.action, {
@@ -139,9 +164,15 @@ document.addEventListener('DOMContentLoaded', () => {
       credentials: 'same-origin'
     })
     .then(res => res.json())
-    .then(data => { loadingElem.querySelector('.message-content').innerHTML = customMarkdownParse(data.response); })
+    .then(data => {
+      if (loadingElem && loadingElem.parentNode) loadingElem.parentNode.removeChild(loadingElem);
+      const botTime = data.created_at || new Date().toISOString();
+      addChatBubble(data.response, 'bot', [], botTime);
+    })
     .catch(err => {
-      loadingElem.querySelector('.message-content').textContent = "응답을 받을 수 없습니다.";
+      if (loadingElem && loadingElem.querySelector('.message-content')) {
+        loadingElem.querySelector('.message-content').textContent = "응답을 받을 수 없습니다.";
+      }
       console.error("오류 발생:", err);
     });
   };
@@ -156,40 +187,27 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log("submit 후 폼데이터", k, v);
       }
       const userMsg = messageInput.value;
-      console.log("유저 메시지:" + userMsg)
-      console.log("입력한 image files:", imageInput.files);
-      console.log("입력한 image value:", imageInput.value);
       let ImageChatingInput = document.getElementById('imageInput');
       let files = ImageChatingInput && ImageChatingInput.files ? [...ImageChatingInput.files] : [];
       let fileUrls = files.length > 0 ? files.map(file => URL.createObjectURL(file)) : [];
-      fileUrls.forEach(url => console.log("채팅에 보일 이미지 url:", url));
-        
+      // 현재 시간
+      const nowISOString = new Date().toISOString();
       if (fileUrls.length > 0) {
-        addChatBubble('', 'user', fileUrls);
+        addChatBubble('', 'user', fileUrls, nowISOString);
       }
       if (userMsg && userMsg.trim() !== '') {
-        addChatBubble(userMsg, 'user');
+        addChatBubble(userMsg, 'user', [], nowISOString);
       }
-
       const loadingElem = addLoadingBubble();
-
-      sendChat(form, userMsg, loadingElem);
-
+      sendChat(form, userMsg, loadingElem, nowISOString);
       messageInput.value = '';
-      console.log("메시지 제거 후:" + messageInput.value)
       if (imagePreviewContainer) imagePreviewContainer.innerHTML = '';
-      console.log("이미지 미리보기 제거 후:", imagePreviewContainer.innerHTML);
-
       if (ImageChatingInput && ImageChatingInput.parentNode) {
         ImageChatingInput.value = '';
         const newInput = ImageChatingInput.cloneNode(true);
         ImageChatingInput.parentNode.replaceChild(newInput, ImageChatingInput);
         imageInput = newInput;
-        console.log("파일 input 리셋 후 files:", imageInput.files);
-        console.log("파일 input 리셋 후 value:", imageInput.value);
         attachImagePreviewListener(newInput); 
-        console.log("리스너 재 등록후 files:", imageInput.files);
-        console.log("리스너 재 등록후 value:", imageInput.value);
       }
       setTimeout(() => {
         fileUrls.forEach(url => URL.revokeObjectURL(url));
@@ -219,13 +237,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const userMsgs = chatHistory.querySelectorAll('.user-side .message-content');
     let alreadyExists = false;
+    let createdAt = null;
     Array.from(userMsgs).forEach(el => {
       if (normalize(el.textContent) === normalize(lastMsg)) {
         alreadyExists = true;
+        const parentBlock = el.closest('.chat-message-block');
+        if (parentBlock) {
+          const timeElem = parentBlock.querySelector('.chat-time[data-time]');
+          if (timeElem) {
+            createdAt = timeElem.getAttribute('data-time');
+          }
+        }
       }
     });
     if (!alreadyExists) {
-      addChatBubble(lastMsg, 'user');
+      createdAt = createdAt || new Date().toISOString();
+      addChatBubble(lastMsg, 'user', [], createdAt);
     }
     const loadingElem = addLoadingBubble();
     fetch(window.location.pathname, {
@@ -238,7 +265,11 @@ document.addEventListener('DOMContentLoaded', () => {
       credentials: 'same-origin'
     })
       .then(res => res.json())
-      .then(data => { loadingElem.querySelector('.message-content').innerHTML = customMarkdownParse(data.response); })
+      .then(data => {
+        const createdAt = data.created_at || new Date().toISOString();
+        if (loadingElem && loadingElem.parentNode) loadingElem.parentNode.removeChild(loadingElem);
+        addChatBubble(data.response, 'bot', [], createdAt);
+      })
       .catch(() => { loadingElem.querySelector('.message-content').textContent = "응답을 받을 수 없습니다."; });
 
     if (window.history.replaceState) {
