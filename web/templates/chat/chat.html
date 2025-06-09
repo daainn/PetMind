@@ -54,15 +54,8 @@
 
       {% if is_guest and not show_guest_info_form %}
       <div class="chat-message bot-message">
-        <div class="message-text">
-          ✅ 반려견 정보를 등록했어요! <br>이제 궁금한 점을 입력해 상담을 시작해보세요.
-        </div>
       </div>
       <div class="chat-message bot-message" style="background: #fff7e6; color: #a67c00;">
-        <div class="message-text">
-          👉 더 많은 기능은 <strong>로그인</strong> 후 이용하실 수 있어요!
-          <a href="{% url 'user:login' %}" style="margin-left: 8px; color: #007bff;">로그인하러 가기</a>
-        </div>
       </div>
       {% endif %}
 
