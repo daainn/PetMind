@@ -99,6 +99,7 @@ def chat_member_view(request, dog_id):
         'is_guest': False,
         'user_email': user.email,
         'dog': dog,
+        'dog_id': dog.id,    
         'dog_list': dog_list,
         'can_generate_report': False,
     })
@@ -205,12 +206,14 @@ def chat_member_talk_detail(request, dog_id, chat_id):
         "is_guest": False,
         "now_time": timezone.localtime().strftime("%I:%M %p").lower(),
         "dog": dog,
+        "dog_id": dog.id,
         "dog_list": dog_list,
         'can_generate_report': True,
     })
 
 
 def chat_main(request):
+    dog_id = None
     is_guest = request.session.get("guest", False)
     user_id = request.session.get("user_id")
     guest_user_id = request.session.get("guest_user_id")
@@ -239,9 +242,11 @@ def chat_main(request):
 
             if current_dog_id:
                 current_chat = Chat.objects.filter(dog__id=current_dog_id).first()
+                dog_id = current_dog_id
             else:
                 current_chat = chat_list.first()
                 if current_chat and current_chat.dog:
+                    dog_id = current_chat.dog.id
                     request.session["current_dog_id"] = current_chat.dog.id
 
         except User.DoesNotExist:
@@ -283,6 +288,7 @@ def chat_main(request):
         'guest_dog_name': guest_name,
         'guest_dog_breed': guest_breed,
         'dog_breeds': dog_breeds,
+        'dog_id': dog_id,
         'show_guest_info_form': False,
         'show_login_notice': is_guest 
     })
