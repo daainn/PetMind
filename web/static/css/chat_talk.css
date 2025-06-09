@@ -20,7 +20,7 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 25px;
   margin: 24px 0 24px 0;
   width: 100%;
   max-width: 60%;
@@ -45,7 +45,6 @@
 .chat-message {
   width: fit-content;
   max-width: 100%;
-  padding: 16px 20px;
   border-radius: 12px;
   font-size: 15px;
   line-height: 1.8;
@@ -60,6 +59,7 @@
 }
 .user-message {
   background: #FFFFDB;
+  padding: 16px 20px;
   color: #2B2F31;
   border-top-right-radius: 0;
 }
@@ -84,7 +84,6 @@
   background: #FFFFDB;
   border-radius: 16px;
   box-shadow: 0 2px 12px rgba(180,180,100,0.04);
-  margin-bottom: 24px;
   padding: 20px 24px 16px 24px;
   transition: box-shadow .2s;
 }
@@ -422,6 +421,15 @@
   margin-top: 4px;
 }
 
+.left-time {
+  align-self: flex-start;
+  margin-top: 43.5px;
+}
+
+.right-time {
+  align-self: flex-end;
+}
+
 
 @media (max-width: 768px) {
   .chat-main {
@@ -433,7 +441,7 @@
   .chat-message-wrapper {
     max-width: 100%;
   }
-
+  
   .chat-message {
     font-size: 15px;
     padding: 14px 16px;
