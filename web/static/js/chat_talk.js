@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // 시간 포맷 변환
   document.querySelectorAll(".chat-time").forEach(el => {
     const rawTime = el.getAttribute("data-time");
     if (!rawTime) return;
@@ -9,7 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
       : '시간 오류';
   });
 
-  // 게스트 체크: 비로그인 사용자 기능 제한
   const isGuest = window.isGuest; 
   if (isGuest) {
     [
@@ -21,12 +19,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 이미지 미리보기 & 채팅 전송 공통 함수
   let imageInput = document.getElementById('imageInput');
   const imagePreviewContainer = document.getElementById('imagePreviewContainer');
   let currentFileURLs = [];
   
-  // 최초 등록 + 이후 동적 재등록용 함수로 만듦
   function attachImagePreviewListener(input) {
     if (!input || !imagePreviewContainer) {
       console.log('attachImagePreviewListener: input 또는 imagePreviewContainer가 없음');
@@ -91,10 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return result;
   }
 
-
-
-
-  // 채팅 메시지/답변 말풍선 출력
   const chatHistory = document.querySelector('.chat-history');
   const addChatBubble = (message, side = 'user', images = []) => {
     console.log('[addChatBubble] message:', message, 'side:', side, 'images:', images);
@@ -131,15 +123,12 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
 
-
-  // 로딩 애니메이션 말풍선
   const addLoadingBubble = () => addChatBubble(
     `<span class="dot-loader">
       <span class="dot"></span><span class="dot"></span><span class="dot"></span>
     </span>`, 'bot'
   );
 
-  // 채팅 전송 함수
   const sendChat = (form, message, loadingElem) => {
     const formData = new FormData(form);
     formData.set('message', message); 
@@ -191,7 +180,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (imagePreviewContainer) imagePreviewContainer.innerHTML = '';
       console.log("이미지 미리보기 제거 후:", imagePreviewContainer.innerHTML);
 
-      // 파일 input을 완전히 리셋 
       if (ImageChatingInput && ImageChatingInput.parentNode) {
         ImageChatingInput.value = '';
         const newInput = ImageChatingInput.cloneNode(true);
@@ -199,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
         imageInput = newInput;
         console.log("파일 input 리셋 후 files:", imageInput.files);
         console.log("파일 input 리셋 후 value:", imageInput.value);
-        attachImagePreviewListener(newInput); // 꼭 여기서 미리보기 리스너 재등록!
+        attachImagePreviewListener(newInput); 
         console.log("리스너 재 등록후 files:", imageInput.files);
         console.log("리스너 재 등록후 value:", imageInput.value);
       }
@@ -210,8 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   }
 
-
-  // 첫질문 후 chat_talk.html로 로드되며 응답 처리
   const params = new URLSearchParams(window.location.search);
   const justSent = params.get('just_sent');
   const lastMsg = params.get('last_msg');

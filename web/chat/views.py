@@ -430,6 +430,7 @@ def chat_send(request):
                 MessageImage.objects.create(message=user_message, image=img)
             except Exception:
                 pass
+
         return redirect('chat:chat_talk_detail', chat_id=chat.id)
 
     current_dog_id = request.session.get("current_dog_id")
@@ -443,18 +444,6 @@ def chat_send(request):
         user=user,
         chat_title=message[:20] if message else "상담 시작"
     )
-
-    user_message = Message.objects.create(
-        chat=chat,
-        sender="user",
-        message=message if message else "[이미지 전송]"
-    )
-
-    for img in image_files[:3]:
-        try:
-            MessageImage.objects.create(message=user_message, image=img)
-        except Exception:
-            pass
 
     url = reverse('chat:chat_member_talk_detail', args=[dog.id, chat.id])
     return redirect(f"{url}?just_sent=1&last_msg={quote(message)}")
