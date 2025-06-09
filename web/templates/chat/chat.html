@@ -110,7 +110,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (form) {
     form.addEventListener('submit', function (e) {
-      // 비회원인 경우 이름/견종 체크
       if (isGuest) {
         const guestDogName = nameField?.value.trim();
         const guestDogBreed = breedField?.value.trim();
@@ -128,19 +127,16 @@ document.addEventListener('DOMContentLoaded', function () {
           return false;
         }
       }
-      // 나머지는 그냥 폼 제출 (redirect)
       if (warningBox) warningBox.style.display = 'none';
     });
   }
 
-  // 메시지 입력할 때마다 경고 숨김
   if (messageTextarea) {
     messageTextarea.addEventListener('input', () => {
       if (warningBox) warningBox.style.display = 'none';
     });
   }
 
-  // 비회원이면 이미지 업로드 제한
   if (isGuest) {
     const imageInput = document.getElementById('imageInput');
     const imageUploadBtn = document.querySelector('.image-upload-btn');
