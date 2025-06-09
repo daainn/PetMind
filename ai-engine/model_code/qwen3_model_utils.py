@@ -270,7 +270,7 @@ def split_thinking_and_content(output_ids, input_len):
     return thinking, content
 
 
-def should_trigger_summary(chat_history: list, turn_interval: int = 1) -> bool:
+def should_trigger_summary(chat_history: list, turn_interval: int = 10) -> bool:
     return len(chat_history) >= turn_interval * 2 and len(chat_history) % (turn_interval * 2) == 0
 
 

@@ -94,28 +94,28 @@
   </main>
 </div>
 
-<!-- ✅ JS -->
 <script src="{% static 'js/chat_member_sidebar.js' %}"></script>
 <script src="{% static 'js/image_upload.js' %}"></script>
 <script src="{% static 'js/right_sidebar.js' %}"></script>
 
-<!-- ✅ 경고 메시지 -->
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const form = document.querySelector('.chat-input-form');
-    const warningBox = document.getElementById('guestWarning');
-    const nameField = document.getElementById('guestDogName');
-    const breedField = document.getElementById('guestDogBreed');
-    const messageTextarea = document.querySelector('textarea[name="message"]');
-    const isGuest = {{ is_guest|yesno:"true,false" }};
-    let warningTimeout;
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.querySelector('.chat-input-form');
+  const warningBox = document.getElementById('guestWarning');
+  const nameField = document.getElementById('guestDogName');
+  const breedField = document.getElementById('guestDogBreed');
+  const messageTextarea = document.querySelector('textarea[name="message"]');
+  const isGuest = {{ is_guest|yesno:"true,false" }};
+  let warningTimeout;
 
-    if (form) {
-      form.addEventListener('submit', function (e) {
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      // 비회원인 경우 이름/견종 체크
+      if (isGuest) {
         const guestDogName = nameField?.value.trim();
         const guestDogBreed = breedField?.value.trim();
 
-        if (isGuest && (!guestDogName || !guestDogBreed)) {
+        if (!guestDogName || !guestDogBreed) {
           e.preventDefault();
           if (warningBox) {
             warningBox.style.display = 'block';
@@ -125,31 +125,35 @@
               warningBox.style.display = 'none';
             }, 3000);
           }
-        } else {
-          if (warningBox) warningBox.style.display = 'none';
+          return false;
         }
-      });
-    }
-
-    if (messageTextarea) {
-      messageTextarea.addEventListener('input', () => {
-        if (warningBox) warningBox.style.display = 'none';
-      });
-    }
-
-    if (isGuest) {
-      const imageInput = document.getElementById('imageInput');
-      const imageUploadBtn = document.querySelector('.image-upload-btn');
-
-      if (imageUploadBtn && imageInput) {
-        imageUploadBtn.addEventListener('click', function (e) {
-          e.preventDefault();
-          alert("이미지 업로드는 로그인 후 이용하실 수 있습니다.");
-        });
       }
-    }
-  });
+      // 나머지는 그냥 폼 제출 (redirect)
+      if (warningBox) warningBox.style.display = 'none';
+    });
+  }
 
+  // 메시지 입력할 때마다 경고 숨김
+  if (messageTextarea) {
+    messageTextarea.addEventListener('input', () => {
+      if (warningBox) warningBox.style.display = 'none';
+    });
+  }
+
+  // 비회원이면 이미지 업로드 제한
+  if (isGuest) {
+    const imageInput = document.getElementById('imageInput');
+    const imageUploadBtn = document.querySelector('.image-upload-btn');
+
+    if (imageUploadBtn && imageInput) {
+      imageUploadBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        alert("이미지 업로드는 로그인 후 이용하실 수 있습니다.");
+      });
+    }
+  }
+});
 </script>
+
 </body>
 </html>

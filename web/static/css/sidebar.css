@@ -2,10 +2,10 @@
   width: 280px;
   background-color: #ffffff;
   border-right: 1px solid #E3EFFF;
-  height: 100vh;
+  height: calc(100vh - 72px); /* Adjusted for header height */
   position: fixed;
   left: 0;
-  top: 0;
+  top: 72px; /* header 높이와 동일하게 */
   z-index: 100;
   overflow-y: auto;
   transform: translateX(-100%);
