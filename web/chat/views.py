@@ -27,9 +27,11 @@ from .report_utils.report_pdf import generate_pdf_from_context
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from chat.utils import get_image_response
-from chat.models import Chat, Message
 from datetime import datetime
 from django.utils.timezone import make_aware
+from urllib.parse import quote
+from django.urls import reverse
+import mimetypes
 
 
 def chat_entry(request):
@@ -98,6 +100,7 @@ def chat_member_view(request, dog_id):
         'is_guest': False,
         'user_email': user.email,
         'dog': dog,
+        'dog_id': dog.id,    
         'dog_list': dog_list,
         'can_generate_report': False,
     })
@@ -144,12 +147,12 @@ def guest_profile_register(request):
 def chat_member_talk_detail(request, dog_id, chat_id):
     user_id = request.session.get("user_id")
     if not user_id:
-        return redirect('user:login')
+        return JsonResponse({'error': '로그인 필요'}, status=401)  
 
     try:
         user = User.objects.get(id=uuid.UUID(user_id))
     except (User.DoesNotExist, ValueError):
-        return redirect('user:login')
+        return JsonResponse({'error': '사용자를 찾을 수 없습니다.'}, status=404) 
 
     dog = DogProfile.objects.filter(id=dog_id).first()
     if not dog or str(dog.user.id) != str(user.id):
@@ -168,7 +171,7 @@ def chat_member_talk_detail(request, dog_id, chat_id):
         elif image_files:
             user_message = Message.objects.create(chat=chat, sender='user', message="[이미지 전송]")
         else:
-            return redirect('chat:chat_member_talk_detail', dog_id=dog.id, chat_id=chat.id)
+            return JsonResponse({'error': '메시지나 이미지를 입력해주세요.'}, status=400) 
 
         for img in image_files[:3]:
             try:
@@ -186,7 +189,7 @@ def chat_member_talk_detail(request, dog_id, chat_id):
 
         Message.objects.create(chat=chat, sender='bot', message=answer)
 
-        return redirect('chat:chat_member_talk_detail', dog_id=dog.id, chat_id=chat.id)
+        return JsonResponse({'response': answer, 'chat_id': chat.id})  
 
     messages = Message.objects.filter(chat=chat).prefetch_related("images").order_by('created_at')
     chat_list = Chat.objects.filter(dog=dog).order_by('-created_at')
@@ -203,12 +206,14 @@ def chat_member_talk_detail(request, dog_id, chat_id):
         "is_guest": False,
         "now_time": timezone.localtime().strftime("%I:%M %p").lower(),
         "dog": dog,
+        "dog_id": dog.id,
         "dog_list": dog_list,
         'can_generate_report': True,
     })
 
 
 def chat_main(request):
+    dog_id = None
     is_guest = request.session.get("guest", False)
     user_id = request.session.get("user_id")
     guest_user_id = request.session.get("guest_user_id")
@@ -237,9 +242,11 @@ def chat_main(request):
 
             if current_dog_id:
                 current_chat = Chat.objects.filter(dog__id=current_dog_id).first()
+                dog_id = current_dog_id
             else:
                 current_chat = chat_list.first()
                 if current_chat and current_chat.dog:
+                    dog_id = current_chat.dog.id
                     request.session["current_dog_id"] = current_chat.dog.id
 
         except User.DoesNotExist:
@@ -281,6 +288,7 @@ def chat_main(request):
         'guest_dog_name': guest_name,
         'guest_dog_breed': guest_breed,
         'dog_breeds': dog_breeds,
+        'dog_id': dog_id,
         'show_guest_info_form': False,
         'show_login_notice': is_guest 
     })
@@ -381,6 +389,8 @@ def call_runpod_api(message, dog_info):
     except Exception as e:
         return f"❗ 오류 발생: {str(e)}"
 
+
+
 @require_POST
 @csrf_exempt
 def chat_send(request):
@@ -388,7 +398,7 @@ def chat_send(request):
     user_id = get_user_id(request)
 
     if not user_id:
-        return redirect('user:home')
+        return redirect('user:login')
 
     user = get_object_or_404(User, id=user_id)
 
@@ -396,7 +406,7 @@ def chat_send(request):
     image_files = request.FILES.getlist("images")
 
     if not message and not image_files:
-        return redirect("chat:main")
+        return redirect(request.META.get('HTTP_REFERER', '/'))
 
     if is_guest:
         chat_id = request.session.get("current_chat_id")
@@ -421,21 +431,13 @@ def chat_send(request):
             except Exception:
                 pass
 
-        if image_files:
-            answer = get_image_response(image_files, message)
-        else:
-            guest_info = get_minimal_guest_info(request.session, chat=chat, user_id=user_id)
-            answer = call_runpod_api(message, guest_info)
-
-        Message.objects.create(chat=chat, sender="bot", message=answer)
-
         return redirect('chat:chat_talk_detail', chat_id=chat.id)
 
     current_dog_id = request.session.get("current_dog_id")
     dog = DogProfile.objects.filter(id=current_dog_id, user=user).first()
 
     if not dog:
-        return JsonResponse({"error": "반려견이 선택되지 않았습니다."}, status=400)
+        return redirect('dogs:dog_info_join')
 
     chat = Chat.objects.create(
         dog=dog,
@@ -443,28 +445,8 @@ def chat_send(request):
         chat_title=message[:20] if message else "상담 시작"
     )
 
-    user_message = Message.objects.create(
-        chat=chat,
-        sender="user",
-        message=message if message else "[이미지 전송]"
-    )
-
-    for img in image_files[:3]:
-        try:
-            MessageImage.objects.create(message=user_message, image=img)
-        except Exception:
-            pass
-
-    if image_files:
-        answer = get_image_response(image_files, message)
-    else:
-        user_info = get_dog_info(dog, chat=chat, user_id=user_id)
-        answer = call_runpod_api(message, user_info)
-
-    Message.objects.create(chat=chat, sender="bot", message=answer)
-
-    return redirect('chat:chat_member_talk_detail', dog_id=dog.id, chat_id=chat.id)
-
+    url = reverse('chat:chat_member_talk_detail', args=[dog.id, chat.id])
+    return redirect(f"{url}?just_sent=1&last_msg={quote(message)}")
 
 
 @require_POST
@@ -486,9 +468,11 @@ def chat_member_delete(request, dog_id, chat_id):
 
 @require_POST
 @csrf_exempt
-def chat_member_update_title(request, chat_id):
+@require_POST
+@csrf_exempt
+def chat_member_update_title(request, dog_id, chat_id):
     try:
-        chat = get_object_or_404(Chat, id=chat_id)
+        chat = get_object_or_404(Chat, id=chat_id, dog_id=dog_id)
 
         if not is_chat_owner(request, chat):
             return JsonResponse({'status': 'unauthorized'}, status=403)
@@ -523,13 +507,24 @@ def chat_talk_view(request, chat_id):
         return HttpResponseForbidden("접근 권한이 없습니다.")
 
     user_email = request.session.get("user_email")
+    current_dog_id = request.session.get("current_dog_id")
+    user_id = request.session.get("guest_user_id") if is_guest else request.session.get("user_id")
+
+    try:
+        chat = Chat.objects.get(id=chat_id)
+    except Chat.DoesNotExist:
+        return JsonResponse({'error': '채팅을 찾을 수 없습니다.'}, status=404) 
+
+    if not is_guest:
+        if not user_id or not chat.user or str(chat.user.id) != str(user_id):
+            return JsonResponse({'error': '권한이 없습니다.'}, status=403)  
 
     if request.method == "POST":
         message_text = request.POST.get("message", "").strip()
         image_files = request.FILES.getlist("images")
 
         if not message_text and not image_files:
-            return redirect('chat:chat_talk_detail', chat_id=chat.id)
+            return JsonResponse({'error': '메시지나 이미지가 필요합니다.'}, status=400)  
 
         user_message = Message.objects.create(
             chat=chat,
@@ -562,7 +557,8 @@ def chat_talk_view(request, chat_id):
             answer = call_runpod_api(message_text, user_info)
 
         Message.objects.create(chat=chat, sender='bot', message=answer)
-        return redirect('chat:chat_talk_detail', chat_id=chat.id)
+
+        return JsonResponse({'response': answer, 'chat_id': chat.id}) 
 
     messages = Message.objects.filter(chat=chat).prefetch_related("images").order_by('created_at')
     chat_list = Chat.objects.filter(user__id=user_id).order_by('-created_at') if not is_guest else []
@@ -753,16 +749,21 @@ def chat_report_feedback_view(request, chat_id):
     })
 
 def get_base64_image(image_path):
-    if image_path.startswith("media/") or image_path.startswith("/media/"):
-        image_path = image_path.replace("media/", "").lstrip("/")
+    if image_path.startswith("media/"):
+        image_path = image_path[len("media/"):]
+    elif image_path.startswith("/media/"):
+        image_path = image_path[len("/media/"):]
 
     full_path = os.path.join(settings.MEDIA_ROOT, image_path)
+
     try:
         with open(full_path, "rb") as img_file:
-            return base64.b64encode(img_file.read()).decode("utf-8")
+            encoded = base64.b64encode(img_file.read()).decode("utf-8")
+            mime_type, _ = mimetypes.guess_type(full_path)
+            return encoded, mime_type or "image/jpeg"
     except FileNotFoundError:
         print(f"[오류] 파일을 찾을 수 없습니다: {full_path}")
-        return None
+        return None, None
 
 @api_view(['POST'])
 def generate_report(request):
@@ -770,14 +771,10 @@ def generate_report(request):
     chat_id = data.get("chat_id")
     start_date = data.get("start_date")
     end_date = data.get("end_date")
+    print("📩 받은 데이터:", data)
 
     if not (chat_id and start_date and end_date):
         return Response({"error": "필수 값 누락"}, status=400)
-
-    chat = get_object_or_404(Chat, id=chat_id)
-    
-    if not is_chat_owner(request, chat):
-        return Response({"error": "접근 권한이 없습니다."}, status=403)
 
     dog, history = load_chat_and_profile(chat_id, start_date, end_date)
     if not dog or not history:
@@ -791,12 +788,14 @@ def generate_report(request):
         return Response({"error": f"GPT 처리 중 오류: {str(e)}"}, status=500)
 
     base64_img = None
+    mime_type = None
     if dog.get("image"):
         try:
-            base64_img = get_base64_image(dog["image"])
+            base64_img, mime_type = get_base64_image(dog["image"])
         except Exception as e:
             print(f"[경고] 이미지 Base64 변환 실패: {e}")
             base64_img = None
+            mime_type = None
 
     context = {
         "dog_name": dog["name"],
@@ -808,6 +807,7 @@ def generate_report(request):
         "living_period": dog["living_period"],
         "housing_type": dog["housing_type"],
         "image": base64_img,
+        "image_mime_type": mime_type,
         "start_date": start_date,
         "end_date": end_date,
         "intro_text": intro,
@@ -821,6 +821,7 @@ def generate_report(request):
     try:
         pdf_path = generate_pdf_from_context(context, pdf_filename=f"report_{chat_id}.pdf")
         request.session[f"pdf_path_{chat_id}"] = pdf_path
+        print("✅ PDF 생성 완료:", pdf_path)
         return Response({"status": "success"})
     except Exception as e:
         return Response({"error": f"PDF 생성 실패: {str(e)}"}, status=500)
@@ -860,4 +861,3 @@ def download_report_pdf(request, chat_id):
 @api_view(['GET'])
 def check_report_status(request):
     return Response({"status": "done"})
-

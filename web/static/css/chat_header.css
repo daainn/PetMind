@@ -1,5 +1,9 @@
 .chat-header {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
+  z-index: 1000;
   background-color: #FFFFF6;
   padding: 12px 24px;
   box-sizing: border-box;
@@ -84,6 +88,10 @@ display: block;
 
 .chat-dropdown-menu a:hover {
 background-color: #E3EFFF;
+}
+
+.chat-main {
+  padding-top: 72px;
 }
 
 @media (max-width: 768px) {

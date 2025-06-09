@@ -22,6 +22,8 @@
   <link rel="stylesheet" href="{% static 'css/right_sidebar.css' %}"> 
 
 </head>
+
+{% load custom_markdown %}
 <body>
   <div class="app-wrapper" id="appWrapper">
     {% include 'common/chat_header.html' %}
@@ -31,14 +33,14 @@
  
 
     <main class="chat-main">
-      <div class="chat-history">
+      <div class="chat-history" data-chat-id="{{ chat.id }}" data-dog-id="{{ dog.id }}">
         {% for m in messages %}
           <div class="chat-message-wrapper {% if m.sender == 'user' %}user-side{% else %}bot-side{% endif %}">
-            <div class="chat-message-block" style="display: flex; flex-direction: column; align-items: center;">
+            <div class="chat-message-block" style="display: flex; flex-direction: column;">
               {% if m.images.all %}
-                <div class="chat-image-block" style="margin-bottom: 6px;">
+                <div class="chat-image-block" style="margin-bottom: 8px; display: flex; width: 100%; justify-content: flex-end; align-items: flex-end;">
                   {% for img in m.images.all %}
-                    <img src="{{ img.image.url }}" class="preview-image" alt="업로드 이미지" style="display: block; margin: 4px auto;">
+                    <img src="{{ img.image.url }}" class="preview-image" alt="업로드 이미지" style="width:80px;height:80px;object-fit:cover;border-radius:8px;margin:4px;">
                   {% endfor %}
                 </div>
               {% endif %}
@@ -48,7 +50,13 @@
                     <span class="chat-time side-time" data-time="{{ m.created_at|date:'c' }}"></span>
                   {% endif %}
                   <div class="chat-message {{ m.sender }}-message">
-                    <div class="message-content">{{ m.message|safe }}</div>
+                    <div class="message-content">
+                      {% if m.sender == 'bot' %}
+                        {{ m.message|custom_markdown_parse|safe }}
+                      {% else %}
+                        {{ m.message }}
+                      {% endif %}
+                    </div>
                   </div>
                   {% if m.sender == 'bot' %}
                     <span class="chat-time side-time" data-time="{{ m.created_at|date:'c' }}"></span>
@@ -58,6 +66,7 @@
             </div>
           </div>
         {% endfor %}
+          
       </div>
 
       <div class="recommend-info-box" id="recommendTrigger"
@@ -102,42 +111,8 @@
   <script src="{% static 'js/recommend.js' %}"></script>
   <script src="{% static 'js/right_sidebar.js' %}"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      document.querySelectorAll(".chat-time").forEach(el => {
-        const rawTime = el.getAttribute("data-time");
-        if (rawTime) {
-          const date = new Date(rawTime);
-          if (!isNaN(date)) {
-            el.textContent = date.toLocaleTimeString('ko-KR', {
-              hour: '2-digit', minute: '2-digit', hour12: true
-            });
-          } else {
-            el.textContent = '시간 오류';
-          }
-        }
-      });
-    const isGuest = {{ is_guest|yesno:"true,false" }};
-
-    if (isGuest) {
-      const imageUploadLabel = document.querySelector('.image-upload-btn');
-      if (imageUploadLabel) {
-        imageUploadLabel.addEventListener('click', function (e) {
-          e.preventDefault();
-          alert("이미지 업로드는 로그인 후 이용하실 수 있습니다.");
-        });
-      }
-    }
-
-    if (isGuest) {
-      const recommendBtn = document.getElementById('recommendTrigger');
-      if (recommendBtn) {
-        recommendBtn.addEventListener('click', function (e) {
-          e.preventDefault();
-          alert("추천 콘텐츠는 로그인 후 이용하실 수 있습니다.");
-        });
-      }
-    }
-  });
-</script>
+    window.isGuest = {{ is_guest|yesno:"true,false" }};
+  </script>
+  <script src="{% static 'js/chat_talk.js' %}"></script>
 </body>
 </html>

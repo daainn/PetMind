@@ -41,26 +41,26 @@ function handleTitleClick(event, chatId) {
   goToChat(chatId);
 }
 
-function editChatTitle(chatId) {
+function editChatTitle(chatId, dogId) {
   const input = document.querySelector(`#chat-title-${chatId}`);
   input.removeAttribute("readonly");
   input.focus();
 
-  input.addEventListener("mousedown", (e) => e.stopPropagation(), { once: true });
+  input.addEventListener("mousedown", (e) => e.stopPropagation());
 
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      saveChatTitle(chatId, input);
+      saveChatTitle(chatId, dogId, input);
     }
-  }, { once: true });
+  });
 
   input.addEventListener("blur", () => {
-    saveChatTitle(chatId, input);
-  }, { once: true });
+    saveChatTitle(chatId, dogId, input);
+  });
 }
 
-function saveChatTitle(chatId, input) {
+function saveChatTitle(chatId, dogId, input) {
   const newTitle = input.value.trim();
   if (!newTitle) {
     alert("제목은 비워둘 수 없습니다.");
@@ -68,7 +68,7 @@ function saveChatTitle(chatId, input) {
     return;
   }
 
-  fetch(`/chat/member/update-title/${chatId}/`, {
+  fetch(`/chat/${dogId}/update-title/${chatId}/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -86,7 +86,6 @@ function saveChatTitle(chatId, input) {
   });
 }
 
-
 function deleteChat(chatId, dogId) {
   console.log("Deleting chat:", chatId);  
   if (!confirm("이 채팅을 삭제하시겠습니까?")) return;
@@ -94,21 +93,22 @@ function deleteChat(chatId, dogId) {
   const currentPath = window.location.pathname;  
   const expectedPath = `/chat/${dogId}/talk/${chatId}/`;
   const isCurrentChat = currentPath === expectedPath;
+
   fetch(`/chat/${dogId}/delete/${chatId}/`, {
-  method: "POST",
-  headers: {
-    "X-CSRFToken": getCSRFToken(),
-  },
-}).then((res) => {
-  if (res.ok) {
-    document.querySelector(`#chat-${chatId}`)?.remove();
-    if (isCurrentChat) window.location.href = "/chat/main/";
-  } else {
-    res.text().then(msg => {
-      alert("삭제 실패");
-    });
-  }
-});
+    method: "POST",
+    headers: {
+      "X-CSRFToken": getCSRFToken(),
+    },
+  }).then((res) => {
+    if (res.ok) {
+      document.querySelector(`#chat-${chatId}`)?.remove();
+      if (isCurrentChat) window.location.href = "/chat/main/";
+    } else {
+      res.text().then(msg => {
+        alert("삭제 실패");
+      });
+    }
+  });
 }
 
 function goToChat(chatId) {

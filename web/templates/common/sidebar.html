@@ -12,9 +12,11 @@
         <img src="{% static 'images/petmind_logo.png' %}" alt="PetMind 로고" class="sidebar-logo">
       </a>
     </div>
-    <a href="{% url 'chat:main' %}" class="chat-new-btn">
-      <img src="{% static 'images/new-chat.png' %}" alt="새 채팅">
-    </a>
+    {% if not is_guest %}
+      <a href="{% url 'chat:chat_member' dog_id %}" class="chat-new-btn">
+        <img src="{% static 'images/new-chat.png' %}" alt="새 채팅">
+      </a>
+    {% endif %}
   </div>
 
   <div class="sidebar-scrollable">
@@ -39,7 +41,7 @@
                 <input class="question-text" type="text" id="chat-title-{{ c.id }}" name="title" value="{{ c.chat_title|truncatechars:10 }}" readonly />
               </div>
               <div class="question-icons">
-                <i class="fas fa-pencil-alt" onclick="editChatTitle({{ c.id }})" title="제목 수정"></i>
+                <i class="fas fa-pencil-alt" onclick="editChatTitle({{ c.id }}, {{ c.dog.id }})" title="제목 수정"></i>
                 <i class="fas fa-trash" onclick="deleteChat({{ c.id }}, {{ c.dog.id }})" title="삭제하기"></i>
                 <span class="chat-active-indicator"></span>
               </div>
@@ -126,7 +128,6 @@
     if (e.target === updateModal) closeModal();
     if (e.target === feedbackModal) feedbackModal.style.display = "none";
   });
-  window.currentDogId = {{ current_dog.id }};
 </script>
 
 <style>
