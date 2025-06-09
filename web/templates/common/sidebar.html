@@ -40,7 +40,7 @@
               </div>
               <div class="question-icons">
                 <i class="fas fa-pencil-alt" onclick="editChatTitle({{ c.id }})" title="제목 수정"></i>
-                <i class="fas fa-trash" onclick="deleteChat({{ c.id }})" title="삭제하기"></i>
+                <i class="fas fa-trash" onclick="deleteChat({{ c.id }}, {{ c.dog.id }})" title="삭제하기"></i>
                 <span class="chat-active-indicator"></span>
               </div>
             </div>
@@ -83,14 +83,11 @@
   </div>
 </div>
 
-<!-- 공통 모달 파일 include -->
 {% include 'common/update_modal.html' %}
 {% include 'common/feedback_modal.html' %}
 
-<!-- FontAwesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-<!-- JavaScript -->
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const settingsBtn = document.getElementById("settingsBtn");
@@ -129,9 +126,9 @@
     if (e.target === updateModal) closeModal();
     if (e.target === feedbackModal) feedbackModal.style.display = "none";
   });
+  window.currentDogId = {{ current_dog.id }};
 </script>
 
-<!-- ✓ 스타일 -->
 <style>
   .sidebar {
     width: 280px;
