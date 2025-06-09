@@ -48,3 +48,24 @@ def generate_pdf_from_context(context, pdf_filename="report.pdf"):
 
     return pdf_path
 
+
+import os
+import base64
+import mimetypes
+from django.conf import settings
+
+def get_base64_image(image_path):
+    """
+    MEDIA_ROOT 하위의 상대 경로 image_path를 base64로 인코딩하여 반환.
+    예: image_path='profile_images/1.jpeg'
+    """
+    full_path = os.path.join(settings.MEDIA_ROOT, image_path)
+
+    try:
+        with open(full_path, "rb") as img_file:
+            encoded = base64.b64encode(img_file.read()).decode("utf-8")
+            mime_type, _ = mimetypes.guess_type(full_path)
+            return encoded, mime_type or "image/jpeg"
+    except FileNotFoundError:
+        print(f"[오류] 파일을 찾을 수 없습니다: {full_path}")
+        return None, None

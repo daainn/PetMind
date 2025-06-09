@@ -31,6 +31,7 @@ from datetime import datetime
 from django.utils.timezone import make_aware
 from urllib.parse import quote
 from django.urls import reverse
+import mimetypes
 
 
 def chat_entry(request):
@@ -759,16 +760,21 @@ def chat_report_feedback_view(request, chat_id):
     })
 
 def get_base64_image(image_path):
-    if image_path.startswith("media/") or image_path.startswith("/media/"):
-        image_path = image_path.replace("media/", "").lstrip("/")
+    if image_path.startswith("media/"):
+        image_path = image_path[len("media/"):]
+    elif image_path.startswith("/media/"):
+        image_path = image_path[len("/media/"):]
 
     full_path = os.path.join(settings.MEDIA_ROOT, image_path)
+
     try:
         with open(full_path, "rb") as img_file:
-            return base64.b64encode(img_file.read()).decode("utf-8")
+            encoded = base64.b64encode(img_file.read()).decode("utf-8")
+            mime_type, _ = mimetypes.guess_type(full_path)
+            return encoded, mime_type or "image/jpeg"
     except FileNotFoundError:
         print(f"[오류] 파일을 찾을 수 없습니다: {full_path}")
-        return None
+        return None, None
 
 @api_view(['POST'])
 def generate_report(request):
@@ -776,14 +782,10 @@ def generate_report(request):
     chat_id = data.get("chat_id")
     start_date = data.get("start_date")
     end_date = data.get("end_date")
+    print("📩 받은 데이터:", data)
 
     if not (chat_id and start_date and end_date):
         return Response({"error": "필수 값 누락"}, status=400)
-
-    chat = get_object_or_404(Chat, id=chat_id)
-    
-    if not is_chat_owner(request, chat):
-        return Response({"error": "접근 권한이 없습니다."}, status=403)
 
     dog, history = load_chat_and_profile(chat_id, start_date, end_date)
     if not dog or not history:
@@ -797,12 +799,14 @@ def generate_report(request):
         return Response({"error": f"GPT 처리 중 오류: {str(e)}"}, status=500)
 
     base64_img = None
+    mime_type = None
     if dog.get("image"):
         try:
-            base64_img = get_base64_image(dog["image"])
+            base64_img, mime_type = get_base64_image(dog["image"])
         except Exception as e:
             print(f"[경고] 이미지 Base64 변환 실패: {e}")
             base64_img = None
+            mime_type = None
 
     context = {
         "dog_name": dog["name"],
@@ -814,6 +818,7 @@ def generate_report(request):
         "living_period": dog["living_period"],
         "housing_type": dog["housing_type"],
         "image": base64_img,
+        "image_mime_type": mime_type,
         "start_date": start_date,
         "end_date": end_date,
         "intro_text": intro,
@@ -827,6 +832,7 @@ def generate_report(request):
     try:
         pdf_path = generate_pdf_from_context(context, pdf_filename=f"report_{chat_id}.pdf")
         request.session[f"pdf_path_{chat_id}"] = pdf_path
+        print("✅ PDF 생성 완료:", pdf_path)
         return Response({"status": "success"})
     except Exception as e:
         return Response({"error": f"PDF 생성 실패: {str(e)}"}, status=500)
@@ -866,4 +872,3 @@ def download_report_pdf(request, chat_id):
 @api_view(['GET'])
 def check_report_status(request):
     return Response({"status": "done"})
-
