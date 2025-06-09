@@ -145,12 +145,12 @@ def guest_profile_register(request):
 def chat_member_talk_detail(request, dog_id, chat_id):
     user_id = request.session.get("user_id")
     if not user_id:
-        return JsonResponse({'error': '로그인 필요'}, status=401)  # 로그인 안 된 경우 JSON 응답으로 처리
+        return JsonResponse({'error': '로그인 필요'}, status=401)  
 
     try:
         user = User.objects.get(id=uuid.UUID(user_id))
     except (User.DoesNotExist, ValueError):
-        return JsonResponse({'error': '사용자를 찾을 수 없습니다.'}, status=404)  # 사용자 없음
+        return JsonResponse({'error': '사용자를 찾을 수 없습니다.'}, status=404) 
 
     dog = DogProfile.objects.filter(id=dog_id).first()
     if not dog or str(dog.user.id) != str(user.id):
@@ -169,7 +169,7 @@ def chat_member_talk_detail(request, dog_id, chat_id):
         elif image_files:
             user_message = Message.objects.create(chat=chat, sender='user', message="[이미지 전송]")
         else:
-            return JsonResponse({'error': '메시지나 이미지를 입력해주세요.'}, status=400)  # 메시지나 이미지 없을 경우
+            return JsonResponse({'error': '메시지나 이미지를 입력해주세요.'}, status=400) 
 
         for img in image_files[:3]:
             try:
@@ -187,8 +187,7 @@ def chat_member_talk_detail(request, dog_id, chat_id):
 
         Message.objects.create(chat=chat, sender='bot', message=answer)
 
-        # 리디렉션 대신 JSON 응답 반환
-        return JsonResponse({'response': answer, 'chat_id': chat.id})  # JSON 응답으로 변경
+        return JsonResponse({'response': answer, 'chat_id': chat.id})  
 
     messages = Message.objects.filter(chat=chat).prefetch_related("images").order_by('created_at')
     chat_list = Chat.objects.filter(dog=dog).order_by('-created_at')
@@ -402,7 +401,6 @@ def chat_send(request):
     if not message and not image_files:
         return redirect(request.META.get('HTTP_REFERER', '/'))
 
-    # ---- 비회원일 때 ----
     if is_guest:
         chat_id = request.session.get("current_chat_id")
         chat = Chat.objects.filter(id=chat_id).first()
@@ -474,9 +472,11 @@ def chat_member_delete(request, dog_id, chat_id):
 
 @require_POST
 @csrf_exempt
-def chat_member_update_title(request, chat_id):
+@require_POST
+@csrf_exempt
+def chat_member_update_title(request, dog_id, chat_id):
     try:
-        chat = get_object_or_404(Chat, id=chat_id)
+        chat = get_object_or_404(Chat, id=chat_id, dog_id=dog_id)
 
         if not is_chat_owner(request, chat):
             return JsonResponse({'status': 'unauthorized'}, status=403)
