@@ -83,6 +83,12 @@
   border-top: 1.5px solid #e6e6e6;
   margin: 1.3em 0;
 }
+.message-content br {
+  line-height: 1 !important;
+  margin: 0;
+  padding: 0;
+  display: block;
+}
 
 .answer-section {
   background: #FFFFDB;
