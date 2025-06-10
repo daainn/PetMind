@@ -388,7 +388,7 @@ def call_runpod_api(message, dog_info):
         data = res.json()
         return data.get("response", "⚠️ 응답이 없습니다.")
     except Exception as e:
-        return f"❗ 오류 발생: {str(e)}"
+        return f"일시적인 오류로 답변을 제공하지 못하니 잠시 후 다시 시도해 주세요 🐶"
 
 
 
@@ -643,7 +643,7 @@ def recommend_content(request, chat_id):
             <div class="recommend-card with-image">
                 <div class="card-content-section">
                 <p class="recommend-title">{item['title']}</p>
-                <p class="recommend-description">{item['body'][:80]}...</p>
+                <p class="recommend-description">{item['body'][:80]}···</p>
                 <span class="recommend-link-text">👉 자세히 보기</span>
                 </div>
             </div>
@@ -654,7 +654,7 @@ def recommend_content(request, chat_id):
             <a href="{item['reference_url']}" target="_blank" class="recommend-card-link">
             <div class="recommend-card no-image">
                 <p class="recommend-title">{item['title']}</p>
-                <p class="recommend-description">{item['body'][:80]}...</p>
+                <p class="recommend-description">{item['body'][:80]}···</p>
                 <span class="recommend-link-text">👉 자세히 보기</span>
             </div>
             </a>
