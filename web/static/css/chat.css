@@ -403,7 +403,7 @@ body {
 }
 
 /* 화면 하단 안내 문구 고정 */
-.fixed-helper-text {
+.helper-text {
   position: fixed;
   left: 0;
   bottom: 0;
