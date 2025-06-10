@@ -228,7 +228,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // ✅ 스트리밍 완료 후: JSON 응답이면 파싱 (Qwen 대응)
     let finalText = fullText.trim();
     try {
       const parsedJson = JSON.parse(finalText);
@@ -236,12 +235,10 @@ document.addEventListener('DOMContentLoaded', () => {
         finalText = parsedJson.response;
       }
     } catch (e) {
-      // 일반 텍스트면 그대로 사용
     }
 
     contentDiv.innerHTML = customMarkdownParse(finalText);
 
-    // ⏰ 시간 표시
     const botTime = new Date().toISOString();
     const timeElem = document.createElement('span');
     timeElem.className = 'chat-time side-time right-time';
