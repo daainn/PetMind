@@ -69,6 +69,9 @@
               <option value="">직접 입력</option>
               <option value="gmail.com">gmail.com</option>
               <option value="naver.com">naver.com</option>
+              <option value="daum.net">daum.net</option>
+              <option value="hanmail.net">hanmail.net</option>
+              <option value="nate.com">nate.com</option>
             </select>
             <button type="button" class="btn-auth-request">인증 번호 요청</button>
           </div>
@@ -87,7 +90,7 @@
         <label for="password" id="password-label">비밀번호<span style="color:#FFC508;">*</span></label>
         <div class="password-group-wrapper">
           <input type="password" name="password" id="password" placeholder="비밀번호를 입력하세요">
-          <p class="helper-text" id="password-helper">※ 영문 대/소문자, 숫자, 특수문자를 2종류 혼합하여 8~16자 입력</p>
+          <p class="helper-text" id="password-helper">※ 영문, 숫자, 특수문자를 2종류 혼용하여 8~16자 입력</p>
           <p class="helper-text error-message" id="password-error"></p>
         </div>
       </div>
@@ -184,9 +187,19 @@
       const validEmail = /^[a-z0-9]{5,20}$/.test(emailVal);
       const validPassword = /^(?=.*[A-Za-z])(?=.*\d|[^A-Za-z\d])(?=.{8,16}).*$/.test(passwordVal);
 
-      if (!validEmail || !validPassword || !isAgreed) {
+      if (!validEmail) {
         e.preventDefault();
-        alert("입력값을 다시 확인해주세요.");
+        alert("이메일 형식을 확인해주세요.");
+        return;
+      }
+      if (!validPassword) {
+        e.preventDefault();
+        alert("비밀번호 조건을 확인해주세요.");
+        return;
+      }
+      if (!isAgreed) {
+        e.preventDefault();
+        alert("필수 약관에 동의해주세요.");
         return;
       }
 
