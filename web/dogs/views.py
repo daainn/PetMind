@@ -61,19 +61,23 @@ def dog_info_join_view(request):
     
 @require_POST
 def delete_dog_profile(request, dog_id):
+
     user = get_logged_in_user(request)
     if not user:
         return redirect('user:home')
+
     try:
         dog = DogProfile.objects.get(id=dog_id, user=user)
     except DogProfile.DoesNotExist:
         return redirect('user:home')
-    dog.delete()
 
     all_dogs = DogProfile.objects.filter(user=user).order_by('created_at')
+    total_dog_count = all_dogs.count()
 
-    if all_dogs.exists():
-        latest_dog = all_dogs.last()
-        return redirect('chat:chat_member', dog_id=latest_dog.id)
+    dog.delete()
+
+    if total_dog_count == 1:
+        return redirect('/dogs/dog_info/join/?mode=add')
     else:
-        return redirect('/dogs/join/?mode=add')
+        latest_dog = DogProfile.objects.filter(user=user).order_by('created_at').last()
+        return redirect('chat:chat_member', dog_id=latest_dog.id)
