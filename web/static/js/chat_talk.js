@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let html = '';
 
     if (images.length) {
-      html += `<div class="chat-image-block" style="margin-top:8px;">`;
+      html += `<div class="chat-image-block">`;
       images.forEach(url => {
         if (url.startsWith('blob:') || url.startsWith('/media/')) {
           html += `<img src="${url}" class="preview-image" style="width:80px;height:80px;object-fit:cover;border-radius:8px;margin-right:4px;">`;

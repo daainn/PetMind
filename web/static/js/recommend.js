@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function () {
           wrapper.className = 'chat-message-wrapper bot-side';
           wrapper.innerHTML = `
             <div class="chat-message-block">
-              <div class="chat-message bot-message">
+              <div class="recommend-bubble">
                 <div class="message-content">${data.cards_html}</div>
               </div>
               <span class="chat-time side-time" data-time="${new Date().toISOString()}"></span>
