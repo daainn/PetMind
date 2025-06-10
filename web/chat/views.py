@@ -34,6 +34,7 @@ from django.utils.timezone import make_aware
 from urllib.parse import quote
 from django.urls import reverse
 import mimetypes
+from urllib.parse import unquote
 
 
 def chat_entry(request):
@@ -806,9 +807,13 @@ def generate_report(request):
     mime_type = None
     if dog.get("image"):
         try:
-            base64_img, mime_type = get_base64_image(dog["image"])
+            image_path = dog["image"]
+            # print("🐾 원본 image 경로:", dog["image"])
+            cleaned_image_path = unquote(image_path.replace("/media/", ""))
+            # print("🐾 media/ 제거된 경로:", cleaned_image_path)
+            base64_img, mime_type = get_base64_image(cleaned_image_path)
         except Exception as e:
-            print(f"[경고] 이미지 Base64 변환 실패: {e}")
+            # print(f"[경고] 이미지 Base64 변환 실패: {e}")
             base64_img = None
             mime_type = None
 

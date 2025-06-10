@@ -401,3 +401,16 @@ body {
     display: none;
   }
 }
+
+/* 화면 하단 안내 문구 고정 */
+.helper-text {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100vw;
+  color: #b0b0b0;
+  font-size: 13px;
+  text-align: center;
+  padding: 12px 0 10px 0;
+  z-index: 1000;
+}
