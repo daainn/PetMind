@@ -404,7 +404,6 @@ body {
 
 /* 화면 하단 안내 문구 고정 */
 .helper-text {
-  position: fixed;
   left: 0;
   bottom: 0;
   width: 100vw;
