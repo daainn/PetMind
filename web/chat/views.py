@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
-from chat.utils import get_image_response
+from chat.utils import call_gpt_stream_with_images  
+from django.http import StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
 from django.http import JsonResponse, FileResponse, HttpResponseNotAllowed, Http404, HttpResponseNotFound, HttpResponseServerError, HttpResponse
@@ -14,6 +15,7 @@ from user.utils import get_logged_in_user
 from collections import defaultdict
 from django.http import HttpResponseForbidden
 from datetime import date, timedelta
+from asgiref.sync import sync_to_async
 import uuid
 import requests
 import json
@@ -167,12 +169,13 @@ def chat_member_talk_detail(request, dog_id, chat_id):
         message = request.POST.get("message", "").strip()
         image_files = request.FILES.getlist("images")
 
+        if not message and not image_files:
+            return JsonResponse({'error': '메시지나 이미지를 입력해주세요.'}, status=400)
+
         if message:
             user_message = Message.objects.create(chat=chat, sender='user', message=message)
         elif image_files:
             user_message = Message.objects.create(chat=chat, sender='user', message="[이미지 전송]")
-        else:
-            return JsonResponse({'error': '메시지나 이미지를 입력해주세요.'}, status=400) 
 
         for img in image_files[:3]:
             try:
@@ -181,17 +184,29 @@ def chat_member_talk_detail(request, dog_id, chat_id):
                 pass
 
         if image_files:
-            answer = get_image_response(image_files, message)
+            async def gpt_stream():
+                final_answer = ""
+                try:
+                    async for chunk in call_gpt_stream_with_images(image_files, message):
+                        final_answer += chunk
+                        yield chunk
+                except Exception as e:
+                    yield f"\n[에러 발생: {str(e)}]"
+                finally:
+                    await sync_to_async(Message.objects.create)(
+                        chat=chat,
+                        sender='bot',
+                        message=final_answer.strip()
+                    )
+            return StreamingHttpResponse(gpt_stream(), content_type="text/plain")
+
         elif message:
             user_info = get_dog_info(dog)
             answer = call_runpod_api(message, user_info)
-        else:
-            answer = "질문이나 이미지를 입력해주세요."
+            Message.objects.create(chat=chat, sender='bot', message=answer)
+            return JsonResponse({'response': answer, 'chat_id': chat.id})
 
-        Message.objects.create(chat=chat, sender='bot', message=answer)
-
-        return JsonResponse({'response': answer, 'chat_id': chat.id})  
-
+    # GET 요청 처리 (기존 그대로 유지)
     messages = Message.objects.filter(chat=chat).prefetch_related("images").order_by('created_at')
     chat_list = Chat.objects.filter(dog=dog).order_by('-created_at')
     grouped_chat_list = group_chats_by_date(chat_list)
@@ -378,7 +393,7 @@ def get_chat_history(chat):
 
 def call_runpod_api(message, dog_info):
     try:
-        api_url = "http://213.173.105.9:27616/chat"
+        api_url = "http://213.173.105.9:26808/chat"
         payload = {
             "message": message,
             "dog_info": dog_info
@@ -388,7 +403,7 @@ def call_runpod_api(message, dog_info):
         data = res.json()
         return data.get("response", "⚠️ 응답이 없습니다.")
     except Exception as e:
-        return f"❗ 오류 발생: {str(e)}"
+        return f"일시적인 오류로 답변을 제공하지 못하니 잠시 후 다시 시도해 주세요 🐶"
 
 
 
@@ -643,7 +658,7 @@ def recommend_content(request, chat_id):
             <div class="recommend-card with-image">
                 <div class="card-content-section">
                 <p class="recommend-title">{item['title']}</p>
-                <p class="recommend-description">{item['body'][:80]}...</p>
+                <p class="recommend-description">{item['body'][:80]}···</p>
                 <span class="recommend-link-text">👉 자세히 보기</span>
                 </div>
             </div>
@@ -654,7 +669,7 @@ def recommend_content(request, chat_id):
             <a href="{item['reference_url']}" target="_blank" class="recommend-card-link">
             <div class="recommend-card no-image">
                 <p class="recommend-title">{item['title']}</p>
-                <p class="recommend-description">{item['body'][:80]}...</p>
+                <p class="recommend-description">{item['body'][:80]}···</p>
                 <span class="recommend-link-text">👉 자세히 보기</span>
             </div>
             </a>

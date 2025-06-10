@@ -64,36 +64,61 @@ document.addEventListener('DOMContentLoaded', () => {
   function customMarkdownParse(text) {
     if (!text) return '';
 
-    text = text.replace(/"[^"]*"|'[^']*'|`[^`]*`/g, (match) => {
-        return match.replace(/\./g, '[[DOT]]')
-                    .replace(/!/g, '[[EXCL]]')
-                    .replace(/\?/g, '[[QST]]');
-    });
+    text = text.replace(/"[^"]*"|'[^']*'|`[^`]*`/g, (match) =>
+      match.replace(/\./g, '[[DOT]]')
+          .replace(/!/g, '[[EXCL]]')
+          .replace(/\?/g, '[[QST]]')
+    );
 
     text = text.replace(/\*\*?분석\*\*?(?::)?\s?/g, '### ✅ 문제 행동 분석\n');
-    text = text.replace(/\*\*?해결책 제시\*\*?(?::)?\s?/g, '\n### 🐾 솔루션\n');
-    text = text.replace(/\*\*?추가 질문\*\*?(?::)?\s?/g, '\n### 추가 질문\n');
+    text = text.replace(/\*\*?해결책 제시\*\*?(?::)?\s?/g, '### 🐾 솔루션\n');
+    text = text.replace(/\*\*?추가 질문\*\*?(?::)?\s?/g, '### ❓ 추가 질문\n');
     text = text.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
 
-    text = text.replace(/(\d+)\.\s/g, '<br><span style="margin-left:1em; display:inline-block;">$1.</span> ');
-    text = text.replace(/([.!?])(?=[^\d<\n])/g, '$1<br>');
-    text = text.replace(/(<br>\s*){2,}/g, '<br>');
+    text = text.replace(/((?:^\d+\.\s.+\n?)+)/gm, (match) => {
+      // 헤더나 빈 줄 섞이면 패스
+      if (match.includes('###') || match.includes('##')) return match;
+      const lines = match.trim().split('\n').filter(Boolean);
+      const items = lines
+        .filter(line => /^\d+\.\s/.test(line))
+        .map(line => line.replace(/^\d+\.\s/, '').trim())
+        .map(content => `<li>${content}</li>`)
+        .join('');
+      return `<ol style="margin:0.5em 0 0 1.2em; padding:0;">${items}</ol>`;
+    });
+
+    // 🔸 일반 리스트 (- ) 처리
+    text = text.replace(/((?:^-\s.+\n?)+)/gm, (match) => {
+      const lines = match.trim().split('\n').filter(Boolean);
+      const items = lines
+        .map(line => line.replace(/^- /, '').trim())
+        .map(content => `<li>${content}</li>`)
+        .join('');
+      return `<ul style="margin:0.5em 0 0 1.2em; padding:0;">${items}</ul>`;
+    });
+
+    // h3 치환
     text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>');
 
-    let sectionRegex = /<h3>(.*?)<\/h3>(.*?)(?=(<h3>|$))/gs;
+    // 섹션 단위로 나누기
+    let sectionRegex = /<h3>(.*?)<\/h3>(.*?)(?=<h3>|$)/gs;
     let result = '';
-    let lastIndex = 0;
     let match;
     while ((match = sectionRegex.exec(text)) !== null) {
-        result += `<div class="answer-section"><h3>${match[1]}</h3>${match[2].trim()}</div>`;
-        lastIndex = sectionRegex.lastIndex;
+      result += `
+        <div class="answer-section" style="line-height:1.5; font-size:15px; margin-bottom:1.2em; background:#fffbe6; border-left:4px solid #ffd54f; border-radius:8px; padding:12px 16px;">
+          <h3 style="font-size:16px; font-weight:bold; color:#333; margin:0 0 0.5em;">${match[1]}</h3>
+          ${match[2].trim()}
+        </div>
+      `;
     }
 
+    // fallback
     if (!result) {
-        result = `<div class="answer-section">${text.trim()}</div>`;
+      result = `<div class="answer-section">${text.trim()}</div>`;
     }
 
-    result = result.replace(/<hr>/g, '');
+    // 특수문자 복원
     result = result.replace(/\[\[DOT\]\]/g, '.').replace(/\[\[EXCL\]\]/g, '!').replace(/\[\[QST\]\]/g, '?');
     return result;
   }
@@ -103,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let html = '';
 
     if (images.length) {
-      html += `<div class="chat-image-block" style="margin-top:8px;">`;
+      html += `<div class="chat-image-block">`;
       images.forEach(url => {
         if (url.startsWith('blob:') || url.startsWith('/media/')) {
           html += `<img src="${url}" class="preview-image" style="width:80px;height:80px;object-fit:cover;border-radius:8px;margin-right:4px;">`;
@@ -154,29 +179,85 @@ document.addEventListener('DOMContentLoaded', () => {
     </span>`, 'bot', [], null
   );
 
-  const sendChat = (form, message, loadingElem, userMsgTime) => {
-    const formData = new FormData(form);
-    formData.set('message', message); 
-    fetch(form.action, {
+  const sendChat = async (form, message, loadingElem, userMsgTime) => {
+  const formData = new FormData(form);
+  formData.set('message', message);
+
+  try {
+    const res = await fetch(form.action, {
       method: 'POST',
       body: formData,
-      headers: { 'X-CSRFToken': form.querySelector('[name="csrfmiddlewaretoken"]').value },
+      headers: {
+        'X-CSRFToken': form.querySelector('[name="csrfmiddlewaretoken"]').value
+      },
       credentials: 'same-origin'
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (loadingElem && loadingElem.parentNode) loadingElem.parentNode.removeChild(loadingElem);
-      const botTime = data.created_at || new Date().toISOString();
-      addChatBubble(data.response, 'bot', [], botTime);
-    })
-    .catch(err => {
-      if (loadingElem && loadingElem.querySelector('.message-content')) {
-        loadingElem.querySelector('.message-content').textContent = "응답을 받을 수 없습니다.";
-      }
-      console.error("오류 발생:", err);
     });
-  };
 
+    if (!res.body || !res.ok) {
+      throw new Error("응답이 유효하지 않습니다.");
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+
+    let fullText = '';
+    const contentDiv = loadingElem.querySelector(".message-content");
+    if (!contentDiv) return;
+
+    let typingBuffer = '';
+    let printCursor = 0;
+    let tempText = ''; 
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      fullText += chunk;
+      typingBuffer += chunk;
+
+      while (printCursor < typingBuffer.length) {
+        const char = typingBuffer[printCursor];
+        tempText += char;
+        const parsed = customMarkdownParse(tempText);
+
+        contentDiv.innerHTML = parsed;
+
+        printCursor++;
+        await new Promise(res => setTimeout(res, 20));
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+      }
+    }
+
+    // ✅ 스트리밍 완료 후: JSON 응답이면 파싱 (Qwen 대응)
+    let finalText = fullText.trim();
+    try {
+      const parsedJson = JSON.parse(finalText);
+      if (parsedJson.response) {
+        finalText = parsedJson.response;
+      }
+    } catch (e) {
+      // 일반 텍스트면 그대로 사용
+    }
+
+    contentDiv.innerHTML = customMarkdownParse(finalText);
+
+    // ⏰ 시간 표시
+    const botTime = new Date().toISOString();
+    const timeElem = document.createElement('span');
+    timeElem.className = 'chat-time side-time right-time';
+    timeElem.dataset.time = botTime;
+    timeElem.textContent = formatKoreanTime(botTime);
+
+    const messageBlock = loadingElem.querySelector('.chat-message-block');
+    if (messageBlock) messageBlock.appendChild(timeElem);
+
+  } catch (err) {
+    if (loadingElem && loadingElem.querySelector('.message-content')) {
+      loadingElem.querySelector('.message-content').textContent = "응답을 받을 수 없습니다.";
+    }
+    console.error("스트리밍 중 오류:", err);
+  }
+};
   const form = document.querySelector('.chat-input-form');
   if (form && chatHistory) {
     const messageInput = form.querySelector('textarea');

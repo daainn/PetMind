@@ -93,3 +93,60 @@ def get_image_response(image_files, question="강아지가 왜 이런 행동을 
                 os.remove(path)
             except Exception:
                 pass
+
+    
+async def call_gpt_stream_with_images(image_files, question="강아지가 왜 이런 행동을 하나요?"):
+    image_messages = []
+    temp_paths = []
+
+    for img in image_files[:3]:
+        suffix = os.path.splitext(img.name)[-1]
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            for chunk in img.chunks():
+                tmp.write(chunk)
+            temp_paths.append(tmp.name)
+
+    try:
+        for path in temp_paths:
+            with open(path, "rb") as f:
+                base64_img = base64.b64encode(f.read()).decode("utf-8")
+                image_messages.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{base64_img}"
+                    }
+                })
+
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "당신은 반려견 행동 상담 전문가입니다. "
+                    "이미지와 보호자의 질문을 바탕으로 실천 가능한 훈육 조언을 제공하세요. "
+                    "**한국어**로 작성해주세요."
+                )
+            },
+            {
+                "role": "user",
+                "content": [{"type": "text", "text": question}] + image_messages
+            }
+        ]
+
+        stream = await async_client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+            stream=True,
+            max_tokens=1024,
+        )
+
+        async for chunk in stream:
+            delta = chunk.choices[0].delta
+            if hasattr(delta, "content") and delta.content:
+                yield delta.content
+
+    finally:
+        for path in temp_paths:
+            try:
+                os.remove(path)
+            except Exception:
+                pass
