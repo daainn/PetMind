@@ -70,7 +70,7 @@
         <textarea name="message" placeholder="질문을 입력하세요." required></textarea>
         <div id="imagePreviewContainer" style="display: flex; gap: 8px; margin-top: 8px;"></div>
         <div class="chat-input-bottom">
-          <label class="image-upload-btn" style="visibility: hidden;">
+          <label class="image-upload-btn">
             <input type="file" name="images" id="imageInput" accept="image/*" multiple hidden>
             <img src="{% static 'images/image_upload_btn.png' %}" alt="이미지 업로드 아이콘">
             <span>이미지 업로드</span>
@@ -79,16 +79,13 @@
             <img src="{% static 'images/chatbot_sendbtn.png' %}" alt="보내기">
           </button>
         </div>
-    
+
         <input type="hidden" id="guestDogName" value="{{ guest_dog_name|default_if_none:'' }}">
         <input type="hidden" id="guestDogBreed" value="{{ guest_dog_breed|default_if_none:'' }}">
-      </form>        
-
+      </form>
     </div>
   </main>
 </div>
-
-<div class="fixed-helper-text">PetMind는 반려견의 이해를 돕는 AI 상담 도우미입니다. 반려견의 건강 문의 사항은 전문가와 상의해보세요.</div>
 
 <script src="{% static 'js/chat_member_sidebar.js' %}"></script>
 <script src="{% static 'js/image_upload.js' %}"></script>
