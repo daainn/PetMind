@@ -38,7 +38,17 @@
             <div class="question-item{% if current_chat and current_chat.id == c.id %} active{% endif %}" id="chat-{{ c.id }}">
               <div class="question-info" onclick="location.href='{% url 'chat:chat_member_talk_detail' c.dog.id c.id %}'">
                 <img src="{% static 'images/chat-history.png' %}" alt="채팅 아이콘">
-                <input class="question-text" type="text" id="chat-title-{{ c.id }}" name="title" value="{{ c.chat_title|truncatechars:10 }}" readonly />
+                {% comment %} <input class="question-text" type="text" id="chat-title-{{ c.id }}" name="title" value="{{ c.chat_title|truncatechars:10 }}" readonly /> {% endcomment %}
+                <input
+                  class="chat-title-input"
+                  id="chat-title-{{ c.id }}"
+                  data-chat-id="{{ c.id }}"
+                  data-dog-id="{{ c.dog.id }}"
+                  type="text"
+                  name="title"
+                  value="{{ c.chat_title }}"
+                  readonly
+                />
               </div>
               <div class="question-icons">
                 <i class="fas fa-pencil-alt" onclick="editChatTitle({{ c.id }}, {{ c.dog.id }})" title="제목 수정"></i>
@@ -59,7 +69,6 @@
     {% endif %}
   </div>
 
-  <!-- 환경설정 버튼 -->
   <div class="sidebar-settings-btn-wrapper">
     <button id="settingsBtn" class="settings-btn">
       <img src="{% static 'images/setting.png' %}" alt="환경설정" />

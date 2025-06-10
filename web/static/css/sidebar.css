@@ -73,7 +73,28 @@
   display: none;
 }
 
-/* ===== 질문 아이템 ===== */
+.chat-title-input {
+  font-size: 14px;
+  color: #333;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  width: 100%;
+  padding: 4px 0;
+  font-family: 'Spoqa Han Sans Neo', sans-serif;
+  cursor: pointer;
+}
+
+.chat-title-input:not([readonly]) {
+  border-bottom: 1px solid #ccc;
+  background-color: #fffdf2;
+  cursor: text;
+}
+
+.chat-title-input::placeholder {
+  color: #bbb;
+}
+
 .question-item {
   display: flex;
   align-items: center;
@@ -115,7 +136,6 @@
   pointer-events: none;
 }
 
-/* 호버 시 아이콘 및 원 표시 */
 .question-item:hover .question-icons i,
 .question-item:hover .chat-active-indicator {
   display: inline-block;
