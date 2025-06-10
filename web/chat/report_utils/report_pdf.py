@@ -6,6 +6,9 @@ from django.template.loader import render_to_string
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from django.conf import settings
+import base64
+import mimetypes
+from urllib.parse import unquote
 
 
 def generate_pdf_from_context(context, pdf_filename="report.pdf"):
@@ -49,23 +52,20 @@ def generate_pdf_from_context(context, pdf_filename="report.pdf"):
     return pdf_path
 
 
-import os
-import base64
-import mimetypes
-from django.conf import settings
-
 def get_base64_image(image_path):
-    """
-    MEDIA_ROOT 하위의 상대 경로 image_path를 base64로 인코딩하여 반환.
-    예: image_path='profile_images/1.jpeg'
-    """
-    full_path = os.path.join(settings.MEDIA_ROOT, image_path)
+    decoded_path = unquote(image_path)
+    full_path = os.path.join(settings.MEDIA_ROOT, decoded_path)
+
+    if not os.path.exists(full_path):
+        print(f"❌ [오류] 파일이 존재하지 않음: {full_path}")
+        return None, None
 
     try:
         with open(full_path, "rb") as img_file:
             encoded = base64.b64encode(img_file.read()).decode("utf-8")
             mime_type, _ = mimetypes.guess_type(full_path)
             return encoded, mime_type or "image/jpeg"
-    except FileNotFoundError:
-        print(f"[오류] 파일을 찾을 수 없습니다: {full_path}")
+
+    except Exception as e:
+        print(f"❌ [예외] 이미지 인코딩 실패\n에러: {e}")
         return None, None
