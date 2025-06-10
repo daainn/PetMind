@@ -83,7 +83,7 @@ def delete_dog_profile(request, dog_id):
 
     if total_dog_count == 1:
         # 마지막 한 마리를 삭제한 경우
-        return redirect('/dogs/join/?mode=add')
+        return redirect('/dogs/dog_info/join/?mode=add')
     else:
         # 여러 마리 중 하나만 삭제한 경우
         latest_dog = DogProfile.objects.filter(user=user).order_by('created_at').last()
