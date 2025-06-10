@@ -154,28 +154,74 @@ document.addEventListener('DOMContentLoaded', () => {
     </span>`, 'bot', [], null
   );
 
-  const sendChat = (form, message, loadingElem, userMsgTime) => {
-    const formData = new FormData(form);
-    formData.set('message', message); 
-    fetch(form.action, {
+  const sendChat = async (form, message, loadingElem, userMsgTime) => {
+  const formData = new FormData(form);
+  formData.set('message', message);
+
+  try {
+    const res = await fetch(form.action, {
       method: 'POST',
       body: formData,
-      headers: { 'X-CSRFToken': form.querySelector('[name="csrfmiddlewaretoken"]').value },
+      headers: {
+        'X-CSRFToken': form.querySelector('[name="csrfmiddlewaretoken"]').value
+      },
       credentials: 'same-origin'
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (loadingElem && loadingElem.parentNode) loadingElem.parentNode.removeChild(loadingElem);
-      const botTime = data.created_at || new Date().toISOString();
-      addChatBubble(data.response, 'bot', [], botTime);
-    })
-    .catch(err => {
-      if (loadingElem && loadingElem.querySelector('.message-content')) {
-        loadingElem.querySelector('.message-content').textContent = "응답을 받을 수 없습니다.";
-      }
-      console.error("오류 발생:", err);
     });
-  };
+
+    if (!res.body || !res.ok) {
+      throw new Error("응답이 유효하지 않습니다.");
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+
+    let fullText = '';
+    const contentDiv = loadingElem.querySelector(".message-content");
+    if (!contentDiv) return;
+
+    let typingBuffer = '';
+    let printCursor = 0;
+
+    let tempText = ''; 
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      fullText += chunk;
+      typingBuffer += chunk;
+
+      while (printCursor < typingBuffer.length) {
+        const char = typingBuffer[printCursor];
+        tempText += char;
+        const parsed = customMarkdownParse(tempText);
+
+        contentDiv.innerHTML = `<div class="answer-section">${parsed}</div>`;
+
+        printCursor++;
+        await new Promise(res => setTimeout(res, 20));
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+      }
+    }
+
+    contentDiv.innerHTML = customMarkdownParse(fullText);
+
+    const botTime = new Date().toISOString();
+    const timeElem = document.createElement('span');
+    timeElem.className = 'chat-time side-time right-time';
+    timeElem.dataset.time = botTime;
+    timeElem.textContent = formatKoreanTime(botTime);
+
+    const messageBlock = loadingElem.querySelector('.chat-message-block');
+    if (messageBlock) messageBlock.appendChild(timeElem);
+
+  } catch (err) {
+    if (loadingElem && loadingElem.querySelector('.message-content')) {
+      loadingElem.querySelector('.message-content').textContent = "응답을 받을 수 없습니다.";
+    }
+    console.error("스트리밍 중 오류:", err);
+  }
+};
 
   const form = document.querySelector('.chat-input-form');
   if (form && chatHistory) {

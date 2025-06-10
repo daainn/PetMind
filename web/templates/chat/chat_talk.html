@@ -1,13 +1,13 @@
 {% load static %}
+{% load custom_markdown %}
 
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PetMind | 상담 채팅</title>
+  <title>PetMind | 상답 채팅</title>
   <link rel="icon" href="{% static 'images/petmind_logo_dog.png' %}" type="image/png" />
-
 
   <link href="//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Koh+Santepheap:wght@700&display=swap" rel="stylesheet">
@@ -17,63 +17,55 @@
   <link rel="stylesheet" href="{% static 'css/chat_header.css' %}">
   <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
   <link rel="stylesheet" href="{% static 'css/chat_talk.css' %}">
+  <link rel="stylesheet" href="{% static 'css/right_sidebar.css' %}">
 
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <link rel="stylesheet" href="{% static 'css/right_sidebar.css' %}"> 
-
 </head>
 
-{% load custom_markdown %}
 <body>
   <div class="app-wrapper" id="appWrapper">
     {% include 'common/chat_header.html' %}
     {% include 'common/sidebar.html' %}
     {% include 'common/right_sidebar.html' %}
-    {% comment %} {% include 'chat/chat_report_feedback.html' %} {% endcomment %}
- 
 
     <main class="chat-main">
       <div class="chat-history" data-chat-id="{{ chat.id }}" data-dog-id="{{ dog.id }}">
         {% for m in messages %}
           <div class="chat-message-wrapper {% if m.sender == 'user' %}user-side{% else %}bot-side{% endif %}">
-            <div class="chat-message-block" style="display: flex; flex-direction: column;">
-              {% if m.images.all %}
-                <div class="chat-image-block" style="margin-bottom: 8px; display: flex; width: 100%; justify-content: flex-end; align-items: flex-end;">
-                  {% for img in m.images.all %}
-                    <img src="{{ img.image.url }}" class="preview-image" alt="업로드 이미지" style="width:80px;height:80px;object-fit:cover;border-radius:8px;margin:4px;">
-                  {% endfor %}
-                </div>
-              {% endif %}
-              {% if m.message %}
-                <div style="display: flex; justify-content: flex-end; align-items: center; gap: 6px; width: 100%;">
-                  {% if m.sender == 'user' %}
-                    <span class="chat-time side-time" data-time="{{ m.created_at|date:'c' }}"></span>
-                  {% endif %}
-                  <div class="chat-message {{ m.sender }}-message">
-                    <div class="message-content">
-                      {% if m.sender == 'bot' %}
-                        {{ m.message|custom_markdown_parse|safe }}
-                      {% else %}
-                        {{ m.message }}
-                      {% endif %}
-                    </div>
+            <div class="chat-message-block" style="display: flex; justify-content: {% if m.sender == 'user' %}flex-end{% else %}flex-start{% endif %}; align-items: flex-end; gap: 6px; width: 100%;">
+              {% if m.sender == 'user' %}
+                <span class="chat-time side-time left-time" data-time="{{ m.created_at|date:'c' }}">{{ m.created_at|date:"A h:i" }}</span>
+                <div class="chat-message user-message">
+                  <div class="message-content">
+                    {{ m.message }}
                   </div>
-                  {% if m.sender == 'bot' %}
-                    <span class="chat-time side-time" data-time="{{ m.created_at|date:'c' }}"></span>
-                  {% endif %}
                 </div>
+              {% else %}
+                <div class="chat-message bot-message">
+                  <div class="message-content">
+                    {{ m.message|custom_markdown_parse|safe }}
+                  </div>
+                </div>
+                <span class="chat-time side-time right-time" data-time="{{ m.created_at|date:'c' }}">{{ m.created_at|date:"A h:i" }}</span>
               {% endif %}
             </div>
+
+            {% if m.images.all %}
+              <div class="chat-image-block" style="margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px; justify-content: {% if m.sender == 'user' %}flex-end{% else %}flex-start{% endif %};">
+                {% for img in m.images.all %}
+                  <img src="{{ img.image.url }}" class="preview-image" alt="업로드 이미지" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">
+                {% endfor %}
+              </div>
+            {% endif %}
           </div>
         {% endfor %}
-          
       </div>
 
       <div class="recommend-info-box" id="recommendTrigger"
            data-url="{% url 'chat:recommend_content' chat_id=current_chat.id %}"
            style="cursor:pointer;">
         <img src="{% static 'images/recommendation_btn.png' %}" alt="추천 아이콘" class="recommend-icon">
-        <span class="recommend-text">이런 정보는 어때요? 추천 콘텐츠를 확인해보세요.</span>
+        <span class="recommend-text">이런 정보는 어때요? 추천 컨텐츠를 확인해보세요.</span>
       </div>
 
       <form method="POST"
@@ -104,8 +96,9 @@
       </form>
     </main>
   </div>
+
   <span id="isGuestFlag" style="display: none;">{{ is_guest|yesno:"true,false" }}</span>
-  
+
   <script src="{% static 'js/chat_member_sidebar.js' %}"></script>
   <script src="{% static 'js/image_upload.js' %}"></script>
   <script src="{% static 'js/recommend.js' %}"></script>

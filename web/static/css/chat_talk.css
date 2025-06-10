@@ -43,16 +43,20 @@
 }
 
 .chat-message {
-  width: fit-content;
-  max-width: 100%;
+  display: inline-block;
+  padding: 14px 18px;    
   border-radius: 12px;
   font-size: 15px;
   line-height: 1.8;
   word-break: break-word;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
   position: relative;
+  max-width: 100%;
+  width: fit-content;
+}
+.message-content {
+  display: block;
+  white-space: normal;
 }
 .chat-message-wrapper.user-side .chat-message {
   align-self: flex-end;
@@ -86,6 +90,9 @@
   box-shadow: 0 2px 12px rgba(180,180,100,0.04);
   padding: 20px 24px 16px 24px;
   transition: box-shadow .2s;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
 }
 .answer-section h3 {
   margin-top: 0;
