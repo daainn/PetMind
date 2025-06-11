@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   web:
-    image: petmind-web:latest  
+    build: .
     container_name: petmind-web
     restart: always
     command: gunicorn petmind.wsgi:application --bind 0.0.0.0:8000
