@@ -98,7 +98,7 @@
   padding: 20px 24px 16px 24px;
   transition: box-shadow .2s;
   word-wrap: break-word;
-  white-space: pre-wrap;
+  /* white-space: pre-wrap; */
   overflow-wrap: break-word;
 }
 .answer-section h3 {
