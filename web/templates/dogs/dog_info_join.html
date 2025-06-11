@@ -120,6 +120,10 @@
     <div class="inline-input-row">
       <div class="profile-subtitle">반려견 나이</div>
       <input type="text" name="age" placeholder="반려견 나이 (예: 3)" value="{{ form.age.value|default_if_none:'' }}" />
+      <div id="age-error" class="field-error"></div>
+      {% if form.age.errors %}
+      <div class="field-error">{{ form.age.errors.0 }}</div>
+      {% endif %}
     </div>
 
     <div class="inline-input-row">
