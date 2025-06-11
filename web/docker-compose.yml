@@ -5,7 +5,13 @@ services:
     build: .
     container_name: petmind-web
     restart: always
-    command: gunicorn petmind.wsgi:application --bind 0.0.0.0:8000
+    command: >
+      sh -c "
+        python manage.py migrate &&
+        python import_breeds.py &&
+        python import_contents.py &&
+        python manage.py runserver 0.0.0.0:8000
+      "
     expose:
       - "8000"
     env_file:
