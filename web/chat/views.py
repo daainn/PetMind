@@ -146,6 +146,13 @@ def guest_profile_register(request):
     return HttpResponseNotAllowed(['GET', 'POST'])
 
 
+def stream_answer(answer):
+    def generate():
+        for char in answer:
+            yield char
+    return StreamingHttpResponse(generate(), content_type='text/plain; charset=utf-8')
+
+
 @require_http_methods(["GET", "POST"])
 def chat_member_talk_detail(request, dog_id, chat_id):
     user_id = request.session.get("user_id")
@@ -204,9 +211,12 @@ def chat_member_talk_detail(request, dog_id, chat_id):
             user_info = get_dog_info(dog)
             answer = call_runpod_api(message, user_info)
             Message.objects.create(chat=chat, sender='bot', message=answer)
-            return JsonResponse({'response': answer, 'chat_id': chat.id})
 
-    # GET 요청 처리 (기존 그대로 유지)
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return stream_answer(answer)
+            else:
+                return JsonResponse({'response': answer, 'chat_id': chat.id}, json_dumps_params={'ensure_ascii': False})
+
     messages = Message.objects.filter(chat=chat).prefetch_related("images").order_by('created_at')
     chat_list = Chat.objects.filter(dog=dog).order_by('-created_at')
     grouped_chat_list = group_chats_by_date(chat_list)
@@ -393,7 +403,7 @@ def get_chat_history(chat):
 
 def call_runpod_api(message, dog_info):
     try:
-        api_url = "http://213.173.105.9:26808/chat"
+        api_url = "http://213.173.105.10:44616/chat"
         payload = {
             "message": message,
             "dog_info": dog_info
@@ -574,7 +584,10 @@ def chat_talk_view(request, chat_id):
 
         Message.objects.create(chat=chat, sender='bot', message=answer)
 
-        return JsonResponse({'response': answer, 'chat_id': chat.id}) 
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return stream_answer(answer)
+        else:
+            return JsonResponse({'response': answer, 'chat_id': chat.id}, json_dumps_params={'ensure_ascii': False})
 
     messages = Message.objects.filter(chat=chat).prefetch_related("images").order_by('created_at')
     chat_list = Chat.objects.filter(user__id=user_id).order_by('-created_at') if not is_guest else []
