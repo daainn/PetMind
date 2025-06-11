@@ -20,5 +20,8 @@ python manage.py migrate --noinput
 # 3) 정적 파일 수집
 python manage.py collectstatic --noinput
 
+# --- Nginx 시작
+nginx
+
 # 4) 애플리케이션 실행
 exec "$@"
