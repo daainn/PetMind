@@ -1,0 +1,59 @@
+{% load static %}
+{% load custom_filters %}
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PetMind | 성격 유형 검사</title>
+  <link rel="icon" href="{% static 'images/petmind_logo_dog.png' %}" type="image/png" />
+  <link href="//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Koh+Santepheap:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Leckerli+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/chat.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chat_header.css' %}">
+  <link rel="stylesheet" href="{% static 'css/right_sidebar.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dog_personality_test.css' %}">
+</head>
+<body class="member">
+<div class="app-wrapper" id="appWrapper">
+  {% include 'common/chat_header.html' with hide_report_button=True hide_sidebar_button=True %}
+
+  {% include 'common/right_sidebar.html' %}
+
+  <main class="chat-main">
+    <div class="chat-empty">
+      <h2 class="chat-title">🐶 반려견 성격 유형 검사</h2>
+      <form id="personalityTestForm" class="personality-test-form">
+        <div class="test-question-box">
+          <p><strong>1. 산책할 때 어떤가요?</strong></p>
+          <label><input type="radio" name="q1" value="E"> 다른 강아지나 사람에게 먼저 다가가요</label><br>
+          <label><input type="radio" name="q1" value="I"> 혼자 조용히 걷는 걸 선호해요</label>
+        </div>
+
+        <div class="test-question-box">
+          <p><strong>2. 장난감을 주면?</strong></p>
+          <label><input type="radio" name="q2" value="S"> 현실적인 방식으로 놀아요</label><br>
+          <label><input type="radio" name="q2" value="N"> 상상력을 발휘해서 창의적으로 놀아요</label>
+        </div>
+
+        <button type="submit" class="send-btn" style="margin-top: 24px;">
+          결과 보기
+        </button>
+      </form>
+    </div>
+  </main>
+</div>
+
+<script src="{% static 'js/right_sidebar.js' %}"></script>
+
+<script>
+document.getElementById('personalityTestForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  alert("성격 유형 검사 결과는 곧 제공될 예정입니다! 😊");
+});
+</script>
+
+</body>
+</html>

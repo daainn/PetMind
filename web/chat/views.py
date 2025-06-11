@@ -106,6 +106,7 @@ def chat_member_view(request, dog_id):
         'dog_id': dog.id,    
         'dog_list': dog_list,
         'can_generate_report': False,
+        'hide_report_button': True,
     })
 
 
@@ -257,6 +258,7 @@ def chat_main(request):
             "show_guest_info_form": True,
             "is_guest": True,
             "dog_breeds": dog_breeds,
+            'hide_report_button': True,
         })
 
     chat_list, current_chat, messages = [], None, []
@@ -316,7 +318,8 @@ def chat_main(request):
         'dog_breeds': dog_breeds,
         'dog_id': dog_id,
         'show_guest_info_form': False,
-        'show_login_notice': is_guest 
+        'show_login_notice': is_guest,
+        'hide_report_button': True
     })
 
 def chat_switch_dog(request, dog_id):

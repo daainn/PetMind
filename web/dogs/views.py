@@ -81,3 +81,21 @@ def delete_dog_profile(request, dog_id):
     else:
         latest_dog = DogProfile.objects.filter(user=user).order_by('created_at').last()
         return redirect('chat:chat_member', dog_id=latest_dog.id)
+
+
+def dog_personality_test_view(request, dog_id):
+    user = get_logged_in_user(request)
+    if not user:
+        return redirect('user:home')
+
+    dog_list = DogProfile.objects.filter(user=user).order_by('created_at')
+    current_dog = get_object_or_404(DogProfile, id=dog_id, user=user)
+
+    return render(request, 'dogs/dog_personality_test.html', {
+        'hide_report_button': True,
+        'is_guest': False,
+        'dog': current_dog,
+        'dog_id': current_dog.id,
+        'dog_list': dog_list,
+        'user_email': user.email,
+    })

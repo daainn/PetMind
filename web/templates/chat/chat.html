@@ -26,23 +26,20 @@
   <main class="chat-main">
     <div class="chat-empty">
       <h2 class="chat-title">반려견의 어떤 점이 알고 싶으신가요?</h2>
-      <div class="personality-test-banner">
-        <div class="banner-left">
-          <img src="{% static 'images/petmind_logo_dog.png' %}" alt="성격 아이콘" class="icon" />
-          <div class="text-group">
-            <p class="banner-title"> 우리 강아지의 성격 유형을 알아볼까요?</p>
-            <p class="banner-subtitle">12문항으로 간편하게 분석해 드려요.</p>
+      {% if not is_guest %}
+        <div class="personality-test-banner">
+          <div class="banner-left">
+            <img src="{% static 'images/petmind_logo_dog.png' %}" alt="성격 아이콘" class="icon" />
+            <div class="text-group">
+              <p class="banner-title"> 우리 강아지의 성격 유형을 알아볼까요?</p>
+              <p class="banner-subtitle">12문항으로 간편하게 분석해 드려요.</p>
+            </div>
           </div>
+          <a href="{% url 'dogs:dog_personality_test' dog_id %}" class="banner-btn">
+            성격 검사 시작하기&nbsp;&gt;
+          </a>
         </div>
-        <!-- 더미 alert 액션 -->
-        <button
-          type="button"
-          class="banner-btn"
-          onclick="alert('곧 제공될 성격 검사 기능을 기대해 주세요! 😊')"
-        >
-          성격 검사 시작하기&nbsp;&gt;
-        </button>
-      </div>
+      {% endif %}
 
       {% if is_guest and show_guest_info_form %}
       <div class="chat-message bot-message" style="background: #fffcd3; padding: 20px; border-radius: 16px; max-width: 640px; margin: 0 auto 24px;">
