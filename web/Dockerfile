@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     default-libmysqlclient-dev \
     libssl-dev \
     netcat \
-    mysql-client \
+    default-mysql-client \
   && rm -rf /var/lib/apt/lists/*
 
 # 2) 파이썬 패키지 설치
