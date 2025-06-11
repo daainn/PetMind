@@ -16,7 +16,7 @@ services:
       timeout: 10s
       retries: 3
     volumes:
-      - static_volume:/app/collected_static  
+      - ./
 
   nginx:
     image: nginx:latest
@@ -25,8 +25,9 @@ services:
     ports:
       - "80:80" 
     volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-      - ./web/collected_static:/app/collected_static  
+      # - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      # - ./web/collected_static:/app/collected_static  
+      ./app
 
 volumes:
   db_data:
