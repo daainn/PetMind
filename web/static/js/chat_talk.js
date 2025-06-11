@@ -86,7 +86,7 @@ function customMarkdownParse(text) {
       .map(line => line.replace(/^\d+\.\s/, '').trim())
       .map(content => `<li>${content}</li>`)
       .join('');
-    return `<ol style="margin:0.5em 0 0 1.2em; padding:0;">${items}</ol>`;
+    return `<ol>${items}</ol>`;
   });
 
   text = text.replace(/((?:^-\s.+\n?)+)/gm, (match) => {
@@ -95,7 +95,7 @@ function customMarkdownParse(text) {
       .map(line => line.replace(/^- /, '').trim())
       .map(content => `<li>${content}</li>`)
       .join('');
-    return `<ul style="margin:0.5em 0 0 1.2em; padding:0;">${items}</ul>`;
+    return `<ul>${items}</ul>`;
   });
 
   text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>');
@@ -105,12 +105,8 @@ function customMarkdownParse(text) {
   let m;
   while ((m = sectionRegex.exec(text)) !== null) {
     result += `
-      <div class="answer-section" style="
-        line-height:1.5; font-size:15px; margin-bottom:1.2em;
-        background:#fffbe6; border-left:4px solid #ffd54f;
-        border-radius:8px; padding:12px 16px;
-      ">
-        <h3 style="font-size:16px; font-weight:bold; color:#333; margin:0 0 0.5em;">
+      <div class="answer-section">
+        <h3>
           ${m[1]}
         </h3>
         ${m[2].trim()}
@@ -127,7 +123,7 @@ function customMarkdownParse(text) {
     .replace(/\[\[EXCL\]\]/g, '!')
     .replace(/\[\[QST\]\]/g, '?');
 
-  return result;
+  return result.trim();
 }
 
   const chatHistory = document.querySelector('.chat-history');
@@ -195,7 +191,8 @@ function customMarkdownParse(text) {
       method: 'POST',
       body: formData,
       headers: {
-        'X-CSRFToken': form.querySelector('[name="csrfmiddlewaretoken"]').value
+        'X-CSRFToken': form.querySelector('[name="csrfmiddlewaretoken"]').value,
+        'X-Requested-With': 'XMLHttpRequest' 
       },
       credentials: 'same-origin'
     });
@@ -236,13 +233,17 @@ function customMarkdownParse(text) {
     }
 
     let finalText = fullText.trim();
-    try {
-      const parsedJson = JSON.parse(finalText);
-      if (parsedJson.response) {
-        finalText = parsedJson.response;
-      }
-    } catch (e) {
-    }
+
+    // try {
+    //   const parsedJson = JSON.parse(finalText);
+    //   if (typeof parsedJson.response === "string") {
+    //     finalText = parsedJson.response;
+    //   } else {
+    //     finalText = JSON.stringify(parsedJson.response);
+    //   }
+    // } catch (e) {
+    //   console.warn("JSON 파싱 실패", e);
+    // }
 
     contentDiv.innerHTML = customMarkdownParse(finalText);
 
