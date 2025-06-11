@@ -7,6 +7,13 @@ until nc -z $DB_HOST $DB_PORT; do
   sleep 2
 done
 
+# 1.5) 데이터베이스 자동 생성
+mysql -h "$DB_HOST" -P "$DB_PORT" \
+  -u "$DB_USER" -p"$DB_PASSWORD" \
+  -e "CREATE DATABASE IF NOT EXISTS \`$DB_NAME\` \
+  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+
 # 2) 마이그레이션
 python manage.py migrate --noinput
 
