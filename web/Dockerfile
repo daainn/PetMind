@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # 4) 엔트리포인트 스크립트 복사 및 권한 설정
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # 5) 컨테이너 시작 시 실행될 명령 지정
