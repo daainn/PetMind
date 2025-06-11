@@ -16,7 +16,7 @@ services:
       timeout: 10s
       retries: 3
     volumes:
-      - ./web:/app
+      - static_volume:/app/collected_static
 
   nginx:
     image: nginx:latest
