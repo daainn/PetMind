@@ -37,7 +37,7 @@ SECRET_KEY = config('DJANGO_SECRET_KEY')
 # ALLOWED_HOSTS = ['13.124.112.16', 'localhost', '127.0.0.1', '0.0.0.0', 'petmind.com']
 
 DEBUG = config('DEBUG', default='False') == 'True'
-ALLOWED_HOSTS = ['52.78.58.71', '13.209.249.38', 'petmind.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['52.78.58.71', '43.202.244.172', 'petmind.com', 'localhost', '127.0.0.1']
 
 
 
