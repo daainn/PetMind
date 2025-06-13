@@ -35,6 +35,8 @@ from urllib.parse import quote
 from django.urls import reverse
 import mimetypes
 from urllib.parse import unquote
+from dogs.models import PersonalityResult
+from chat.utils import format_dog_info
 
 
 def chat_entry(request):
@@ -195,7 +197,11 @@ def chat_member_talk_detail(request, dog_id, chat_id):
             async def gpt_stream():
                 final_answer = ""
                 try:
-                    async for chunk in call_gpt_stream_with_images(image_files, message):
+                    dog_info = await sync_to_async(get_dog_info)(dog, chat=chat, user_id=user.id)
+                    profile_text = await sync_to_async(format_dog_info)(dog_info)
+                    full_question = f"[보호자 질문]\n{message}\n\n[반려견 프로필]\n{profile_text}"
+
+                    async for chunk in call_gpt_stream_with_images(image_files, full_question):
                         final_answer += chunk
                         yield chunk
                 except Exception as e:
@@ -343,6 +349,13 @@ def get_dog_info(dog, chat=None, user_id=None):
         if isinstance(default, str) and isinstance(v, int):
             return str(v)
         return v
+    
+    try:
+        personality = PersonalityResult.objects.get(dog=dog)
+        personality_character = personality.character
+    except PersonalityResult.DoesNotExist:
+        personality_character = ""
+
 
     info = {
         "name": safe(dog.name, ""),
@@ -359,7 +372,8 @@ def get_dog_info(dog, chat=None, user_id=None):
         "prev_a": prev_a,
         "prev_cate": None,
         "is_first_question": len(chat_history) == 0,
-        "user_id": user_id if user_id else (str(dog.user.id) if hasattr(dog, "user") else "unknown")
+        "user_id": user_id if user_id else (str(dog.user.id) if hasattr(dog, "user") else "unknown"),
+        "personality": personality_character
     }
     return info
 
@@ -568,7 +582,8 @@ def chat_talk_view(request, chat_id):
                 pass
 
         if image_files:
-            answer = get_image_response(image_files, user_message)
+            user_info = get_dog_info(dog, chat=chat, user_id=user.id)
+            answer = get_image_response(image_files, user_message, user_info)
         else:
             if is_guest:
                 user_info = get_minimal_guest_info(request.session, chat=chat, user_id=user_id)
