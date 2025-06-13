@@ -403,7 +403,7 @@ def get_chat_history(chat):
 
 def call_runpod_api(message, dog_info):
     try:
-        api_url = "http://213.173.105.10:44616/chat"
+        api_url = "http://69.48.159.14:21878/chat"    # 06.13 12:17
         payload = {
             "message": message,
             "dog_info": dog_info
@@ -662,31 +662,18 @@ def recommend_content(request, chat_id):
     '''
 
     for item in top_contents.to_dict(orient="records"):
-        image_url = item['image_url']
-        has_image = image_url and image_url.strip().startswith("http")
 
-        if has_image:
-            html += f'''
-            <a href="{item['reference_url']}" target="_blank" class="recommend-card-link">
-            <div class="recommend-card with-image">
-                <div class="card-content-section">
-                <p class="recommend-title">{item['title']}</p>
-                <p class="recommend-description">{item['body'][:80]}···</p>
-                <span class="recommend-link-text">👉 자세히 보기</span>
-                </div>
+        html += f'''
+        <a href="{item['reference_url']}" target="_blank" class="recommend-card-link">
+        <div class="recommend-card with-image">
+            <div class="card-content-section">
+            <p class="recommend-title">{item['title']}</p>
+            <p class="recommend-description">{item['body'][:80]}···</p>
+            <span class="recommend-link-text">👉 자세히 보기</span>
             </div>
-            </a>
-            '''
-        else:
-            html += f'''
-            <a href="{item['reference_url']}" target="_blank" class="recommend-card-link">
-            <div class="recommend-card no-image">
-                <p class="recommend-title">{item['title']}</p>
-                <p class="recommend-description">{item['body'][:80]}···</p>
-                <span class="recommend-link-text">👉 자세히 보기</span>
-            </div>
-            </a>
-            '''
+        </div>
+        </a>
+        '''
 
     html += '</div></div>'
 

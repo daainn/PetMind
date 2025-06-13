@@ -12,7 +12,7 @@
       <img src="{% static 'images/sidebar.png' %}" alt="사이드바 열기">
     </button>
 
-    <a href="/" class="chat-logo">PetMind</a>
+    <a href="{% url 'chat:main' %}" class="chat-logo">PetMind</a>
 
     
     {% include 'chat/chat_report_feedback.html' %}
