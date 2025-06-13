@@ -10,6 +10,30 @@ load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
 async_client = AsyncOpenAI(api_key=openai_api_key)
 
+def format_dog_info(dog_info: dict) -> str:
+    lines = []
+    labels = {
+        "name": "이름",
+        "breed": "견종",
+        "age": "나이",
+        "gender": "성별",
+        "neutered": "중성화 여부",
+        "disease": "질병 이력",
+        "disease_desc": "질병 상세",
+        "period": "함께 산 기간",
+        "housing": "주거 형태",
+        "personality": "성격 유형"
+    }
+
+    for key, label in labels.items():
+        val = dog_info.get(key)
+        if val and val != "모름":
+            if key == "neutered":
+                val = "예" if val else "아니오"
+            lines.append(f"• {label}: {val}")
+
+    return "\n".join(lines)
+
 
 async def call_gpt4o_with_images_stream(question: str, image_paths: list):
     try:
@@ -55,7 +79,7 @@ async def call_gpt4o_with_images_stream(question: str, image_paths: list):
         return None
 
 
-def get_image_response(image_files, question="강아지가 왜 이런 행동을 하나요?"):
+def get_image_response(image_files, question="강아지가 왜 이런 행동을 하나요?", dog_info=None):
     try:
         image_paths = []
 
@@ -65,6 +89,10 @@ def get_image_response(image_files, question="강아지가 왜 이런 행동을 
                 for chunk in img.chunks():
                     tmp.write(chunk)
                 image_paths.append(tmp.name)
+
+        if dog_info:
+            profile_text = format_dog_info(dog_info)
+            question = f"[보호자 질문]\n{question}\n\n[반려견 프로필]\n{profile_text}"
 
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
