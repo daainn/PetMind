@@ -403,7 +403,7 @@ def get_chat_history(chat):
 
 def call_runpod_api(message, dog_info):
     try:
-        api_url = "http://38.128.232.8:41215/chat"
+        api_url = "http://69.48.159.14:21878/chat"
         payload = {
             "message": message,
             "dog_info": dog_info
