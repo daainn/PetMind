@@ -37,6 +37,7 @@ import mimetypes
 from urllib.parse import unquote
 from dogs.models import PersonalityResult
 from chat.utils import format_dog_info
+import pytz
 
 
 def chat_entry(request):
@@ -359,7 +360,7 @@ def get_dog_info(dog, chat=None, user_id=None):
 
     info = {
         "name": safe(dog.name, ""),
-        "breed": safe(getattr(dog, "breed_name", None)),
+        "breed": safe(dog.breed.name if dog.breed else None),
         "age": safe(dog.age),
         "gender": safe(dog.gender),
         "neutered": safe(dog.neutered),
@@ -680,18 +681,31 @@ def recommend_content(request, chat_id):
     '''
 
     for item in top_contents.to_dict(orient="records"):
+        image_url = item['image_url']
+        has_image = image_url and image_url.strip().startswith("http")
 
-        html += f'''
-        <a href="{item['reference_url']}" target="_blank" class="recommend-card-link">
-        <div class="recommend-card with-image">
-            <div class="card-content-section">
-            <p class="recommend-title">{item['title']}</p>
-            <p class="recommend-description">{item['body'][:80]}···</p>
-            <span class="recommend-link-text">👉 자세히 보기</span>
+        if has_image:
+            html += f'''
+            <a href="{item['reference_url']}" target="_blank" class="recommend-card-link">
+            <div class="recommend-card with-image">
+                <div class="card-content-section">
+                <p class="recommend-title">{item['title']}</p>
+                <p class="recommend-description">{item['body'][:80]}···</p>
+                <span class="recommend-link-text">👉 자세히 보기</span>
+                </div>
             </div>
-        </div>
-        </a>
-        '''
+            </a>
+            '''
+        else:
+            html += f'''
+            <a href="{item['reference_url']}" target="_blank" class="recommend-card-link">
+            <div class="recommend-card no-image">
+                <p class="recommend-title">{item['title']}</p>
+                <p class="recommend-description">{item['body'][:80]}···</p>
+                <span class="recommend-link-text">👉 자세히 보기</span>
+            </div>
+            </a>
+            '''
 
     html += '</div></div>'
 
@@ -758,8 +772,9 @@ def load_chat_and_profile(chat_id, start_date, end_date):
     }
 
     try:
-        start_dt = make_aware(datetime.strptime(start_date, "%Y-%m-%d"))
-        end_dt = make_aware(datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1))
+        kst = pytz.timezone("Asia/Seoul")
+        start_dt = kst.localize(datetime.strptime(start_date, "%Y-%m-%d"))
+        end_dt = kst.localize(datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1))
     except ValueError:
         return dog_dict, []
 
@@ -775,7 +790,6 @@ def load_chat_and_profile(chat_id, start_date, end_date):
     ]
 
     return dog_dict, history
-
 def chat_report_feedback_view(request, chat_id):
     chat = get_object_or_404(Chat, id=chat_id)
     return render(request, 'chat/chat_report_feedback.html', {
@@ -826,12 +840,9 @@ def generate_report(request):
     if dog.get("image"):
         try:
             image_path = dog["image"]
-            # print("🐾 원본 image 경로:", dog["image"])
             cleaned_image_path = unquote(image_path.replace("/media/", ""))
-            # print("🐾 media/ 제거된 경로:", cleaned_image_path)
             base64_img, mime_type = get_base64_image(cleaned_image_path)
         except Exception as e:
-            # print(f"[경고] 이미지 Base64 변환 실패: {e}")
             base64_img = None
             mime_type = None
 

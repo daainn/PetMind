@@ -227,7 +227,7 @@ body {
 }
 
 .send-btn {
-  background-color: #FFC508;
+  /* background-color: #FFC508; */
   border: none;
   width: 42px;
   height: 42px;
@@ -353,7 +353,7 @@ body {
   }
 
   .chat-message.bot-message button {
-    background-color: #ffd400;
+    background-color: #FFC508;
     border: none;
     border-radius: 8px;
     color: #000;
