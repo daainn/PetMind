@@ -583,7 +583,7 @@ def chat_talk_view(request, chat_id):
                 pass
 
         if image_files:
-            user_info = get_dog_info(dog, chat=chat, user_id=user.id)
+            user_info = get_dog_info(dog, chat=chat, user_id=user_id)
             answer = get_image_response(image_files, user_message, user_info)
         else:
             if is_guest:
@@ -681,16 +681,33 @@ def recommend_content(request, chat_id):
     '''
 
     for item in top_contents.to_dict(orient="records"):
-        html += f'''
-        <a href="{item['reference_url']}" target="_blank" class="recommend-card-link">
-        <div class="recommend-card with-image">
-            <div class="card-content-section">
-            <p class="recommend-title">{item['title']}</p>
-            <p class="recommend-description">{item['body'][:80]}···</p>
-            <span class="recommend-link-text">👉 자세히 보기</span>
-        </div>
-        </a>
-        '''
+        image_url = item['image_url']
+        has_image = image_url and image_url.strip().startswith("http")
+
+        if has_image:
+            html += f'''
+            <a href="{item['reference_url']}" target="_blank" class="recommend-card-link">
+            <div class="recommend-card with-image">
+                <div class="card-content-section">
+                <p class="recommend-title">{item['title']}</p>
+                <p class="recommend-description">{item['body'][:80]}···</p>
+                <span class="recommend-link-text">👉 자세히 보기</span>
+                </div>
+            </div>
+            </a>
+            '''
+        else:
+            html += f'''
+            <a href="{item['reference_url']}" target="_blank" class="recommend-card-link">
+            <div class="recommend-card with-image">
+                <div class="card-content-section">
+                <p class="recommend-title">{item['title']}</p>
+                <p class="recommend-description">{item['body'][:80]}···</p>
+                <span class="recommend-link-text">👉 자세히 보기</span>
+                </div>
+            </div>
+            </a>
+            '''
 
     html += '</div></div>'
 

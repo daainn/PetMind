@@ -412,11 +412,11 @@
   gap: 4px;
 }
 
-.recommend-card.no-image {
+/* .recommend-card.no-image {
   flex-direction: column;
   background-color: #FFFDE7;
   border-left: 4px solid #FFD54F;
-}
+} */
 
 .recommend-title {
   font-size: 15px;
