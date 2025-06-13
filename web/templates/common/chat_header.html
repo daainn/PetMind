@@ -16,7 +16,7 @@
       <div style="width: 40px;"></div>
     {% endif %}
 
-    <a href="/" class="chat-logo">PetMind</a>
+    <a href="{% url 'chat:main' %}" class="chat-logo">PetMind</a>
 
     
     {% if not hide_report_button %}
