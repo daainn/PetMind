@@ -53,9 +53,10 @@ def generate_response(request: InferenceRequest):
 
     context = search_documents(question)
 
-    messages, updated_history = build_chat_messages(
+    messages = build_chat_messages(
         system_msg=system_msg,
         user_input=question,
+        context = context
         dog_info=profile,
         chat_history=profile["chat_history"],
         user_id=user_id
