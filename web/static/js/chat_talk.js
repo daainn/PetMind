@@ -365,5 +365,6 @@ function customMarkdownParse(text) {
     }
   }
 
-  
+  const elements = document.querySelectorAll(".chat-message-wrapper");
+  elements.forEach(el => el.classList.add("no-flex"));
 });

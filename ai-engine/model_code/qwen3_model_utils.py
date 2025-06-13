@@ -190,7 +190,7 @@ def search_documents(user_input):
         return None
 
 
-def build_chat_messages(system_msg, user_input, dog_info, chat_history, user_id):
+def build_chat_messages(system_msg, context, user_input, dog_info, chat_history, user_id):
     recalled = []
     try:
         recalled = search_user_memories_by_score(user_id, user_input, threshold=1.5)
@@ -202,6 +202,15 @@ def build_chat_messages(system_msg, user_input, dog_info, chat_history, user_id)
     memory_block = "\n".join([f"- {m}" for m in recalled])
     if memory_block:
         system_msg["content"] += f"\n\n📌 관련 과거 기억:\n{memory_block}"
+
+    if "context" not in system_msg or not isinstance(system_msg["context"], str):
+        system_msg["context"] = ""
+
+    system_msg['context'] += "\n\n📌 RAG 검색된 문서:\n" + (context or "검색된 문서가 없습니다.")
+
+    personality = dog_info.get("personality", "")
+    if personality:
+        system_msg["content"] += f"\n\n🧠 반려견 성격:\n{personality}"
 
     dog_profile_lines = []
     profile_fields = {
@@ -241,7 +250,7 @@ def build_chat_messages(system_msg, user_input, dog_info, chat_history, user_id)
     messages += chat_history[-10:]  
     messages.append({"role": "user", "content": user_message})
 
-    return messages, chat_history
+    return messages
 
 
 
@@ -251,7 +260,7 @@ def run_model_inference(messages):
     with torch.no_grad():
         outputs = model.generate(
             **inputs,
-            max_new_tokens=2048,
+            max_new_tokens=1024,
             temperature=0.6,
             top_p=0.95,
             top_k=20,

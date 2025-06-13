@@ -35,6 +35,9 @@ from urllib.parse import quote
 from django.urls import reverse
 import mimetypes
 from urllib.parse import unquote
+from dogs.models import PersonalityResult
+from chat.utils import format_dog_info
+import pytz
 
 
 def chat_entry(request):
@@ -106,6 +109,7 @@ def chat_member_view(request, dog_id):
         'dog_id': dog.id,    
         'dog_list': dog_list,
         'can_generate_report': False,
+        'hide_report_button': True,
     })
 
 
@@ -194,7 +198,11 @@ def chat_member_talk_detail(request, dog_id, chat_id):
             async def gpt_stream():
                 final_answer = ""
                 try:
-                    async for chunk in call_gpt_stream_with_images(image_files, message):
+                    dog_info = await sync_to_async(get_dog_info)(dog, chat=chat, user_id=user.id)
+                    profile_text = await sync_to_async(format_dog_info)(dog_info)
+                    full_question = f"[보호자 질문]\n{message}\n\n[반려견 프로필]\n{profile_text}"
+
+                    async for chunk in call_gpt_stream_with_images(image_files, full_question):
                         final_answer += chunk
                         yield chunk
                 except Exception as e:
@@ -257,6 +265,7 @@ def chat_main(request):
             "show_guest_info_form": True,
             "is_guest": True,
             "dog_breeds": dog_breeds,
+            'hide_report_button': True,
         })
 
     chat_list, current_chat, messages = [], None, []
@@ -316,7 +325,8 @@ def chat_main(request):
         'dog_breeds': dog_breeds,
         'dog_id': dog_id,
         'show_guest_info_form': False,
-        'show_login_notice': is_guest 
+        'show_login_notice': is_guest,
+        'hide_report_button': True
     })
 
 def chat_switch_dog(request, dog_id):
@@ -340,10 +350,17 @@ def get_dog_info(dog, chat=None, user_id=None):
         if isinstance(default, str) and isinstance(v, int):
             return str(v)
         return v
+    
+    try:
+        personality = PersonalityResult.objects.get(dog=dog)
+        personality_character = personality.character
+    except PersonalityResult.DoesNotExist:
+        personality_character = ""
+
 
     info = {
         "name": safe(dog.name, ""),
-        "breed": safe(getattr(dog, "breed_name", None)),
+        "breed": safe(dog.breed.name if dog.breed else None),
         "age": safe(dog.age),
         "gender": safe(dog.gender),
         "neutered": safe(dog.neutered),
@@ -356,7 +373,8 @@ def get_dog_info(dog, chat=None, user_id=None):
         "prev_a": prev_a,
         "prev_cate": None,
         "is_first_question": len(chat_history) == 0,
-        "user_id": user_id if user_id else (str(dog.user.id) if hasattr(dog, "user") else "unknown")
+        "user_id": user_id if user_id else (str(dog.user.id) if hasattr(dog, "user") else "unknown"),
+        "personality": personality_character
     }
     return info
 
@@ -403,7 +421,7 @@ def get_chat_history(chat):
 
 def call_runpod_api(message, dog_info):
     try:
-        api_url = "http://213.173.105.10:44616/chat"
+        api_url = "http://69.48.159.14:21878/chat"
         payload = {
             "message": message,
             "dog_info": dog_info
@@ -565,7 +583,8 @@ def chat_talk_view(request, chat_id):
                 pass
 
         if image_files:
-            answer = get_image_response(image_files, user_message)
+            user_info = get_dog_info(dog, chat=chat, user_id=user.id)
+            answer = get_image_response(image_files, user_message, user_info)
         else:
             if is_guest:
                 user_info = get_minimal_guest_info(request.session, chat=chat, user_id=user_id)
@@ -753,8 +772,9 @@ def load_chat_and_profile(chat_id, start_date, end_date):
     }
 
     try:
-        start_dt = make_aware(datetime.strptime(start_date, "%Y-%m-%d"))
-        end_dt = make_aware(datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1))
+        kst = pytz.timezone("Asia/Seoul")
+        start_dt = kst.localize(datetime.strptime(start_date, "%Y-%m-%d"))
+        end_dt = kst.localize(datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1))
     except ValueError:
         return dog_dict, []
 
@@ -770,7 +790,6 @@ def load_chat_and_profile(chat_id, start_date, end_date):
     ]
 
     return dog_dict, history
-
 def chat_report_feedback_view(request, chat_id):
     chat = get_object_or_404(Chat, id=chat_id)
     return render(request, 'chat/chat_report_feedback.html', {
@@ -821,12 +840,9 @@ def generate_report(request):
     if dog.get("image"):
         try:
             image_path = dog["image"]
-            # print("🐾 원본 image 경로:", dog["image"])
             cleaned_image_path = unquote(image_path.replace("/media/", ""))
-            # print("🐾 media/ 제거된 경로:", cleaned_image_path)
             base64_img, mime_type = get_base64_image(cleaned_image_path)
         except Exception as e:
-            # print(f"[경고] 이미지 Base64 변환 실패: {e}")
             base64_img = None
             mime_type = None
 
