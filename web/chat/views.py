@@ -699,10 +699,12 @@ def recommend_content(request, chat_id):
         else:
             html += f'''
             <a href="{item['reference_url']}" target="_blank" class="recommend-card-link">
-            <div class="recommend-card no-image">
+            <div class="recommend-card with-image">
+                <div class="card-content-section">
                 <p class="recommend-title">{item['title']}</p>
                 <p class="recommend-description">{item['body'][:80]}···</p>
                 <span class="recommend-link-text">👉 자세히 보기</span>
+                </div>
             </div>
             </a>
             '''
