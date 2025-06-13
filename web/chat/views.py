@@ -35,6 +35,7 @@ from urllib.parse import quote
 from django.urls import reverse
 import mimetypes
 from urllib.parse import unquote
+import pytz
 
 
 def chat_entry(request):
@@ -756,8 +757,9 @@ def load_chat_and_profile(chat_id, start_date, end_date):
     }
 
     try:
-        start_dt = make_aware(datetime.strptime(start_date, "%Y-%m-%d"))
-        end_dt = make_aware(datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1))
+        kst = pytz.timezone("Asia/Seoul")
+        start_dt = kst.localize(datetime.strptime(start_date, "%Y-%m-%d"))
+        end_dt = kst.localize(datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1))
     except ValueError:
         return dog_dict, []
 
@@ -773,7 +775,6 @@ def load_chat_and_profile(chat_id, start_date, end_date):
     ]
 
     return dog_dict, history
-
 def chat_report_feedback_view(request, chat_id):
     chat = get_object_or_404(Chat, id=chat_id)
     return render(request, 'chat/chat_report_feedback.html', {
