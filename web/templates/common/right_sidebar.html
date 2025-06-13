@@ -19,7 +19,7 @@
       <strong class="dog-name">{{ dog.name }}</strong>
 
       <a href="{% url 'dogs:dog_info_join' %}?mode=edit&dog_id={{ dog.id }}"
-        class="dog-edit-button-inline" aria-label="수정">
+         class="dog-edit-button-inline" aria-label="수정">
         <i class="fas fa-pen"></i>
       </a>
 
@@ -41,11 +41,6 @@
       {% if dog.neutered %}
         <span class="tag">중성화 {{ dog.neutered }}</span>
       {% endif %}
-      {% if dog.disease_history %}
-        <span class="tag">{{ dog.disease_history }}</span>
-      {% else %}
-        <span class="tag">과거 수술 이력 없음</span>
-      {% endif %}
       {% if dog.living_period %}
         <span class="tag">함께 산 지 {{ dog.living_period }}</span>
       {% endif %}
@@ -53,6 +48,20 @@
         <span class="tag">{{ dog.housing_type }} 거주</span>
       {% endif %}
     </div>
+
+    {% with result=dog.personalityresult_set.last %}
+      {% if result %}
+        <div class="dog-mbti-box">
+          <h4 class="mbti-label">{{ dog.name }} 성격 유형 : {{ result.type }}</h4>
+          <div class="mbti-hashtags">
+            {% for tag in result.hashtags %}
+              <span class="mbti-tag">#{{ tag|cut:"#" }}</span>
+            {% endfor %}
+          </div>
+          <a href="{% url 'dogs:dog_personality_result' dog.id %}" class="mbti-view-btn">결과 자세히 보기</a>
+        </div>
+      {% endif %}
+    {% endwith %}
   </div>
 
   {% if dog_list and dog_list|length > 1 %}
@@ -82,7 +91,7 @@
             </div>
           </a>
           <a href="{% url 'dogs:dog_info_join' %}?mode=edit&dog_id={{ other_dog.id }}"
-            class="dog-edit-button-inline" aria-label="수정">
+             class="dog-edit-button-inline" aria-label="수정">
             <i class="fas fa-pen"></i>
           </a>
         </li>

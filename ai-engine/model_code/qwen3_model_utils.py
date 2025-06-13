@@ -203,7 +203,14 @@ def build_chat_messages(system_msg, context, user_input, dog_info, chat_history,
     if memory_block:
         system_msg["content"] += f"\n\n📌 관련 과거 기억:\n{memory_block}"
 
+    if "context" not in system_msg or not isinstance(system_msg["context"], str):
+        system_msg["context"] = ""
+
     system_msg['context'] += "\n\n📌 RAG 검색된 문서:\n" + (context or "검색된 문서가 없습니다.")
+
+    personality = dog_info.get("personality", "")
+    if personality:
+        system_msg["content"] += f"\n\n🧠 반려견 성격:\n{personality}"
 
     dog_profile_lines = []
     profile_fields = {

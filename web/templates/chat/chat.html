@@ -26,6 +26,20 @@
   <main class="chat-main">
     <div class="chat-empty">
       <h2 class="chat-title">반려견의 어떤 점이 알고 싶으신가요?</h2>
+      {% if not is_guest %}
+        <div class="personality-test-banner">
+          <div class="banner-left">
+            <img src="{% static 'images/petmind_logo_dog.png' %}" alt="성격 아이콘" class="icon" />
+            <div class="text-group">
+              <p class="banner-title"> 우리 강아지의 성격 유형을 알아볼까요?</p>
+              <p class="banner-subtitle">12문항으로 간편하게 분석해 드려요.</p>
+            </div>
+          </div>
+          <a href="{% url 'dogs:dog_personality_test' dog_id %}" class="banner-btn">
+            성격 검사 시작하기&nbsp;&gt;
+          </a>
+        </div>
+      {% endif %}
 
       {% if is_guest and show_guest_info_form %}
       <div class="chat-message bot-message" style="background: #fffcd3; padding: 20px; border-radius: 16px; max-width: 640px; margin: 0 auto 24px;">
@@ -45,7 +59,7 @@
             <option value="기타">기타</option>
           </select>
           <button type="submit"
-                  style="padding: 8px 30px; background-color: #ffd400; border: none; border-radius: 8px; color: #000; font-weight: bold;">
+                  style="padding: 8px 30px; background-color: #FFC508; border: none; border-radius: 8px; color: #000; font-weight: bold;">
             확인
           </button>
         </form>
@@ -67,16 +81,11 @@
 
       <form method="POST" action="{% url 'chat:chat_send' %}" enctype="multipart/form-data" class="chat-input-form">
         {% csrf_token %}
-        <textarea name="message" placeholder="질문을 입력하세요." required></textarea>
-        <div id="imagePreviewContainer" style="display: flex; gap: 8px; margin-top: 8px;"></div>
-        <div class="chat-input-bottom">
-          <label class="image-upload-btn" style="visibility: hidden;">
-            <input type="file" name="images" id="imageInput" accept="image/*" multiple hidden>
-            <img src="{% static 'images/image_upload_btn.png' %}" alt="이미지 업로드 아이콘">
-            <span>이미지 업로드</span>
-          </label>
-          <button type="submit" class="send-btn">
-            <img src="{% static 'images/chatbot_sendbtn.png' %}" alt="보내기">
+        <div class="chat-input-row" style="display: flex; align-items: center; gap: 8px;">
+          <textarea name="message" placeholder="질문을 입력하세요." required
+                    style="height: 50px; resize: none; padding: 12px 16px; font-size: 14px; flex: 1; border-radius: 16px;"></textarea>
+          <button type="submit" class="send-btn" style="width: 44px; height: 44px; border-radius: 50%; background-color: #FFC508; display: flex; justify-content: center; align-items: center; border: none;">
+            <img src="{% static 'images/chatbot_sendbtn.png' %}" alt="보내기" style="width: 40px; height: 40px;">
           </button>
         </div>
 

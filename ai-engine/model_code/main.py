@@ -24,6 +24,7 @@ class DogInfo(BaseModel):
     disease_desc: Optional[str] = ""
     period: Optional[str] = "모름"
     housing: Optional[str] = "모름"
+    personality: Optional[str] = "모름"
     chat_history: List[MessageItem]
     prev_q: Optional[str]
     prev_a: Optional[str]
@@ -56,7 +57,7 @@ def generate_response(request: InferenceRequest):
     messages = build_chat_messages(
         system_msg=system_msg,
         user_input=question,
-        context = context
+        context = context,
         dog_info=profile,
         chat_history=profile["chat_history"],
         user_id=user_id

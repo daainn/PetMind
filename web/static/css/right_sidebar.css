@@ -53,7 +53,7 @@
 .dog-profile-card {
   background: #fffefc;
   border-radius: 20px;
-  padding: 24px;
+  padding: 1px 24px 24px 24px;
   text-align: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
@@ -206,4 +206,53 @@
 
 .add-dog-button:hover {
   background-color: #ffe86e;
+}
+
+.dog-mbti-box {
+  margin-top: 16px;
+  background: #fffbe6;
+  padding: 1px 16px 12px 16px;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.mbti-label {
+  font-size: 14px;
+  font-weight: bold;
+  color: #6b4c00;
+}
+
+.mbti-type {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f59e0b;
+  background-color: #fff3cd;
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+}
+
+.mbti-hashtags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+  justify-content: center;
+}
+
+.mbti-tag {
+  background-color: #fce76c;
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  color: #555;
+}
+
+.mbti-view-btn {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 13px;
+  text-decoration: underline;
+  color: #555;
 }
