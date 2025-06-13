@@ -413,3 +413,59 @@ body {
   padding: 12px 0 10px 0;
   z-index: 1000;
 }
+
+.personality-test-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 720px;
+  margin: 0 auto 30px;
+  padding: 16px 24px;
+  background: linear-gradient(90deg, #fff8d6, #fff1c1);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.personality-test-banner .banner-left {
+  display: flex;
+  align-items: center;
+}
+
+.personality-test-banner .icon {
+  width: 40px;
+  margin-right: 16px;
+}
+
+.personality-test-banner .text-group {
+  line-height: 1.2;
+}
+
+.personality-test-banner .banner-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: #b76e00;
+}
+
+.personality-test-banner .banner-subtitle {
+  font-size: 0.875rem;
+  color: #8f6a00;
+  margin: 0;
+}
+
+.personality-test-banner .banner-btn {
+  background-color: #ffc508;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 450;
+  color: #2b2104;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.personality-test-banner .banner-btn:hover {
+  background-color: #e6b000;
+  transform: translateY(-2px);
+}

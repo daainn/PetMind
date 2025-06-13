@@ -106,6 +106,7 @@ def chat_member_view(request, dog_id):
         'dog_id': dog.id,    
         'dog_list': dog_list,
         'can_generate_report': False,
+        'hide_report_button': True,
     })
 
 
@@ -257,6 +258,7 @@ def chat_main(request):
             "show_guest_info_form": True,
             "is_guest": True,
             "dog_breeds": dog_breeds,
+            'hide_report_button': True,
         })
 
     chat_list, current_chat, messages = [], None, []
@@ -316,7 +318,8 @@ def chat_main(request):
         'dog_breeds': dog_breeds,
         'dog_id': dog_id,
         'show_guest_info_form': False,
-        'show_login_notice': is_guest 
+        'show_login_notice': is_guest,
+        'hide_report_button': True
     })
 
 def chat_switch_dog(request, dog_id):
@@ -403,7 +406,7 @@ def get_chat_history(chat):
 
 def call_runpod_api(message, dog_info):
     try:
-        api_url = "http://213.173.105.10:44616/chat"
+        api_url = "http://69.48.159.14:21878/chat"
         payload = {
             "message": message,
             "dog_info": dog_info
