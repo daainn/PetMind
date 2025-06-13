@@ -25,35 +25,28 @@
   <main class="chat-main">
     <div class="chat-empty">
       <h2 class="chat-title">🐶 반려견 성격 유형 검사</h2>
-      <form id="personalityTestForm" class="personality-test-form">
-        <div class="test-question-box">
-          <p><strong>1. 산책할 때 어떤가요?</strong></p>
-          <label><input type="radio" name="q1" value="E"> 다른 강아지나 사람에게 먼저 다가가요</label><br>
-          <label><input type="radio" name="q1" value="I"> 혼자 조용히 걷는 걸 선호해요</label>
-        </div>
+      <form id="personalityTestForm" class="personality-test-form" method="post" action="{% url 'dogs:submit_personality_test' dog_id=dog_id %}">
+        {% csrf_token %}
+        
+        {% for q in questions %}
+          <div class="test-question-box">
+            <p><strong>{{ forloop.counter }}. {{ q.question }}</strong></p>
+            {% for opt in q.options %}
+              <label>
+                <input type="radio" name="{{ q.name }}" value="{{ opt.value }}">
+                {{ opt.text }}
+              </label><br>
+            {% endfor %}
+          </div>
+        {% endfor %}
 
-        <div class="test-question-box">
-          <p><strong>2. 장난감을 주면?</strong></p>
-          <label><input type="radio" name="q2" value="S"> 현실적인 방식으로 놀아요</label><br>
-          <label><input type="radio" name="q2" value="N"> 상상력을 발휘해서 창의적으로 놀아요</label>
-        </div>
-
-        <button type="submit" class="send-btn" style="margin-top: 24px;">
-          결과 보기
-        </button>
+        <button type="submit" class="send-btn">결과 보기</button>
       </form>
     </div>
   </main>
 </div>
 
 <script src="{% static 'js/right_sidebar.js' %}"></script>
-
-<script>
-document.getElementById('personalityTestForm').addEventListener('submit', function (e) {
-  e.preventDefault();
-  alert("성격 유형 검사 결과는 곧 제공될 예정입니다! 😊");
-});
-</script>
 
 </body>
 </html>

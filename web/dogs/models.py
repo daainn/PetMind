@@ -42,3 +42,11 @@ class DogProfile(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class PersonalityResult(models.Model):
+    dog = models.ForeignKey(DogProfile, on_delete=models.CASCADE)
+    type = models.CharField(max_length=4)
+    character = models.TextField()
+    hashtags = models.JSONField(default=list)
+    created_at = models.DateTimeField(auto_now_add=True)
