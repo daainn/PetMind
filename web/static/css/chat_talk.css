@@ -34,6 +34,12 @@
   box-sizing: border-box;
   
 }
+.chat-message-wrapper {
+  display: flex;
+}
+.chat-message-wrapper.no-flex {
+  display: initial !important;
+}
 .chat-message-wrapper.user-side {
   justify-content: flex-end;
 }
