@@ -17,7 +17,7 @@ from typing import List
 from django.urls import reverse
 import asyncio
 from asgiref.sync import async_to_sync
-
+from django.http import JsonResponse
 
 
 def dog_info_join_view(request):
@@ -108,8 +108,6 @@ def dog_personality_test_view(request, dog_id):
     dog_list = DogProfile.objects.filter(user=user).order_by('created_at')
     current_dog = get_object_or_404(DogProfile, id=dog_id, user=user)
 
-    questions = asyncio.run(get_all_test_questions())
-
     return render(request, 'dogs/dog_personality_test.html', {
         'hide_report_button': True,
         'is_guest': False,
@@ -117,9 +115,11 @@ def dog_personality_test_view(request, dog_id):
         'dog_id': current_dog.id,
         'dog_list': dog_list,
         'user_email': user.email,
-        'questions': questions,
     })
 
+def get_test_questions_api(request, dog_id):
+    questions = asyncio.run(get_all_test_questions())
+    return JsonResponse({'questions': questions})
 
 def submit_personality_test(request, dog_id):
     if request.method == 'POST':
