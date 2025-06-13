@@ -583,7 +583,7 @@ def chat_talk_view(request, chat_id):
                 pass
 
         if image_files:
-            user_info = get_dog_info(dog, chat=chat, user_id=user.id)
+            user_info = get_dog_info(dog, chat=chat, user_id=user_id)
             answer = get_image_response(image_files, user_message, user_info)
         else:
             if is_guest:
