@@ -14,7 +14,7 @@ from django.contrib.auth.decorators import login_required
 from user.utils import get_logged_in_user
 from collections import defaultdict
 from django.http import HttpResponseForbidden
-from datetime import date, timedelta
+from datetime import date, timedelta, time
 from asgiref.sync import sync_to_async
 import uuid
 import requests
@@ -751,6 +751,7 @@ def submit_review(request):
         return JsonResponse({'status': 'invalid_json'}, status=400)
     
 
+
 def load_chat_and_profile(chat_id, start_date, end_date):
     try:
         chat = Chat.objects.select_related("dog").get(id=chat_id)
@@ -774,46 +775,59 @@ def load_chat_and_profile(chat_id, start_date, end_date):
     }
 
     try:
-        kst = pytz.timezone("Asia/Seoul")
-        start_dt = kst.localize(datetime.strptime(start_date, "%Y-%m-%d"))
-        end_dt = kst.localize(datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1))
+        start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+        end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+
+        start_dt = make_aware(datetime.combine(start_dt, time.min)) 
+        end_dt = make_aware(datetime.combine(end_dt, time.max))   
     except ValueError:
         return dog_dict, []
 
     messages = Message.objects.filter(
         chat_id=chat_id,
-        created_at__gte=start_dt,
-        created_at__lt=end_dt
+        created_at__range=(start_dt, end_dt)
     ).order_by("created_at")
 
     history = [
         {"role": "user" if msg.sender == "user" else "assistant", "content": msg.message}
         for msg in messages if msg.message
     ]
-
     return dog_dict, history
+
+
 def chat_report_feedback_view(request, chat_id):
     chat = get_object_or_404(Chat, id=chat_id)
     return render(request, 'chat/chat_report_feedback.html', {
         "chat_id": chat_id,
     })
 
-def get_base64_image(image_path):
-    if image_path.startswith("media/"):
-        image_path = image_path[len("media/"):]
-    elif image_path.startswith("/media/"):
-        image_path = image_path[len("/media/"):]
-
-    full_path = os.path.join(settings.MEDIA_ROOT, image_path)
-
+def get_base64_image(image_path_or_url):
     try:
-        with open(full_path, "rb") as img_file:
-            encoded = base64.b64encode(img_file.read()).decode("utf-8")
-            mime_type, _ = mimetypes.guess_type(full_path)
-            return encoded, mime_type or "image/jpeg"
-    except FileNotFoundError:
-        print(f"[오류] 파일을 찾을 수 없습니다: {full_path}")
+        if image_path_or_url.startswith("http"):
+            response = requests.get(image_path_or_url, timeout=5)
+            if response.status_code == 200:
+                mime_type = response.headers.get("Content-Type", "image/jpeg")
+                base64_str = base64.b64encode(response.content).decode("utf-8")
+                return base64_str, mime_type
+            else:
+                print(f"[오류] S3 이미지 요청 실패: {response.status_code}")
+                return None, None
+        else:
+            if image_path_or_url.startswith("media/"):
+                image_path_or_url = image_path_or_url[len("media/"):]
+            elif image_path_or_url.startswith("/media/"):
+                image_path_or_url = image_path_or_url[len("/media/"):]
+
+            full_path = os.path.join(settings.MEDIA_ROOT, image_path_or_url)
+
+            with open(full_path, "rb") as img_file:
+                encoded = base64.b64encode(img_file.read()).decode("utf-8")
+                mime_type, _ = mimetypes.guess_type(full_path)
+                return encoded, mime_type or "image/jpeg"
+    except Exception as e:
+        print(f"[오류] 이미지 인코딩 실패: {str(e)}")
         return None, None
+
 
 @api_view(['POST'])
 def generate_report(request):
